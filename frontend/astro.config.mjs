@@ -1,9 +1,29 @@
 // @ts-check
-import { defineConfig } from 'astro/config';
+import { defineConfig, fontProviders } from "astro/config";
+import tailwindcss from "@tailwindcss/vite";
 
-import react from '@astrojs/react';
+import react from "@astrojs/react";
 
-// https://astro.build/config
 export default defineConfig({
-  integrations: [react()]
+  vite: { plugins: [tailwindcss()] },
+  integrations: [react()],
+
+  fonts: [
+    {
+      provider: fontProviders.local(),
+      name: "Inter Variable",
+      cssVariable: "--font-inter",
+      options: {
+        variants: [
+          {
+            weight: "100 900",
+            style: "normal",
+            src: [
+              "./node_modules/@fontsource-variable/inter/files/inter-latin-standard-normal.woff2",
+            ],
+          },
+        ],
+      },
+    },
+  ],
 });
