@@ -1,4 +1,6 @@
 /frontend/dist/
 /frontend/.astro/
+/frontend/.market/
 /frontend/node_modules/
 /frontend/.DS_Store
+/frontend/public/market-cache/

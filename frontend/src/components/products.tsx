@@ -1,4 +1,3 @@
-import type { ImageMetadata } from "astro";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Base, H5 } from "@/components/ui/typography";
@@ -15,30 +14,16 @@ import {
 import { IconBan, IconSearch, IconX } from "@tabler/icons-react";
 import { parseAsString, parseAsStringLiteral, useQueryStates } from "nuqs";
 import { NuqsAdapter } from "nuqs/adapters/react";
+import {
+  FILTER_VALUES,
+  FILTERS,
+  TYPE_LABELS,
+  type Filter,
+  type ProductSummary,
+} from "@/data/product-types";
 
-const FILTER_VALUES = ["all", "connector", "utils", "demo"] as const;
 const SORT_VALUES = ["az", "za"] as const;
-
-type Filter = (typeof FILTER_VALUES)[number];
-type ProductCategory = Exclude<Filter, "all">;
 type SortOrder = (typeof SORT_VALUES)[number];
-
-type ProductMeta = {
-  id: string;
-  name: string;
-  description: string;
-  type: ProductCategory;
-  listed?: boolean;
-};
-
-type Product = ProductMeta & { logo: ImageMetadata };
-
-const FILTERS: { value: Filter; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "connector", label: "Connectors" },
-  { value: "utils", label: "Utilities" },
-  { value: "demo", label: "Demos" },
-];
 
 const productSearchParams = {
   type: parseAsStringLiteral(FILTER_VALUES).withDefault("all"),
@@ -46,32 +31,12 @@ const productSearchParams = {
   q: parseAsString.withDefault(""),
 };
 
-const metaFiles = import.meta.glob<{ default: ProductMeta }>(
-  "../data/market/**/meta.json",
-  { eager: true },
-);
-
-const logoFiles = import.meta.glob<{ default: ImageMetadata }>(
-  "../data/market/**/logo.png",
-  { eager: true },
-);
-
-const ALL_PRODUCTS: Product[] = Object.entries(metaFiles)
-  .map(([path, module]) => ({
-    ...module.default,
-    logo: logoFiles[path.replace("meta.json", "logo.png")]?.default,
-  }))
-  .filter(
-    (product): product is Product =>
-      product.listed !== false && product.logo !== undefined,
-  );
-
 function getVisibleProducts(
-  products: Product[],
+  products: ProductSummary[],
   filter: Filter,
   query: string,
   sortOrder: SortOrder,
-): Product[] {
+): ProductSummary[] {
   const q = query.trim().toLocaleLowerCase();
   const direction = sortOrder === "az" ? 1 : -1;
 
@@ -86,17 +51,19 @@ function getVisibleProducts(
     .sort((a, b) => direction * a.name.localeCompare(b.name));
 }
 
-export default function Products() {
+type ProductsProps = { products: ProductSummary[] };
+
+export default function Products({ products }: ProductsProps) {
   return (
     <NuqsAdapter>
-      <ProductList />
+      <ProductList products={products} />
     </NuqsAdapter>
   );
 }
 
-function ProductList() {
+function ProductList({ products }: ProductsProps) {
   const [{ type, sort, q }, setParams] = useQueryStates(productSearchParams);
-  const visibleProducts = getVisibleProducts(ALL_PRODUCTS, type, q, sort);
+  const visibleProducts = getVisibleProducts(products, type, q, sort);
 
   return (
     <section className="mt-12">
@@ -155,23 +122,25 @@ function ProductList() {
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {visibleProducts.map((product) => (
-          <Card className="min-h-64" key={product.id}>
-            <CardHeader className="flex flex-row justify-between">
-              <img
-                src={product.logo.src}
-                alt=""
-                width={70}
-                height={70}
-                loading="lazy"
-                className="size-20 object-contain"
-              />
-              <Badge>{product.type}</Badge>
-            </CardHeader>
-            <CardContent>
-              <H5>{product.name}</H5>
-              <Base>{product.description}</Base>
-            </CardContent>
-          </Card>
+          <a href={`/${product.id}`} key={product.id}>
+            <Card className="min-h-66">
+              <CardHeader className="flex flex-row justify-between">
+                <img
+                  src={product.logo}
+                  alt=""
+                  width={70}
+                  height={70}
+                  loading="lazy"
+                  className="rounded-md object-contain"
+                />
+                <Badge>{TYPE_LABELS[product.type]}</Badge>
+              </CardHeader>
+              <CardContent>
+                <H5>{product.name}</H5>
+                <Base>{product.description}</Base>
+              </CardContent>
+            </Card>
+          </a>
         ))}
       </div>
       {visibleProducts.length === 0 && (

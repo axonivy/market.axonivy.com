@@ -1,0 +1,584 @@
+import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { unzipSync } from "fflate";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const MARKET_REPO_URL = "https://github.com/axonivy-market/market.git";
+const MARKET_REPO_DIR = path.join(ROOT, ".market", "market");
+const PRODUCTS_DIR = path.join(MARKET_REPO_DIR, "market");
+const CACHE_DIR = path.join(ROOT, ".market", "cache");
+const INDEX_FILE = path.join(ROOT, ".market", "products.json");
+const PUBLIC_DIR = path.join(ROOT, "public", "market-cache");
+const PUBLIC_URL = "/market-cache";
+
+const DEFAULT_REPO_URL = "https://maven.axonivy.com";
+const DEFAULT_TYPE = "iar";
+const CONCURRENCY = 16;
+
+const SLIM_FILES = new Set(["product.json"]);
+
+// Types
+
+type MetaArtifact = {
+  name: string;
+  groupId: string;
+  artifactId: string;
+  type?: string;
+  repoUrl?: string;
+  key?: string;
+  doc?: boolean;
+  archivedArtifacts?: {
+    groupId: string;
+    artifactId: string;
+    lastVersion: string;
+  }[];
+};
+
+type Meta = {
+  id: string;
+  name: string;
+  type: string;
+  mavenArtifacts?: MetaArtifact[];
+};
+
+export type ArtifactVersion = { version: string; url: string };
+
+export type IndexArtifact = {
+  name: string;
+  groupId: string;
+  artifactId: string;
+  type: string;
+  doc: boolean;
+  isProduct: boolean;
+  // Newest first
+  versions: ArtifactVersion[];
+};
+
+export type IndexInstallable = {
+  version: string;
+  // Absolute path of the _product.json, which is passed to the Designer's install(url).
+  url: string;
+  minimumIvyVersion?: string;
+};
+
+export type IndexProduct = {
+  id: string;
+  metaDir: string;
+  versions: string[];
+  featuredVersion?: string;
+  readme?: { file: string; baseUrl: string };
+  artifacts: IndexArtifact[];
+  // Newest first
+  installable: IndexInstallable[];
+};
+
+export type MarketIndex = { generatedAt: string; products: IndexProduct[] };
+
+type CacheMarker = { zipUrl: string; full: boolean; missing?: boolean };
+
+// Helpers
+
+const stats = {
+  downloaded: 0,
+  cached: 0,
+  missing: 0,
+  warnings: [] as string[],
+};
+
+function warn(message: string) {
+  stats.warnings.push(message);
+  console.warn(`  ⚠ ${message}`);
+}
+
+class NotFoundError extends Error {}
+
+async function fetchWithRetry(url: string, retries = 3): Promise<Response> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const response = await fetch(url);
+      if (response.status === 404) {
+        throw new NotFoundError(`404 ${url}`);
+      }
+      if (!response.ok) {
+        throw new Error(`${response.status} ${url}`);
+      }
+      return response;
+    } catch (error) {
+      if (error instanceof NotFoundError || attempt >= retries) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+    }
+  }
+}
+
+async function fetchText(url: string) {
+  return (await fetchWithRetry(url)).text();
+}
+
+async function fetchBytes(url: string) {
+  return new Uint8Array(await (await fetchWithRetry(url)).arrayBuffer());
+}
+
+async function mapLimit<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  const workers = Array.from(
+    { length: Math.min(limit, items.length) },
+    async () => {
+      while (next < items.length) {
+        const index = next++;
+        results[index] = await fn(items[index]);
+      }
+    },
+  );
+  await Promise.all(workers);
+  return results;
+}
+
+function xmlValues(xml: string, tag: string): string[] {
+  return [...xml.matchAll(new RegExp(`<${tag}>([^<]*)</${tag}>`, "g"))].map(
+    (match) => match[1].trim(),
+  );
+}
+
+async function readJson<T>(file: string): Promise<T | undefined> {
+  try {
+    return JSON.parse(await readFile(file, "utf8")) as T;
+  } catch {
+    return undefined;
+  }
+}
+
+function toPosix(file: string) {
+  return file.split(path.sep).join("/");
+}
+
+// Versions
+
+// Simplified Maven version ordering: 13.2.0-a5 < 14.0.0-b8 < 14.0.0-b9-SNAPSHOT < 14.0.0-b9 < 14.0.0-SNAPSHOT < 14.0.0
+const QUALIFIER_RANK: Record<string, number> = {
+  a: 1,
+  alpha: 1,
+  b: 2,
+  beta: 2,
+  m: 3,
+  milestone: 3,
+  rc: 4,
+  cr: 4,
+  "": 5,
+  ga: 5,
+  final: 5,
+  release: 5,
+};
+
+function parseVersion(version: string) {
+  const snapshot = isSnapshot(version);
+  const [base, ...rest] = version.replace(/-SNAPSHOT$/, "").split("-");
+  const numbers = base.split(".").map((part) => Number.parseInt(part, 10) || 0);
+  const qualifier = rest.join("-").toLowerCase();
+  const match = /^([a-z]*)[.-]?(\d*)$/.exec(qualifier);
+  return {
+    numbers,
+    qualifierRank: QUALIFIER_RANK[match?.[1] ?? qualifier] ?? 6,
+    qualifierName: match?.[1] ?? qualifier,
+    qualifierNumber: Number.parseInt(match?.[2] ?? "", 10) || 0,
+    snapshot,
+  };
+}
+
+export function compareVersions(a: string, b: string): number {
+  const va = parseVersion(a);
+  const vb = parseVersion(b);
+  for (let i = 0; i < Math.max(va.numbers.length, vb.numbers.length); i++) {
+    const diff = (va.numbers[i] ?? 0) - (vb.numbers[i] ?? 0);
+    if (diff !== 0) return diff;
+  }
+  if (va.qualifierRank !== vb.qualifierRank) {
+    return va.qualifierRank - vb.qualifierRank;
+  }
+  if (va.qualifierName !== vb.qualifierName) {
+    return va.qualifierName.localeCompare(vb.qualifierName);
+  }
+  if (va.qualifierNumber !== vb.qualifierNumber) {
+    return va.qualifierNumber - vb.qualifierNumber;
+  }
+  return Number(vb.snapshot) - Number(va.snapshot);
+}
+
+const newestFirst = (a: string, b: string) => compareVersions(b, a);
+
+function isSnapshot(version: string) {
+  return version.endsWith("-SNAPSHOT");
+}
+
+// Maven
+
+type Coordinates = {
+  repoUrl: string;
+  groupId: string;
+  artifactId: string;
+  type: string;
+};
+
+function artifactBaseUrl({ repoUrl, groupId, artifactId }: Coordinates) {
+  return `${repoUrl.replace(/\/$/, "")}/${groupId.replaceAll(".", "/")}/${artifactId}`;
+}
+
+async function fetchVersions(coordinates: Coordinates): Promise<string[]> {
+  try {
+    const xml = await fetchText(
+      `${artifactBaseUrl(coordinates)}/maven-metadata.xml`,
+    );
+    return xmlValues(xml, "version").filter(
+      (version, i, all) => all.indexOf(version) === i,
+    );
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      warn(
+        `No maven-metadata.xml for ${coordinates.groupId}:${coordinates.artifactId}`,
+      );
+      return [];
+    }
+    throw error;
+  }
+}
+
+async function resolveUrl(
+  coordinates: Coordinates,
+  version: string,
+): Promise<string | undefined> {
+  const base = `${artifactBaseUrl(coordinates)}/${version}`;
+  const { artifactId, type } = coordinates;
+  if (!isSnapshot(version)) {
+    return `${base}/${artifactId}-${version}.${type}`;
+  }
+  try {
+    const xml = await fetchText(`${base}/maven-metadata.xml`);
+    const snapshot = [
+      ...xml.matchAll(/<snapshotVersion>([\s\S]*?)<\/snapshotVersion>/g),
+    ]
+      .map((match) => match[1])
+      .find(
+        (block) =>
+          xmlValues(block, "extension")[0] === type &&
+          xmlValues(block, "classifier").length === 0,
+      );
+    const value = snapshot && xmlValues(snapshot, "value")[0];
+    if (!value) {
+      warn(`No .${type} in SNAPSHOT ${artifactId}:${version}`);
+      return undefined;
+    }
+    return `${base}/${artifactId}-${value}.${type}`;
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      warn(`No maven-metadata.xml for SNAPSHOT ${artifactId}:${version}`);
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+async function resolveArtifactVersions(
+  artifact: MetaArtifact,
+): Promise<ArtifactVersion[]> {
+  const repoUrl = artifact.repoUrl ?? DEFAULT_REPO_URL;
+  const type = artifact.type ?? DEFAULT_TYPE;
+  const current: Coordinates = {
+    repoUrl,
+    type,
+    groupId: artifact.groupId,
+    artifactId: artifact.artifactId,
+  };
+
+  const candidates = new Map<string, Coordinates>();
+  for (const version of await fetchVersions(current)) {
+    candidates.set(version, current);
+  }
+  for (const archived of artifact.archivedArtifacts ?? []) {
+    const coordinates: Coordinates = {
+      repoUrl,
+      type,
+      groupId: archived.groupId,
+      artifactId: archived.artifactId,
+    };
+    for (const version of await fetchVersions(coordinates)) {
+      if (
+        !candidates.has(version) &&
+        compareVersions(version, archived.lastVersion) <= 0
+      ) {
+        candidates.set(version, coordinates);
+      }
+    }
+  }
+
+  const resolved = await mapLimit(
+    [...candidates],
+    CONCURRENCY,
+    async ([version, coordinates]) => {
+      const url = await resolveUrl(coordinates, version);
+      return url ? { version, url } : undefined;
+    },
+  );
+  return resolved
+    .filter((entry): entry is ArtifactVersion => entry !== undefined)
+    .sort((a, b) => newestFirst(a.version, b.version));
+}
+
+// Product zips
+
+async function extractZip(
+  bytes: Uint8Array,
+  dir: string,
+  filter?: Set<string>,
+) {
+  const files = unzipSync(bytes, {
+    filter: (file) => !filter || filter.has(file.name),
+  });
+  for (const [name, content] of Object.entries(files)) {
+    if (name.endsWith("/")) continue;
+    const target = path.resolve(dir, name);
+    if (!target.startsWith(dir + path.sep)) {
+      warn(`Skipped unsafe zip entry ${name}`);
+      continue;
+    }
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, content);
+  }
+}
+
+// Ensures the zip of a version is extracted in the cache and returns its folder.
+// `full` extracts everything (README, images), otherwise only product.json.
+// Returns undefined if the zip doesn't exist on Maven.
+async function ensureCached(
+  artifactId: string,
+  { version, url }: ArtifactVersion,
+  full: boolean,
+): Promise<string | undefined> {
+  const dir = path.join(CACHE_DIR, artifactId, version);
+  const markerFile = path.join(dir, ".cache.json");
+  const marker = await readJson<CacheMarker>(markerFile);
+
+  if (marker?.zipUrl === url && (marker.full || !full || marker.missing)) {
+    stats.cached++;
+    return marker.missing ? undefined : dir;
+  }
+
+  await rm(dir, { recursive: true, force: true });
+  await mkdir(dir, { recursive: true });
+  try {
+    const bytes = await fetchBytes(url);
+    await extractZip(bytes, dir, full ? undefined : SLIM_FILES);
+    await writeFile(
+      markerFile,
+      JSON.stringify({ zipUrl: url, full } satisfies CacheMarker),
+    );
+    stats.downloaded++;
+    return dir;
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      warn(`Zip not found: ${url}`);
+      await writeFile(
+        markerFile,
+        JSON.stringify({
+          zipUrl: url,
+          full,
+          missing: true,
+        } satisfies CacheMarker),
+      );
+      stats.missing++;
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+async function writeProductJson(
+  cacheDir: string,
+  publicDir: string,
+  version: string,
+  name: string,
+) {
+  const raw = await readFile(path.join(cacheDir, "product.json"), "utf8");
+  const productJson = JSON.parse(raw.replaceAll("${version}", version));
+  productJson.name = name;
+  await mkdir(publicDir, { recursive: true });
+  await writeFile(
+    path.join(publicDir, "_product.json"),
+    JSON.stringify(productJson, null, 2),
+  );
+  return productJson as { minimumIvyVersion?: string };
+}
+
+// Products
+
+async function findMetaFiles(): Promise<string[]> {
+  const files: string[] = [];
+  for (const type of await readdir(PRODUCTS_DIR, { withFileTypes: true })) {
+    if (!type.isDirectory()) continue;
+    for (const product of await readdir(path.join(PRODUCTS_DIR, type.name), {
+      withFileTypes: true,
+    })) {
+      const file = path.join(
+        PRODUCTS_DIR,
+        type.name,
+        product.name,
+        "meta.json",
+      );
+      if (product.isDirectory() && existsSync(file)) {
+        files.push(file);
+      }
+    }
+  }
+  return files.sort();
+}
+
+async function processProduct(metaFile: string): Promise<IndexProduct> {
+  const meta = (await readJson<Meta>(metaFile))!;
+  const metaDir = path.dirname(metaFile);
+  console.log(`• ${meta.id}`);
+
+  const artifacts: IndexArtifact[] = [];
+  for (const artifact of meta.mavenArtifacts ?? []) {
+    artifacts.push({
+      name: artifact.name,
+      groupId: artifact.groupId,
+      artifactId: artifact.artifactId,
+      type: artifact.type ?? DEFAULT_TYPE,
+      doc: artifact.doc ?? false,
+      isProduct: artifact.artifactId.endsWith("-product"),
+      versions: await resolveArtifactVersions(artifact),
+    });
+  }
+
+  const product: IndexProduct = {
+    id: meta.id,
+    metaDir: toPosix(path.relative(ROOT, metaDir)),
+    versions: [],
+    artifacts,
+    installable: [],
+  };
+
+  const productArtifact = artifacts.find((artifact) => artifact.isProduct);
+  if (productArtifact) {
+    product.versions = productArtifact.versions.map(({ version }) => version);
+    product.featuredVersion = product.versions[0];
+
+    const results = await mapLimit(
+      productArtifact.versions,
+      CONCURRENCY,
+      async (artifactVersion) => {
+        const featured = artifactVersion.version === product.featuredVersion;
+        const cacheDir = await ensureCached(
+          productArtifact.artifactId,
+          artifactVersion,
+          featured,
+        );
+        if (!cacheDir) return undefined;
+
+        const relativeDir = `${meta.id}/${productArtifact.artifactId}/${artifactVersion.version}`;
+        const publicDir = path.join(PUBLIC_DIR, relativeDir);
+
+        if (featured && existsSync(path.join(cacheDir, "README.md"))) {
+          await cp(cacheDir, publicDir, {
+            recursive: true,
+            filter: (source) =>
+              !/(README.*\.md|\.cache\.json|[/\\]product\.json)$/.test(source),
+          });
+          product.readme = {
+            file: toPosix(
+              path.relative(ROOT, path.join(cacheDir, "README.md")),
+            ),
+            baseUrl: `${PUBLIC_URL}/${relativeDir}/`,
+          };
+        }
+
+        if (!existsSync(path.join(cacheDir, "product.json"))) return undefined;
+        const productJson = await writeProductJson(
+          cacheDir,
+          publicDir,
+          artifactVersion.version,
+          meta.name,
+        );
+        return {
+          version: artifactVersion.version,
+          url: `${PUBLIC_URL}/${relativeDir}/_product.json`,
+          minimumIvyVersion: productJson.minimumIvyVersion,
+        } satisfies IndexInstallable;
+      },
+    );
+    product.installable = results.filter((entry) => entry !== undefined);
+  }
+
+  if (!product.readme && existsSync(path.join(metaDir, "README.md"))) {
+    const relativeDir = `${meta.id}/_local`;
+    await cp(metaDir, path.join(PUBLIC_DIR, relativeDir), {
+      recursive: true,
+      filter: (source) => !/(README.*\.md|meta\.json)$/.test(source),
+    });
+    product.readme = {
+      file: toPosix(path.relative(ROOT, path.join(metaDir, "README.md"))),
+      baseUrl: `${PUBLIC_URL}/${relativeDir}/`,
+    };
+  }
+
+  return product;
+}
+
+// Main
+
+function updateMarketRepo() {
+  if (process.argv.includes("--no-pull")) {
+    console.log("Skipping git pull (--no-pull)");
+  } else if (existsSync(path.join(MARKET_REPO_DIR, ".git"))) {
+    console.log("Updating market repo…");
+    execFileSync("git", ["-C", MARKET_REPO_DIR, "pull", "--ff-only"], {
+      stdio: "inherit",
+    });
+  } else {
+    console.log("Cloning market repo…");
+    execFileSync(
+      "git",
+      ["clone", "--depth", "1", MARKET_REPO_URL, MARKET_REPO_DIR],
+      { stdio: "inherit" },
+    );
+  }
+}
+
+async function main() {
+  const start = Date.now();
+  updateMarketRepo();
+
+  await rm(PUBLIC_DIR, { recursive: true, force: true });
+  await mkdir(PUBLIC_DIR, { recursive: true });
+
+  const metaFiles = await findMetaFiles();
+  console.log(`Processing ${metaFiles.length} products…`);
+  const products = await mapLimit(metaFiles, 4, processProduct);
+
+  const index: MarketIndex = {
+    generatedAt: new Date().toISOString(),
+    products,
+  };
+  await writeFile(INDEX_FILE, JSON.stringify(index, null, 2));
+
+  const seconds = ((Date.now() - start) / 1000).toFixed(1);
+  console.log(
+    `\nDone in ${seconds}s: ${products.length} products, ` +
+      `${stats.downloaded} zips downloaded, ${stats.cached} cached, ${stats.missing} missing, ` +
+      `${stats.warnings.length} warnings.`,
+  );
+  console.log(`Index written to ${path.relative(ROOT, INDEX_FILE)}`);
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

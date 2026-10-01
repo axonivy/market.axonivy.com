@@ -1,3 +1,6 @@
 .astro/
+.market/
 dist/
 node_modules/
+public/market-cache/
+pnpm-lock.yaml
