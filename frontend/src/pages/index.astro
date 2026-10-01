@@ -2,6 +2,7 @@
 import { H1, H4, Base } from "@/components/ui/typography";
 import Layout from "@/layouts/main.astro";
 import Products from "@/components/products";
+import { getProductSummaries } from "@/data/products";
 ---
 
 <Layout>
@@ -29,5 +30,5 @@ import Products from "@/components/products";
       </Base>
     </div>
   </div>
-  <Products client:load />
+  <Products client:load products={getProductSummaries()} />
 </Layout>

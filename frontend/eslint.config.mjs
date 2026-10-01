@@ -6,7 +6,15 @@ import prettier from "eslint-config-prettier";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: [".astro/", "dist/", "node_modules/", "../backend/src/web/"] },
+  {
+    ignores: [
+      ".astro/",
+      "dist/",
+      "node_modules/",
+      ".market/",
+      "public/market-cache/",
+    ],
+  },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   ...astro.configs["flat/recommended"],
