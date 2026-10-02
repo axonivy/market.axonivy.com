@@ -1,6 +1,11 @@
 import type { ImageMetadata } from "astro";
 import type { IndexProduct, MarketIndex } from "../../scripts/fetch-market";
-import type { Product, ProductMeta, ProductSummary } from "./product-types";
+import {
+  isDownloadable,
+  type Product,
+  type ProductMeta,
+  type ProductSummary,
+} from "./product-types";
 import { FEATURED_PRODUCTS_IDS } from "@/data/featured";
 
 export * from "./product-types";
@@ -62,6 +67,7 @@ function loadProducts(): Product[] {
         readme: data?.readme,
         dependency: data?.dependency,
         artifacts: data?.artifacts ?? [],
+        mainArtifactId: findMainArtifactId(data),
         installable: data?.installable ?? [],
       };
     })
@@ -78,6 +84,18 @@ function compatibilityFromVersions(versions?: string[]): string | undefined {
   const oldest = versions?.at(-1);
   const match = oldest && /^(\d+)\.(\d+)/.exec(oldest);
   return match ? `${match[1]}.${match[2]}+` : undefined;
+}
+
+function findMainArtifactId(data?: IndexProduct): string | undefined {
+  const downloadable = (data?.artifacts ?? []).filter(isDownloadable);
+  const productArtifactId = data?.artifacts
+    .find((artifact) => artifact.isProduct)
+    ?.artifactId.replace(/-product$/, "");
+  return (
+    [productArtifactId, data?.dependency?.artifactId].find((id) =>
+      downloadable.some((artifact) => artifact.artifactId === id),
+    ) ?? downloadable[0]?.artifactId
+  );
 }
 
 function capitalize(text: string): string {

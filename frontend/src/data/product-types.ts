@@ -58,6 +58,10 @@ export type ProductArtifact = IndexArtifact;
 export type ProductInstallable = IndexInstallable;
 export type ProductDependency = IndexDependency;
 
+export function isDownloadable(artifact: ProductArtifact): boolean {
+  return !artifact.isProduct && artifact.versions.length > 0;
+}
+
 export type Product = Omit<ProductMeta, "vendor" | "vendorUrl" | "cost"> & {
   vendor: string;
   vendorUrl: string;
@@ -71,6 +75,7 @@ export type Product = Omit<ProductMeta, "vendor" | "vendorUrl" | "cost"> & {
   readme?: { file: string; baseUrl: string };
   dependency?: ProductDependency;
   artifacts: ProductArtifact[];
+  mainArtifactId?: string;
   installable: ProductInstallable[];
 };
 
