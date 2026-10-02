@@ -1,6 +1,7 @@
 import type { ImageMetadata } from "astro";
 import type { IndexProduct, MarketIndex } from "../../scripts/fetch-market";
 import type { Product, ProductMeta, ProductSummary } from "./product-types";
+import { FEATURED_PRODUCTS_IDS } from "@/data/featured";
 
 export * from "./product-types";
 
@@ -102,11 +103,24 @@ export function getProductById(id: string): Product | undefined {
 }
 
 export function getProductSummaries(): ProductSummary[] {
-  return getAllProducts().map(({ id, name, description, type, logo }) => ({
-    id,
-    name,
-    description,
-    type,
-    logo: logo.src,
-  }));
+  const products = getAllProducts();
+  const unknown = FEATURED_PRODUCTS_IDS.filter(
+    (id) => !products.some((product) => product.id === id),
+  );
+
+  if (unknown.length > 0) {
+    throw new Error(`Unknown featured product IDs: ${unknown.join(", ")}`);
+  }
+
+  return getAllProducts().map(({ id, name, description, type, logo }) => {
+    const rank = FEATURED_PRODUCTS_IDS.indexOf(id);
+    return {
+      id,
+      name,
+      description,
+      type,
+      logo: logo.src,
+      featuredRank: rank === -1 ? undefined : rank,
+    };
+  });
 }
