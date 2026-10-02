@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Base, H1, H3, H4, H5 } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   IconClipboardCheck,
   IconPlug,
@@ -94,8 +95,17 @@ const information: InformationRow[] = [
           alt={product.name}
           height={70}
           width={70}
-          class="rounded-md"
+          class={cn("rounded-md", product.logoDark && "dark:hidden")}
         />
+        {product.logoDark && (
+          <img
+            src={product.logoDark.src}
+            alt={product.name}
+            height={70}
+            width={70}
+            class="rounded-md hidden dark:block"
+          />
+        )}
         <H1>{product.name}</H1>
       </div>
       <div class="flex flex-row gap-4 items-center">
@@ -120,7 +130,7 @@ const information: InformationRow[] = [
     </div>
     {product.deprecated && (
       <div class="flex flex-col gap-4 border border-info bg-info-bg p-4 rounded-md">
-        <div class="flex flex-row gap-2 text-info items-center">
+        <div class="flex flex-row gap-2 items-center">
           <IconAlertTriangle class="size-10 shrink-0" />
           <H3 className="uppercase">Deprecated</H3>
         </div>
@@ -147,11 +157,23 @@ const information: InformationRow[] = [
                   rel="noopener noreferrer"
                 >
                   {product.vendorImageFile ? (
-                    <img
-                      src={product.vendorImageFile.src}
-                      alt={product.vendor}
-                      class="ml-auto h-5 w-auto"
-                    />
+                    <>
+                      <img
+                        src={product.vendorImageFile.src}
+                        alt={product.vendor}
+                        class={cn(
+                          "ml-auto h-5 w-auto",
+                          product.vendorImageDarkModeFile && "dark:hidden",
+                        )}
+                      />
+                      {product.vendorImageDarkModeFile && (
+                        <img
+                          src={product.vendorImageDarkModeFile.src}
+                          alt={product.vendor}
+                          class="ml-auto h-5 w-auto hidden dark:block"
+                        />
+                      )}
+                    </>
                   ) : (
                     <AxonIvyLogo class="ml-auto h-5 w-auto" />
                   )}
