@@ -147,6 +147,9 @@ function ProductList({ products }: ProductsProps) {
                   className="rounded-md object-contain"
                 />
                 <div className="flex flex-row gap-1">
+                  {product.deprecated && (
+                    <Badge variant="orange">Deprecated</Badge>
+                  )}
                   {product.featuredRank !== undefined && (
                     <Badge variant="green">Featured</Badge>
                   )}

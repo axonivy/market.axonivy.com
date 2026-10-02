@@ -82,6 +82,7 @@ export type IndexProduct = {
   featuredVersion?: string;
   readme?: { file: string; baseUrl: string };
   dependency?: IndexDependency;
+  mavenDropins?: boolean;
   artifacts: IndexArtifact[];
   // Newest first
   installable: IndexInstallable[];
@@ -477,6 +478,15 @@ function findMavenDependency(
   };
 }
 
+function isMavenDropinsOnly(productJson: ProductJson): boolean {
+  const ids = (productJson.installers ?? []).map((installer) => installer.id);
+  return (
+    ids.includes("maven-dropins") &&
+    !ids.includes("maven-import") &&
+    !ids.includes("maven-dependency")
+  );
+}
+
 // Products
 
 async function findMetaFiles(): Promise<string[]> {
@@ -564,6 +574,7 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
         );
         if (featured) {
           product.dependency = findMavenDependency(productJson);
+          product.mavenDropins = isMavenDropinsOnly(productJson);
         }
         return {
           productJson,

@@ -9,9 +9,14 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Base, H1, H4, H5 } from "@/components/ui/typography";
+import { Base, H1, H3, H4, H5 } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
-import { IconClipboardCheck, IconPlug, IconTools } from "@tabler/icons-astro";
+import {
+  IconClipboardCheck,
+  IconPlug,
+  IconTools,
+  IconAlertTriangle,
+} from "@tabler/icons-astro";
 import DownloadProduct from "@/components/download-product";
 import ProductDetails from "@/components/product-details";
 import AxonIvyLogo from "@/assets/axonivy-logo-2021-rgb.svg";
@@ -95,11 +100,13 @@ const information: InformationRow[] = [
       </div>
       <div class="flex flex-row gap-4 items-center">
         <Button className="h-12 px-6 text-base">Install Now</Button>
-        <DownloadProduct
-          artifacts={product.artifacts}
-          mainArtifactId={product.mainArtifactId}
-          client:load
-        />
+        {!product.mavenDropins && (
+          <DownloadProduct
+            artifacts={product.artifacts}
+            mainArtifactId={product.mainArtifactId}
+            client:load
+          />
+        )}
       </div>
     </div>
     <div class="flex flex-col gap-4">
@@ -111,6 +118,18 @@ const information: InformationRow[] = [
       )}
       <Base>{TYPE_LABELS[product.type]}</Base>
     </div>
+    {product.deprecated && (
+      <div class="flex flex-col gap-4 border border-info bg-info-bg p-4 rounded-md">
+        <div class="flex flex-row gap-2 text-info items-center">
+          <IconAlertTriangle class="size-10 shrink-0" />
+          <H3 className="uppercase">Deprecated</H3>
+        </div>
+        <Base>
+          This extension is deprecated and will no longer receive updates or
+          support.
+        </Base>
+      </div>
+    )}
     <div class="flex flex-col gap-12 md:flex-row">
       <div class="flex md:w-2/3">
         <ProductDetails client:load readme={readme} maven={maven} />
