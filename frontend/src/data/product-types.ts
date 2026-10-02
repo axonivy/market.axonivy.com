@@ -77,4 +77,4 @@ export type Product = Omit<ProductMeta, "vendor" | "vendorUrl" | "cost"> & {
 export type ProductSummary = Pick<
   Product,
   "id" | "name" | "description" | "type"
-> & { logo: string };
+> & { logo: string; featuredRank?: number };

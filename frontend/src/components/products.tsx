@@ -22,14 +22,20 @@ import {
   type ProductSummary,
 } from "@/data/product-types";
 
-const SORT_VALUES = ["az", "za"] as const;
+const SORT_VALUES = ["featured", "az", "za"] as const;
 type SortOrder = (typeof SORT_VALUES)[number];
 
 const productSearchParams = {
   type: parseAsStringLiteral(FILTER_VALUES).withDefault("all"),
-  sort: parseAsStringLiteral(SORT_VALUES).withDefault("az"),
+  sort: parseAsStringLiteral(SORT_VALUES).withDefault("featured"),
   q: parseAsString.withDefault(""),
 };
+
+function compareFeatured(a: ProductSummary, b: ProductSummary): number {
+  const rankA = a.featuredRank ?? Number.MAX_SAFE_INTEGER;
+  const rankB = b.featuredRank ?? Number.MAX_SAFE_INTEGER;
+  return rankA - rankB || a.name.localeCompare(b.name);
+}
 
 function getVisibleProducts(
   products: ProductSummary[],
@@ -48,7 +54,11 @@ function getVisibleProducts(
         product.name.toLocaleLowerCase().includes(q) ||
         product.description.toLocaleLowerCase().includes(q),
     )
-    .sort((a, b) => direction * a.name.localeCompare(b.name));
+    .sort((a, b) =>
+      sortOrder === "featured"
+        ? compareFeatured(a, b)
+        : direction * a.name.localeCompare(b.name),
+    );
 }
 
 type ProductsProps = { products: ProductSummary[] };
@@ -91,9 +101,12 @@ function ProductList({ products }: ProductsProps) {
               className="min-w-0 flex-1 md:w-40 md:flex-none"
               value={sort}
               onChange={(event) =>
-                setParams({ sort: event.currentTarget.value as "az" | "za" })
+                setParams({
+                  sort: event.currentTarget.value as "az" | "za" | "featured",
+                })
               }
             >
+              <NativeSelectOption value="featured">Featured</NativeSelectOption>
               <NativeSelectOption value="az">A-Z</NativeSelectOption>
               <NativeSelectOption value="za">Z-A</NativeSelectOption>
             </NativeSelect>
@@ -133,7 +146,12 @@ function ProductList({ products }: ProductsProps) {
                   loading="lazy"
                   className="rounded-md object-contain"
                 />
-                <Badge>{TYPE_LABELS[product.type]}</Badge>
+                <div className="flex flex-row gap-1">
+                  {product.featuredRank !== undefined && (
+                    <Badge variant="green">Featured</Badge>
+                  )}
+                  <Badge>{TYPE_LABELS[product.type]}</Badge>
+                </div>
               </CardHeader>
               <CardContent>
                 <H5>{product.name}</H5>
