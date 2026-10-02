@@ -4,6 +4,11 @@ import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { unzipSync } from "fflate";
+import {
+  compareVersions,
+  isSnapshot,
+  newestFirst,
+} from "../src/data/versions.ts";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MARKET_REPO_URL = "https://github.com/axonivy-market/market.git";
@@ -168,64 +173,6 @@ function toPosix(file: string) {
   return file.split(path.sep).join("/");
 }
 
-// Versions
-
-// Simplified Maven version ordering: 13.2.0-a5 < 14.0.0-b8 < 14.0.0-b9-SNAPSHOT < 14.0.0-b9 < 14.0.0-SNAPSHOT < 14.0.0
-const QUALIFIER_RANK: Record<string, number> = {
-  a: 1,
-  alpha: 1,
-  b: 2,
-  beta: 2,
-  m: 3,
-  milestone: 3,
-  rc: 4,
-  cr: 4,
-  "": 5,
-  ga: 5,
-  final: 5,
-  release: 5,
-};
-
-function parseVersion(version: string) {
-  const snapshot = isSnapshot(version);
-  const [base, ...rest] = version.replace(/-SNAPSHOT$/, "").split("-");
-  const numbers = base.split(".").map((part) => Number.parseInt(part, 10) || 0);
-  const qualifier = rest.join("-").toLowerCase();
-  const match = /^([a-z]*)[.-]?(\d*)$/.exec(qualifier);
-  return {
-    numbers,
-    qualifierRank: QUALIFIER_RANK[match?.[1] ?? qualifier] ?? 6,
-    qualifierName: match?.[1] ?? qualifier,
-    qualifierNumber: Number.parseInt(match?.[2] ?? "", 10) || 0,
-    snapshot,
-  };
-}
-
-export function compareVersions(a: string, b: string): number {
-  const va = parseVersion(a);
-  const vb = parseVersion(b);
-  for (let i = 0; i < Math.max(va.numbers.length, vb.numbers.length); i++) {
-    const diff = (va.numbers[i] ?? 0) - (vb.numbers[i] ?? 0);
-    if (diff !== 0) return diff;
-  }
-  if (va.qualifierRank !== vb.qualifierRank) {
-    return va.qualifierRank - vb.qualifierRank;
-  }
-  if (va.qualifierName !== vb.qualifierName) {
-    return va.qualifierName.localeCompare(vb.qualifierName);
-  }
-  if (va.qualifierNumber !== vb.qualifierNumber) {
-    return va.qualifierNumber - vb.qualifierNumber;
-  }
-  return Number(vb.snapshot) - Number(va.snapshot);
-}
-
-const newestFirst = (a: string, b: string) => compareVersions(b, a);
-
-function isSnapshot(version: string) {
-  return version.endsWith("-SNAPSHOT");
-}
-
 // Maven
 
 type Coordinates = {
@@ -252,6 +199,10 @@ async function fetchVersions(coordinates: Coordinates): Promise<string[]> {
       warn(
         `No maven-metadata.xml for ${coordinates.groupId}:${coordinates.artifactId}`,
       );
+      return [];
+    }
+    if (coordinates.repoUrl !== DEFAULT_REPO_URL) {
+      warn(`Unreachable repo ${coordinates.repoUrl}: ${error}`);
       return [];
     }
     throw error;
@@ -428,9 +379,89 @@ type ProductJson = {
   minimumIvyVersion?: string;
   installers?: {
     id: string;
-    data?: { dependencies?: Partial<IndexDependency>[] };
+    data?: {
+      projects?: Partial<IndexDependency>[];
+      dependencies?: Partial<IndexDependency>[];
+      repositories?: { url?: string }[];
+    };
   }[];
 };
+
+const ARTIFACT_INSTALLERS = new Set([
+  "maven-import",
+  "maven-dependency",
+  "maven-dropins",
+]);
+
+function findInstallerArtifacts(productJson: ProductJson): MetaArtifact[] {
+  const artifacts: MetaArtifact[] = [];
+  for (const { id, data } of productJson.installers ?? []) {
+    if (!ARTIFACT_INSTALLERS.has(id)) continue;
+    const { projects = [], dependencies = [], repositories } = data ?? {};
+    for (const { groupId, artifactId, type } of [
+      ...projects,
+      ...dependencies,
+    ]) {
+      if (!groupId || !artifactId) continue;
+      artifacts.push({
+        name: artifactIdToName(artifactId),
+        groupId,
+        artifactId,
+        type,
+        repoUrl: repositories?.[0]?.url,
+      });
+    }
+  }
+  return artifacts;
+}
+
+function artifactIdToName(artifactId: string): string {
+  return artifactId
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
+async function resolveInstallerArtifacts(
+  meta: Meta,
+  productJsons: ProductJson[],
+): Promise<IndexArtifact[]> {
+  const known = new Set(
+    (meta.mavenArtifacts ?? []).flatMap((artifact) =>
+      [artifact, ...(artifact.archivedArtifacts ?? [])].map(
+        ({ groupId, artifactId }) => `${groupId}:${artifactId}`,
+      ),
+    ),
+  );
+  const tried = new Set<string>();
+  const artifacts: IndexArtifact[] = [];
+  for (const artifact of productJsons.flatMap(findInstallerArtifacts)) {
+    const key = `${artifact.groupId}:${artifact.artifactId}`;
+    const attempt = `${artifact.repoUrl ?? DEFAULT_REPO_URL} ${key}`;
+    if (known.has(key) || tried.has(attempt)) continue;
+    tried.add(attempt);
+    const versions = await resolveArtifactVersions(artifact);
+    if (versions.length === 0) continue;
+    known.add(key);
+    artifacts.push(toIndexArtifact(artifact, versions));
+  }
+  return artifacts;
+}
+
+function toIndexArtifact(
+  artifact: MetaArtifact,
+  versions: ArtifactVersion[],
+): IndexArtifact {
+  return {
+    name: artifact.name,
+    groupId: artifact.groupId,
+    artifactId: artifact.artifactId,
+    type: artifact.type ?? DEFAULT_TYPE,
+    doc: artifact.doc ?? false,
+    isProduct: artifact.artifactId.endsWith("-product"),
+    versions,
+  };
+}
 
 function findMavenDependency(
   productJson: ProductJson,
@@ -476,15 +507,9 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
 
   const artifacts: IndexArtifact[] = [];
   for (const artifact of meta.mavenArtifacts ?? []) {
-    artifacts.push({
-      name: artifact.name,
-      groupId: artifact.groupId,
-      artifactId: artifact.artifactId,
-      type: artifact.type ?? DEFAULT_TYPE,
-      doc: artifact.doc ?? false,
-      isProduct: artifact.artifactId.endsWith("-product"),
-      versions: await resolveArtifactVersions(artifact),
-    });
+    artifacts.push(
+      toIndexArtifact(artifact, await resolveArtifactVersions(artifact)),
+    );
   }
 
   const product: IndexProduct = {
@@ -496,6 +521,7 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
   };
 
   const productArtifact = artifacts.find((artifact) => artifact.isProduct);
+  const productJsons: ProductJson[] = [];
   if (productArtifact) {
     product.versions = productArtifact.versions.map(({ version }) => version);
     product.featuredVersion = product.versions[0];
@@ -540,14 +566,22 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
           product.dependency = findMavenDependency(productJson);
         }
         return {
-          version: artifactVersion.version,
-          url: `${PUBLIC_URL}/${relativeDir}/_product.json`,
-          minimumIvyVersion: productJson.minimumIvyVersion,
-        } satisfies IndexInstallable;
+          productJson,
+          installable: {
+            version: artifactVersion.version,
+            url: `${PUBLIC_URL}/${relativeDir}/_product.json`,
+            minimumIvyVersion: productJson.minimumIvyVersion,
+          } satisfies IndexInstallable,
+        };
       },
     );
-    product.installable = results.filter((entry) => entry !== undefined);
+    for (const result of results) {
+      if (!result) continue;
+      product.installable.push(result.installable);
+      productJsons.push(result.productJson);
+    }
   }
+  artifacts.push(...(await resolveInstallerArtifacts(meta, productJsons)));
 
   if (!product.readme && existsSync(path.join(metaDir, "README.md"))) {
     const relativeDir = `${meta.id}/_local`;
