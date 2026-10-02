@@ -7,6 +7,8 @@ import {
   type ProductSummary,
 } from "./product-types";
 import { FEATURED_PRODUCTS_IDS } from "@/data/featured";
+import { DEPRECATED_PRODUCTS_IDS } from "@/data/deprecated";
+import { compatibilityRange } from "@/data/versions";
 
 export * from "./product-types";
 
@@ -50,14 +52,16 @@ function loadProducts(): Product[] {
       const logo = image(dir, "logo.png");
       if (!logo) return undefined;
       const data = index.get(meta.id);
+      const deprecated =
+        meta.deprecated === true || DEPRECATED_PRODUCTS_IDS.includes(meta.id);
       return {
         ...meta,
+        deprecated,
         vendor: meta.vendor ?? DEFAULT_VENDOR,
         vendorUrl: meta.vendorUrl ?? DEFAULT_VENDOR_URL,
         cost: capitalize(meta.cost ?? DEFAULT_COST),
         tags: meta.tags?.map(capitalize),
-        compatibility:
-          meta.compatibility ?? compatibilityFromVersions(data?.versions),
+        compatibility: compatibilityRange(data?.versions ?? [], deprecated),
         logo,
         logoDark: image(dir, "logo-dark.png"),
         vendorImageFile: image(dir, meta.vendorImage),
@@ -66,6 +70,7 @@ function loadProducts(): Product[] {
         featuredVersion: data?.featuredVersion,
         readme: data?.readme,
         dependency: data?.dependency,
+        mavenDropins: data?.mavenDropins,
         artifacts: data?.artifacts ?? [],
         mainArtifactId: findMainArtifactId(data),
         installable: data?.installable ?? [],
@@ -78,12 +83,6 @@ function loadProducts(): Product[] {
         !isMissingOnMaven(product),
     )
     .sort((a, b) => a.name.localeCompare(b.name));
-}
-
-function compatibilityFromVersions(versions?: string[]): string | undefined {
-  const oldest = versions?.at(-1);
-  const match = oldest && /^(\d+)\.(\d+)/.exec(oldest);
-  return match ? `${match[1]}.${match[2]}+` : undefined;
 }
 
 function findMainArtifactId(data?: IndexProduct): string | undefined {
@@ -132,6 +131,7 @@ export function getProductSummaries(): ProductSummary[] {
 
   return getAllProducts().map(({ id, name, description, type, logo }) => {
     const rank = FEATURED_PRODUCTS_IDS.indexOf(id);
+    const deprecated = DEPRECATED_PRODUCTS_IDS.includes(id);
     return {
       id,
       name,
@@ -139,6 +139,7 @@ export function getProductSummaries(): ProductSummary[] {
       type,
       logo: logo.src,
       featuredRank: rank === -1 ? undefined : rank,
+      deprecated: deprecated,
     };
   });
 }

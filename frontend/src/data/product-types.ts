@@ -74,6 +74,7 @@ export type Product = Omit<ProductMeta, "vendor" | "vendorUrl" | "cost"> & {
   featuredVersion?: string;
   readme?: { file: string; baseUrl: string };
   dependency?: ProductDependency;
+  mavenDropins?: boolean;
   artifacts: ProductArtifact[];
   mainArtifactId?: string;
   installable: ProductInstallable[];
@@ -82,4 +83,4 @@ export type Product = Omit<ProductMeta, "vendor" | "vendorUrl" | "cost"> & {
 export type ProductSummary = Pick<
   Product,
   "id" | "name" | "description" | "type"
-> & { logo: string; featuredRank?: number };
+> & { logo: string; featuredRank?: number; deprecated?: boolean };

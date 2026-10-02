@@ -61,6 +61,24 @@ function isReleasedVersion(version: string): boolean {
   return !version.includes("-") && /^\d/.test(version);
 }
 
+function majorMinor(version: string): string {
+  return version.split(".").slice(0, 2).join(".");
+}
+
+export function compatibilityRange(
+  versions: string[],
+  deprecated: boolean,
+): string | undefined {
+  const released = versions.filter(isReleasedVersion).sort(newestFirst);
+  if (released.length === 0) return undefined;
+  const suffix = deprecated ? "" : "+";
+  const oldest = majorMinor(released.at(-1)!);
+  const newest = majorMinor(released[0]);
+  return oldest.split(".")[0] === newest.split(".")[0]
+    ? `${oldest}${suffix}`
+    : `${oldest} - ${newest}${suffix}`;
+}
+
 export function versionsToDisplay(
   versions: string[],
   showDevVersions: boolean,
