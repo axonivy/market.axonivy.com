@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Base, H5 } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -144,8 +145,21 @@ function ProductList({ products }: ProductsProps) {
                   width={70}
                   height={70}
                   loading="lazy"
-                  className="rounded-md object-contain"
+                  className={cn(
+                    "rounded-md object-contain",
+                    product.logoDark && "dark:hidden",
+                  )}
                 />
+                {product.logoDark && (
+                  <img
+                    src={product.logoDark}
+                    alt=""
+                    width={70}
+                    height={70}
+                    loading="lazy"
+                    className="hidden rounded-md object-contain dark:block"
+                  />
+                )}
                 <div className="flex flex-row gap-1">
                   {product.deprecated && (
                     <Badge variant="orange">Deprecated</Badge>

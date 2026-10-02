@@ -129,17 +129,19 @@ export function getProductSummaries(): ProductSummary[] {
     throw new Error(`Unknown featured product IDs: ${unknown.join(", ")}`);
   }
 
-  return getAllProducts().map(({ id, name, description, type, logo }) => {
-    const rank = FEATURED_PRODUCTS_IDS.indexOf(id);
-    const deprecated = DEPRECATED_PRODUCTS_IDS.includes(id);
-    return {
-      id,
-      name,
-      description,
-      type,
-      logo: logo.src,
-      featuredRank: rank === -1 ? undefined : rank,
-      deprecated: deprecated,
-    };
-  });
+  return products.map(
+    ({ id, name, description, type, logo, logoDark, deprecated }) => {
+      const rank = FEATURED_PRODUCTS_IDS.indexOf(id);
+      return {
+        id,
+        name,
+        description,
+        type,
+        logo: logo.src,
+        logoDark: logoDark?.src,
+        featuredRank: rank === -1 ? undefined : rank,
+        deprecated,
+      };
+    },
+  );
 }
