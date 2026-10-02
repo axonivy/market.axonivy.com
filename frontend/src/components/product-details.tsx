@@ -1,41 +1,153 @@
-import { H4, P } from "@/components/ui/typography";
+import type { ReactNode } from "react";
+import ReactMarkdown, {
+  defaultUrlTransform,
+  type Components,
+} from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
+import remarkGfm from "remark-gfm";
+import { CodeBlock } from "@/components/ui/code-block";
+import { Base, Code, H4 } from "@/components/ui/typography";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { ProductDependency } from "@/data/product-types";
+import type { Readme, ReadmeSections } from "@/data/readme";
 
-export default function ProductDetails() {
+const README_TABS: { value: keyof ReadmeSections; label: string }[] = [
+  { value: "description", label: "Description" },
+  { value: "demo", label: "Demo" },
+  { value: "setup", label: "Installation Guide" },
+  { value: "components", label: "Components" },
+];
+
+export type MavenDependency = ProductDependency & {
+  productName: string;
+  version: string;
+};
+
+export default function ProductDetails({
+  readme,
+  maven,
+}: {
+  readme?: Readme;
+  maven?: MavenDependency;
+}) {
+  const sections = readme?.sections;
+
+  const tabs: { value: string; label: string; content: ReactNode }[] = [
+    ...README_TABS.filter(({ value }) => sections?.[value]).map(
+      ({ value, label }) => ({
+        value,
+        label,
+        content: (
+          <Markdown markdown={sections![value]!} baseUrl={readme!.baseUrl} />
+        ),
+      }),
+    ),
+    ...(maven && !sections?.components
+      ? [{ value: "maven", label: "Maven", content: <Maven {...maven} /> }]
+      : []),
+  ];
+  if (tabs.length === 0) return null;
+
   return (
-    <Tabs defaultValue="description" className="space-y-12">
+    <Tabs defaultValue={tabs[0].value} className="min-w-0 space-y-12">
       <TabsList variant="line">
-        <TabsTrigger className="px-6 py-5" value="description">
-          <H4>Description</H4>
-        </TabsTrigger>
-        <TabsTrigger className="px-6 py-5" value="demo">
-          <H4>Demo</H4>
-        </TabsTrigger>
-        <TabsTrigger className="px-6 py-5" value="installation">
-          <H4>Installation Guide</H4>
-        </TabsTrigger>
-        <TabsTrigger className="px-6 py-5" value="maven">
-          <H4>Maven</H4>
-        </TabsTrigger>
-        <TabsTrigger className="px-6 py-5" value="changelog">
-          <H4>Changelog</H4>
-        </TabsTrigger>
+        {tabs.map(({ value, label }) => (
+          <TabsTrigger key={value} className="px-6 py-5" value={value}>
+            <H4>{label}</H4>
+          </TabsTrigger>
+        ))}
       </TabsList>
-      <TabsContent value="description">
-        <P>Here is the description of the product.</P>
-      </TabsContent>
-      <TabsContent value="demo">
-        <P>Here is the demo of the product.</P>
-      </TabsContent>
-      <TabsContent value="installation">
-        <P>Here is the installation guide of the product.</P>
-      </TabsContent>
-      <TabsContent value="maven">
-        <P>Here is the Maven configuration for the product.</P>
-      </TabsContent>
-      <TabsContent value="changelog">
-        <P>Here is the changelog of the product.</P>
-      </TabsContent>
+      {tabs.map(({ value, content }) => (
+        <TabsContent key={value} value={value}>
+          {content}
+        </TabsContent>
+      ))}
     </Tabs>
+  );
+}
+
+function Markdown({
+  markdown,
+  baseUrl,
+}: {
+  markdown: string;
+  baseUrl: string;
+}) {
+  return (
+    <div className="prose max-w-none">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw, rehypeSanitize]}
+        urlTransform={(url, key) => resolveUrl(url, key, baseUrl)}
+        components={MARKDOWN_COMPONENTS}
+      >
+        {markdown}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
+const MARKDOWN_COMPONENTS: Components = {
+  pre: ({ node }) => (
+    <CodeBlock
+      className="not-prose my-4"
+      code={textContent(node).replace(/\n$/, "")}
+    />
+  ),
+  code: ({ children }) => <Code className="not-prose">{children}</Code>,
+  a: ({ href, title, children }) => (
+    <a
+      href={href}
+      title={title}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="not-prose text-primary underline"
+    >
+      {children}
+    </a>
+  ),
+};
+
+type HastNode = { type: string; value?: string; children?: HastNode[] };
+
+function textContent(node?: HastNode): string {
+  if (!node) return "";
+  if (node.type === "text") return node.value ?? "";
+  return (node.children ?? []).map(textContent).join("");
+}
+
+function resolveUrl(url: string, key: string, baseUrl: string): string {
+  const safeUrl = defaultUrlTransform(url);
+  const isRelative = !/^([a-z][a-z0-9+.-]*:|\/|#)/i.test(safeUrl);
+  return key === "src" && safeUrl && isRelative
+    ? baseUrl + safeUrl.replace(/^\.\//, "")
+    : safeUrl;
+}
+
+function Maven({
+  productName,
+  groupId,
+  artifactId,
+  version,
+  type,
+}: MavenDependency) {
+  const snippet = [
+    `<!-- ${productName} -->`,
+    "<dependency>",
+    `  <groupId>${groupId}</groupId>`,
+    `  <artifactId>${artifactId}</artifactId>`,
+    `  <version>${version}</version>`,
+    `  <type>${type}</type>`,
+    "</dependency>",
+  ].join("\n");
+
+  return (
+    <div className="space-y-4">
+      <Base>
+        You can consume it as maven artifact in your <Code>pom.xml</Code>
+      </Base>
+      <CodeBlock code={snippet} />
+    </div>
   );
 }

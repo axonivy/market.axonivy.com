@@ -15,6 +15,7 @@ import { IconClipboardCheck, IconPlug, IconTools } from "@tabler/icons-astro";
 import ProductDetails from "@/components/product-details";
 import AxonIvyLogo from "@/assets/axonivy-logo-2021-rgb.svg";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { loadReadme } from "@/data/readme";
 
 export function getStaticPaths() {
   return getAllProducts().map((product) => ({ params: { id: product.id } }));
@@ -26,6 +27,17 @@ const product = getProductById(id);
 if (!product) {
   return Astro.redirect("/404");
 }
+
+const readme = product.readme ? await loadReadme(product.readme) : undefined;
+
+const maven =
+  product.dependency && product.featuredVersion
+    ? {
+        ...product.dependency,
+        productName: product.name,
+        version: product.featuredVersion,
+      }
+    : undefined;
 
 type InformationRow = {
   label: string;
@@ -98,7 +110,7 @@ const information: InformationRow[] = [
     </div>
     <div class="flex flex-col gap-12 md:flex-row">
       <div class="flex md:w-2/3">
-        <ProductDetails client:load />
+        <ProductDetails client:load readme={readme} maven={maven} />
       </div>
       <div class="flex flex-col gap-4 md:w-1/3">
         <H4>Information</H4>
