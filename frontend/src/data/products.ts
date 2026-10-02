@@ -59,6 +59,7 @@ function loadProducts(): Product[] {
         versions: data?.versions ?? [],
         featuredVersion: data?.featuredVersion,
         readme: data?.readme,
+        dependency: data?.dependency,
         artifacts: data?.artifacts ?? [],
         installable: data?.installable ?? [],
       };
@@ -72,10 +73,6 @@ function loadProducts(): Product[] {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/**
- * the oldest product version on Maven, shortened to
- * major.minor, e.g. 9.2.0 → "9.2+". Versions are sorted newest first.
- */
 function compatibilityFromVersions(versions?: string[]): string | undefined {
   const oldest = versions?.at(-1);
   const match = oldest && /^(\d+)\.(\d+)/.exec(oldest);
@@ -86,7 +83,6 @@ function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-/** Declares Maven artifacts, but none of them has a single version on Maven. */
 function isMissingOnMaven(product: Product): boolean {
   return (
     product.artifacts.length > 0 &&

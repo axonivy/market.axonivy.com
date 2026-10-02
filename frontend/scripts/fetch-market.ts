@@ -64,12 +64,19 @@ export type IndexInstallable = {
   minimumIvyVersion?: string;
 };
 
+export type IndexDependency = {
+  groupId: string;
+  artifactId: string;
+  type: string;
+};
+
 export type IndexProduct = {
   id: string;
   metaDir: string;
   versions: string[];
   featuredVersion?: string;
   readme?: { file: string; baseUrl: string };
+  dependency?: IndexDependency;
   artifacts: IndexArtifact[];
   // Newest first
   installable: IndexInstallable[];
@@ -414,7 +421,29 @@ async function writeProductJson(
     path.join(publicDir, "_product.json"),
     JSON.stringify(productJson, null, 2),
   );
-  return productJson as { minimumIvyVersion?: string };
+  return productJson as ProductJson;
+}
+
+type ProductJson = {
+  minimumIvyVersion?: string;
+  installers?: {
+    id: string;
+    data?: { dependencies?: Partial<IndexDependency>[] };
+  }[];
+};
+
+function findMavenDependency(
+  productJson: ProductJson,
+): IndexDependency | undefined {
+  const dependency = productJson.installers?.find(
+    (installer) => installer.id === "maven-dependency",
+  )?.data?.dependencies?.[0];
+  if (!dependency?.groupId || !dependency.artifactId) return undefined;
+  return {
+    groupId: dependency.groupId,
+    artifactId: dependency.artifactId,
+    type: dependency.type ?? DEFAULT_TYPE,
+  };
 }
 
 // Products
@@ -507,6 +536,9 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
           artifactVersion.version,
           meta.name,
         );
+        if (featured) {
+          product.dependency = findMavenDependency(productJson);
+        }
         return {
           version: artifactVersion.version,
           url: `${PUBLIC_URL}/${relativeDir}/_product.json`,

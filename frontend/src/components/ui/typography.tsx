@@ -61,7 +61,7 @@ export function Code({ children, className }: TypographyProps) {
   return (
     <code
       className={cn(
-        "bg-n75 font-code text-n900 rounded px-1 py-0.5 text-sm",
+        "bg-n100 font-code text-n900 rounded px-1.5 py-0.5 text-sm",
         className,
       )}
     >

@@ -1,6 +1,7 @@
 import type { ImageMetadata } from "astro";
 import type {
   IndexArtifact,
+  IndexDependency,
   IndexInstallable,
 } from "../../scripts/fetch-market";
 
@@ -55,6 +56,7 @@ export type ProductMeta = {
 
 export type ProductArtifact = IndexArtifact;
 export type ProductInstallable = IndexInstallable;
+export type ProductDependency = IndexDependency;
 
 export type Product = Omit<ProductMeta, "vendor" | "vendorUrl" | "cost"> & {
   vendor: string;
@@ -67,6 +69,7 @@ export type Product = Omit<ProductMeta, "vendor" | "vendorUrl" | "cost"> & {
   versions: string[];
   featuredVersion?: string;
   readme?: { file: string; baseUrl: string };
+  dependency?: ProductDependency;
   artifacts: ProductArtifact[];
   installable: ProductInstallable[];
 };
