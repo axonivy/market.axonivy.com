@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import ReactMarkdown, {
   defaultUrlTransform,
   type Components,
@@ -32,7 +32,6 @@ export default function ProductDetails({
   maven?: MavenDependency;
 }) {
   const sections = readme?.sections;
-
   const tabs: { value: string; label: string; content: ReactNode }[] = [
     ...README_TABS.filter(({ value }) => sections?.[value]).map(
       ({ value, label }) => ({
@@ -44,13 +43,36 @@ export default function ProductDetails({
       }),
     ),
     ...(maven && !sections?.components
-      ? [{ value: "maven", label: "Maven", content: <Maven {...maven} /> }]
+      ? [{ value: "dependency", label: "Maven", content: <Maven {...maven} /> }]
       : []),
   ];
+  const [selectedTab, setSelectedTab] = useState(tabs[0]?.value);
+
+  useEffect(() => {
+    if (tabs.length === 0) return;
+    const selectTabFromHash = () => {
+      const hash = decodeURIComponent(location.hash.slice(1));
+      const isKnownTab = tabs.some(({ value }) => value === hash);
+      changeTab(isKnownTab ? hash : tabs[0].value);
+    };
+    selectTabFromHash();
+    window.addEventListener("hashchange", selectTabFromHash);
+    return () => window.removeEventListener("hashchange", selectTabFromHash);
+  }, []);
+
+  function changeTab(value: string) {
+    history.replaceState(history.state, "", `#${value}`);
+    setSelectedTab(value);
+  }
+
   if (tabs.length === 0) return null;
 
   return (
-    <Tabs defaultValue={tabs[0].value} className="min-w-0 space-y-12">
+    <Tabs
+      value={selectedTab}
+      onValueChange={(value) => changeTab(value)}
+      className="min-w-0 space-y-12"
+    >
       <TabsList variant="line">
         {tabs.map(({ value, label }) => (
           <TabsTrigger key={value} className="px-6 py-5" value={value}>
