@@ -57,7 +57,13 @@ export function P({ children, className }: TypographyProps) {
   return <p className={cn("text-sm", className)}>{children}</p>;
 }
 
-export function Code({ children, className }: TypographyProps) {
+export function Code({
+  children,
+  className,
+}: {
+  children?: React.ReactNode;
+  className?: string;
+}) {
   return (
     <code
       className={cn(

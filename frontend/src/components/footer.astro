@@ -10,21 +10,22 @@ import {
   IconBrandYoutube,
 } from "@tabler/icons-astro";
 import { P } from "@/components/ui/typography";
+import i18next, { type Lang } from "@/translation/ui";
+import { getLanguageUrls } from "@/translation/urls";
 
+const lang = (Astro.currentLocale ?? "en") as Lang;
+const t = i18next.getFixedT(lang);
+const languageUrls = getLanguageUrls(Astro.url);
 const currentYear = new Date().getFullYear();
+const [beforeLts, ltsText, betweenLinks, leadingEdgeText, afterLeadingEdge] =
+  t("footer.info").split(/<a>|<\/a>/);
 
 const footerContent = {
   copyright: `© ${currentYear} Axon Ivy Inc.`,
   downloadLink: "https://dev.axonivy.com/download",
   releaseLinks: {
-    longTermSupport: {
-      label: "Long Term Support",
-      href: "https://dev.axonivy.com/download",
-    },
-    leadingEdge: {
-      label: "Leading Edge",
-      href: "https://dev.axonivy.com/download",
-    },
+    longTermSupport: "https://dev.axonivy.com/download",
+    leadingEdge: "https://dev.axonivy.com/download",
   },
   website: { label: "www.axonivy.com", href: "https://www.axonivy.com" },
   legalLinks: [
@@ -64,21 +65,21 @@ const footerContent = {
       </a>
       <div class="w-full max-w-md text-center">
         <P className="text-n900">
-          Get the latest stable{" "}
+          {beforeLts}
           <a
-            href={footerContent.releaseLinks.longTermSupport.href}
+            href={footerContent.releaseLinks.longTermSupport}
             class="text-primary underline"
           >
-            {footerContent.releaseLinks.longTermSupport.label}
-          </a>{" "}
-          version of the Axon Ivy Platform - or download the{" "}
+            {ltsText}
+          </a>
+          {betweenLinks}
           <a
-            href={footerContent.releaseLinks.leadingEdge.href}
+            href={footerContent.releaseLinks.leadingEdge}
             class="text-primary underline"
           >
-            {footerContent.releaseLinks.leadingEdge.label}
-          </a>{" "}
-          version.
+            {leadingEdgeText}
+          </a>
+          {afterLeadingEdge}
         </P>
       </div>
       <div>
@@ -86,7 +87,7 @@ const footerContent = {
           href={footerContent.downloadLink}
           class={buttonVariants({ variant: "default" })}
         >
-          Download
+          {t("common.download")}
         </a>
       </div>
     </div>
@@ -96,25 +97,25 @@ const footerContent = {
         <a href="https://dev.axonivy.com/">
           <AxonIvyDevLogo width={160} height={40} />
         </a>
-        <Navbar client:load />
+        <Navbar lang={lang} urls={languageUrls} client:load />
       </div>
       <div class="w-full max-w-md">
         <P className="text-n900">
-          Get the latest stable{" "}
+          {beforeLts}
           <a
-            href={footerContent.releaseLinks.longTermSupport.href}
+            href={footerContent.releaseLinks.longTermSupport}
             class="text-primary underline"
           >
-            {footerContent.releaseLinks.longTermSupport.label}
-          </a>{" "}
-          version of the Axon Ivy Platform - or download the{" "}
+            {ltsText}
+          </a>
+          {betweenLinks}
           <a
-            href={footerContent.releaseLinks.leadingEdge.href}
+            href={footerContent.releaseLinks.leadingEdge}
             class="text-primary underline"
           >
-            {footerContent.releaseLinks.leadingEdge.label}
-          </a>{" "}
-          version.
+            {leadingEdgeText}
+          </a>
+          {afterLeadingEdge}
         </P>
       </div>
       <div class="flex flex-row justify-between">
@@ -122,7 +123,7 @@ const footerContent = {
           href={footerContent.downloadLink}
           class={buttonVariants({ variant: "default" })}
         >
-          Download
+          {t("common.download")}
         </a>
         <a
           href={footerContent.website.href}

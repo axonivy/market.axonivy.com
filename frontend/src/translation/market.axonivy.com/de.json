@@ -1,0 +1,106 @@
+{
+  "common": {
+    "download": "Download",
+    "connector": "Konnektor",
+    "connectors": "Konnektoren",
+    "util": "Util",
+    "utilities": "Utilities",
+    "demo": "Demo",
+    "demos": "Demos"
+  },
+  "nav": {
+    "doc": "Dokumentation",
+    "resources": "Resourcen",
+    "productInfo": "Produktinformationen",
+    "releaseCycle": "Release-Zyklus",
+    "releaseCycleDescription": "Verstehe den Veröffentlichungsplan",
+    "deprecation": "Deprecation",
+    "deprecationDescription": "Plan für bevorstehende Änderungen",
+    "external": "Externe Ressourcen",
+    "market": "Marktplatz",
+    "marketDescription": "Erkunde Erweiterungen und Konnektoren",
+    "community": "Community",
+    "communityDescription": "Stelle Fragen und teile Ideen",
+    "tutorial": "Tutorial",
+    "tutorialDescription": "Lerne Schritt für Schritt",
+    "news": "News",
+    "team": "Team",
+    "menuOpen": "Navigationsmenü öffnen",
+    "menuClose": "Navigationsmenü schließen",
+    "menuMobile": "Mobile Navigation",
+    "home": "Home"
+  },
+  "footer": {
+    "info": "Hole Dir die neueste stabile <a>Long Term Support</a>-Version der Axon Ivy Plattform - oder schnapp Dir die brandneue <a>Leading Edge</a>-Version."
+  },
+  "dashboard": {
+    "title": "Axon Ivy Marktplatz",
+    "subtitle": "Durch die vielfältigen Angebote des Axon Ivy Marktplatzes wird die Prozessautomatisierung umfassend erweitert.",
+    "description": "Hier findest du Erweiterungen für die Anbindung von Standard-Softwarelösungen führender Anbieter wie Microsoft, Amazon oder Adobe sowie fertige Prozessmodelle, Geschäftslösungen und praktische Werkzeuge zur Dokumentenverarbeitung, -speicherung oder -signierung.",
+    "contribution": "Werde Teil der Community und <a>implementiere deine eigene Erweiterung</a>!",
+    "viewOptions": {
+      "filter": { "title": "Filter", "all": "Alle" },
+      "sort": {
+        "title": "Sortieren nach",
+        "featured": "Empfohlen",
+        "az": "A-Z",
+        "za": "Z-A"
+      },
+      "search": {
+        "placeholder": "Suche nach einem Stichwort",
+        "notFound": "Leider hat deine Suche keinen Treffer ergeben. \n Ändere deinen Suchbegriff oder stöbere in unseren Kategorien nach ähnlichen Themen."
+      }
+    },
+    "badges": { "featured": "Empfohlen", "deprecated": "Veraltet" }
+  },
+  "productDetails": {
+    "type": "Typ",
+    "deprecated": {
+      "title": "Veraltet",
+      "description": "Diese Erweiterung ist veraltet und erhält keine Updates oder Unterstützung mehr."
+    },
+    "install": { "title": "Jetzt installieren" },
+    "download": {
+      "artifact": "Artefakt auswählen",
+      "targetPlatform": "Zielplattform auswählen",
+      "version": "Version",
+      "devVersion": "Entwicklungsversionen anzeigen"
+    },
+    "tabs": {
+      "description": "Beschreibung",
+      "demo": "Demo",
+      "setup": "Installation Guide",
+      "components": "Komponenten",
+      "dependencies": {
+        "maven": {
+          "title": "Maven",
+          "description": "Du kannst es als Maven-Artefakt in deinem <code>pom.xml</code> einbinden."
+        }
+      }
+    },
+    "information": {
+      "title": "Informationen",
+      "table": {
+        "label": {
+          "implemented": "Implementiert von",
+          "compatibility": "Kompatibilität",
+          "cost": "Kosten",
+          "language": "Sprache",
+          "type": "Typ",
+          "version": "Version",
+          "tags": "Tags",
+          "source": "Quelle",
+          "status": "Status",
+          "more": "Mehr Informationen"
+        },
+        "value": { "more": "Kontaktiere uns" }
+      }
+    }
+  },
+  "notFound": {
+    "title": "Oops!",
+    "subtitle": "Error Code: 404",
+    "description": "Unsere webseite macht eine kleine Pause. Offenbar finden wir die von Dir angefragte Seite nicht. Du tust uns einen großen Gefallen, wenn Du es hier meldest:",
+    "linkHome": "Zurück zur Homepage"
+  }
+}

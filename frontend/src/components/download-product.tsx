@@ -13,6 +13,8 @@ import {
 import { isDownloadable, type ProductArtifact } from "@/data/product-types";
 import { newestFirst, versionsToDisplay } from "@/data/versions";
 import { Checkbox } from "@/components/ui/checkbox";
+import type { Lang } from "@/translation/ui";
+import { useTranslation } from "react-i18next";
 
 const SHOW_DEV_VERSIONS_KEY = "showDevVersions";
 
@@ -26,10 +28,13 @@ function getInitialShowDevVersions(): boolean {
 export default function DownloadProduct({
   artifacts,
   mainArtifactId,
+  lang,
 }: {
   artifacts: ProductArtifact[];
   mainArtifactId?: string;
+  lang: Lang;
 }) {
+  const { t } = useTranslation(undefined, { lng: lang });
   const downloadable = artifacts.filter(isDownloadable);
   const [artifactId, setArtifactId] = useState(mainArtifactId);
   const [showDevVersions, setShowDevVersions] = useState(
@@ -70,13 +75,13 @@ export default function DownloadProduct({
       <PopoverTrigger
         render={
           <Button variant="outline" className="h-12 px-6 text-base">
-            Download
+            {t("common.download")}
           </Button>
         }
       />
       <PopoverContent align="end" className="w-80 gap-4">
         <div className="flex flex-col gap-1">
-          <P>Choose artifact</P>
+          <P>{t("productDetails.download.artifact")}</P>
           <NativeSelect
             className="w-full"
             value={artifact.artifactId}
@@ -90,7 +95,7 @@ export default function DownloadProduct({
           </NativeSelect>
         </div>
         <div className="flex flex-col gap-1">
-          <P>Choose target platform</P>
+          <P>{t("productDetails.download.targetPlatform")}</P>
           <NativeSelect
             className="w-full"
             value={version}
@@ -98,7 +103,7 @@ export default function DownloadProduct({
           >
             {versions.map((version) => (
               <NativeSelectOption key={version} value={version}>
-                Version {version}
+                {t("productDetails.download.version")} {version}
               </NativeSelectOption>
             ))}
           </NativeSelect>
@@ -107,7 +112,7 @@ export default function DownloadProduct({
               checked={showDevVersions}
               onCheckedChange={changeShowDevVersions}
             />
-            <P className="text-xs">Show dev versions</P>
+            <P className="text-xs">{t("productDetails.download.devVersion")}</P>
           </div>
         </div>
         <Button
@@ -115,7 +120,7 @@ export default function DownloadProduct({
           nativeButton={false}
           render={<a href={downloadUrl} download />}
         >
-          Download
+          {t("common.download")}
         </Button>
       </PopoverContent>
     </Popover>
