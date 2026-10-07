@@ -11,39 +11,51 @@ import { Base, Code, H4 } from "@/components/ui/typography";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ProductDependency } from "@/data/product-types";
 import type { Readme, ReadmeSections } from "@/data/readme";
+import { useTranslations, type Lang, type TranslationKey } from "@/i18n/ui";
 
-const README_TABS: { value: keyof ReadmeSections; label: string }[] = [
-  { value: "description", label: "Description" },
-  { value: "demo", label: "Demo" },
-  { value: "setup", label: "Installation Guide" },
-  { value: "components", label: "Components" },
+const README_TABS: { value: keyof ReadmeSections; label: TranslationKey }[] = [
+  { value: "description", label: "details.tabs.description" },
+  { value: "demo", label: "details.tabs.demo" },
+  { value: "setup", label: "details.tabs.setup" },
+  { value: "components", label: "details.tabs.components" },
 ];
 
 export type MavenDependency = ProductDependency & {
   productName: string;
   version: string;
+  lang: Lang;
 };
 
 export default function ProductDetails({
   readme,
   maven,
+  lang,
 }: {
   readme?: Readme;
   maven?: MavenDependency;
+  lang: Lang;
 }) {
+  const t = useTranslations(lang);
+
   const sections = readme?.sections;
   const tabs: { value: string; label: string; content: ReactNode }[] = [
     ...README_TABS.filter(({ value }) => sections?.[value]).map(
       ({ value, label }) => ({
         value,
-        label,
+        label: t(label),
         content: (
           <Markdown markdown={sections![value]!} baseUrl={readme!.baseUrl} />
         ),
       }),
     ),
     ...(maven && !sections?.components
-      ? [{ value: "dependency", label: "Maven", content: <Maven {...maven} /> }]
+      ? [
+          {
+            value: "dependency",
+            label: t("details.tabs.dependency.maven"),
+            content: <Maven {...maven} lang={lang} />,
+          },
+        ]
       : []),
   ];
   const [selectedTab, setSelectedTab] = useState(tabs[0]?.value);
@@ -153,6 +165,7 @@ function Maven({
   artifactId,
   version,
   type,
+  lang,
 }: MavenDependency) {
   const snippet = [
     `<!-- ${productName} -->`,
@@ -163,11 +176,17 @@ function Maven({
     `  <type>${type}</type>`,
     "</dependency>",
   ].join("\n");
+  const t = useTranslations(lang);
+  const [beforeCode, afterCode] = t("details.tabs.dependency.maven.text").split(
+    "{code}",
+  );
 
   return (
     <div className="space-y-4">
       <Base>
-        You can consume it as maven artifact in your <Code>pom.xml</Code>
+        {beforeCode}
+        <Code>{t("details.tabs.dependency.maven.code")}</Code>
+        {afterCode}
       </Base>
       <CodeBlock code={snippet} />
     </div>

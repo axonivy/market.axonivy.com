@@ -1,0 +1,43 @@
+---
+import { H1, H4, Base } from "@/components/ui/typography";
+import { useTranslations, type Lang } from "@/i18n/ui";
+import Layout from "@/layouts/main.astro";
+import Products from "@/components/products";
+import { getProductSummaries } from "@/data/products";
+
+const lang = (Astro.currentLocale ?? "en") as Lang;
+const t = useTranslations(lang);
+const [beforeLink, afterLink] = t("dashboard.contribute").split("{link}");
+
+export function getStaticPaths() {
+  return [{ params: { lang: undefined } }, { params: { lang: "de" } }];
+}
+---
+
+<Layout>
+  <div class="flex flex-col gap-8">
+    <H1>{t("dashboard.title")}</H1>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <H4 className="max-w-5/6">{t("dashboard.subtitle")}</H4>
+      <Base className="text-n900">
+        {t("dashboard.description")}
+        <br />
+        {beforeLink}
+        <a
+          href="https://github.com/axonivy-market/market/wiki"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-primary underline"
+        >
+          {t("dashboard.contribute.link")}
+        </a>
+        {afterLink}
+      </Base>
+    </div>
+  </div>
+  <Products
+    client:load
+    products={getProductSummaries()}
+    lang={lang}
+  />
+</Layout>

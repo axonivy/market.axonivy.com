@@ -22,6 +22,7 @@ import {
   type Filter,
   type ProductSummary,
 } from "@/data/product-types";
+import { useTranslations, type Lang } from "@/i18n/ui";
 
 const SORT_VALUES = ["featured", "az", "za"] as const;
 type SortOrder = (typeof SORT_VALUES)[number];
@@ -62,26 +63,27 @@ function getVisibleProducts(
     );
 }
 
-type ProductsProps = { products: ProductSummary[] };
+type ProductsProps = { products: ProductSummary[]; lang: Lang };
 
-export default function Products({ products }: ProductsProps) {
+export default function Products({ products, lang }: ProductsProps) {
   return (
     <NuqsAdapter>
-      <ProductList products={products} />
+      <ProductList products={products} lang={lang} />
     </NuqsAdapter>
   );
 }
 
-function ProductList({ products }: ProductsProps) {
+function ProductList({ products, lang }: ProductsProps) {
   const [{ type, sort, q }, setParams] = useQueryStates(productSearchParams);
   const visibleProducts = getVisibleProducts(products, type, q, sort);
+  const t = useTranslations(lang);
 
   return (
     <section className="mt-12">
       <div className="mb-8 flex flex-col gap-4">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div className="flex flex-row items-center gap-2 md:flex-col md:items-start">
-            <H5>Filter</H5>
+            <H5>{t("dashboard.filter.title")}</H5>
             <div className="flex flex-row gap-2">
               {FILTERS.map(({ value, label }) => (
                 <Button
@@ -91,13 +93,15 @@ function ProductList({ products }: ProductsProps) {
                   aria-pressed={type === value}
                   size="lg"
                 >
-                  {label}
+                  {t(label)}
                 </Button>
               ))}
             </div>
           </div>
           <div className="flex w-full flex-row items-center gap-2 md:w-fit">
-            <H5 className="shrink-0 whitespace-nowrap">Sort by:</H5>
+            <H5 className="shrink-0 whitespace-nowrap">
+              {t("dashboard.sort.label")}
+            </H5>
             <NativeSelect
               className="min-w-0 flex-1 md:w-40 md:flex-none"
               value={sort}
@@ -107,16 +111,22 @@ function ProductList({ products }: ProductsProps) {
                 })
               }
             >
-              <NativeSelectOption value="featured">Featured</NativeSelectOption>
-              <NativeSelectOption value="az">A-Z</NativeSelectOption>
-              <NativeSelectOption value="za">Z-A</NativeSelectOption>
+              <NativeSelectOption value="featured">
+                {t("dashboard.sort.featured")}
+              </NativeSelectOption>
+              <NativeSelectOption value="az">
+                {t("dashboard.sort.az")}
+              </NativeSelectOption>
+              <NativeSelectOption value="za">
+                {t("dashboard.sort.za")}
+              </NativeSelectOption>
             </NativeSelect>
           </div>
         </div>
         <div>
           <InputGroup className="h-10 w-full">
             <InputGroupInput
-              placeholder="Search a keyword"
+              placeholder={t("dashboard.search.placeholder")}
               value={q}
               onChange={(event) => setParams({ q: event.currentTarget.value })}
             />
@@ -162,12 +172,16 @@ function ProductList({ products }: ProductsProps) {
                 )}
                 <div className="flex flex-row gap-1">
                   {product.deprecated && (
-                    <Badge variant="orange">Deprecated</Badge>
+                    <Badge variant="orange">
+                      {t("dashboard.product.badge.deprecated")}
+                    </Badge>
                   )}
                   {product.featuredRank !== undefined && (
-                    <Badge variant="green">Featured</Badge>
+                    <Badge variant="green">
+                      {t("dashboard.product.badge.featured")}
+                    </Badge>
                   )}
-                  <Badge>{TYPE_LABELS[product.type]}</Badge>
+                  <Badge>{t(TYPE_LABELS[product.type])}</Badge>
                 </div>
               </CardHeader>
               <CardContent>
@@ -181,9 +195,8 @@ function ProductList({ products }: ProductsProps) {
       {visibleProducts.length === 0 && (
         <div className="text-n800 flex flex-col items-center gap-2 pt-12">
           <IconBan className="size-12 shrink-0 stroke-1" />
-          <Base className="text-center text-xs">
-            Your search did not yield any results. <br /> Please modify your
-            search terms or browse our categories for related content.
+          <Base className="text-center text-xs whitespace-pre-line">
+            {t("dashboard.search.notFound")}
           </Base>
         </div>
       )}

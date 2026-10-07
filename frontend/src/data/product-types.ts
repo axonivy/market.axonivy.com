@@ -4,22 +4,23 @@ import type {
   IndexDependency,
   IndexInstallable,
 } from "../../scripts/fetch-market";
+import type { TranslationKey } from "@/i18n/ui";
 
 export const FILTER_VALUES = ["all", "connector", "utils", "demo"] as const;
 export type Filter = (typeof FILTER_VALUES)[number];
 export type ProductCategory = Exclude<Filter, "all">;
 
-export const FILTERS: { value: Filter; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "connector", label: "Connectors" },
-  { value: "utils", label: "Utilities" },
-  { value: "demo", label: "Demos" },
+export const FILTERS: { value: Filter; label: TranslationKey }[] = [
+  { value: "all", label: "common.filter.all" },
+  { value: "connector", label: "common.filter.connector" },
+  { value: "utils", label: "common.filter.utils" },
+  { value: "demo", label: "common.filter.demo" },
 ];
 
-export const TYPE_LABELS: Record<ProductCategory, string> = {
-  connector: "Connector",
-  utils: "Util",
-  demo: "Demo",
+export const TYPE_LABELS: Record<ProductCategory, TranslationKey> = {
+  connector: "common.label.connector",
+  utils: "common.label.utils",
+  demo: "common.label.demo",
 };
 
 type Localized = { locale: string; value: string };

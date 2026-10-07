@@ -10,7 +10,11 @@ import {
   IconBrandYoutube,
 } from "@tabler/icons-astro";
 import { P } from "@/components/ui/typography";
+import type { Lang } from "@/i18n/ui";
+import { getLanguageUrls } from "@/i18n/urls";
 
+const lang = (Astro.currentLocale ?? "en") as Lang;
+const languageUrls = getLanguageUrls(Astro.url);
 const currentYear = new Date().getFullYear();
 
 const footerContent = {
@@ -96,7 +100,7 @@ const footerContent = {
         <a href="https://dev.axonivy.com/">
           <AxonIvyDevLogo width={160} height={40} />
         </a>
-        <Navbar client:load />
+        <Navbar lang={lang} urls={languageUrls} client:load />
       </div>
       <div class="w-full max-w-md">
         <P className="text-n900">

@@ -2,6 +2,12 @@
 import Navbar from "@/components/navbar";
 import AxonIvyLogo from "@/assets/axonivy-logo-2021-rgb.svg";
 import { ModeToggle } from "./ui/mode-toggle";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import type { Lang } from "@/i18n/ui";
+import { getLanguageUrls } from "@/i18n/urls";
+
+const lang = (Astro.currentLocale ?? "en") as Lang;
+const languageUrls = getLanguageUrls(Astro.url);
 ---
 
 <script is:inline>
@@ -39,8 +45,9 @@ import { ModeToggle } from "./ui/mode-toggle";
       <a href="https://dev.axonivy.com/">
         <AxonIvyLogo width={108} height={16} class="md:h-10 md:w-40" />
       </a>
-      <Navbar client:load />
-      <div class="hidden gap-2 md:flex">
+      <Navbar lang={lang} urls={languageUrls} client:load />
+      <div class="hidden gap-2 md:flex items-center">
+        <LanguageSwitcher lang={lang} urls={languageUrls} />
         <ModeToggle client:load />
       </div>
     </div>
