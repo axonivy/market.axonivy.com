@@ -17,8 +17,8 @@ import { parseAsString, parseAsStringLiteral, useQueryStates } from "nuqs";
 import { NuqsAdapter } from "nuqs/adapters/react";
 import {
   FILTER_VALUES,
-  FILTERS,
-  TYPE_LABELS,
+  getFilters,
+  typeLabel,
   type Filter,
   type ProductSummary,
 } from "@/data/product-types";
@@ -87,7 +87,7 @@ function ProductList({ products, lang }: ProductsProps) {
           <div className="flex flex-row items-center gap-2 md:flex-col md:items-start">
             <H5>{t("dashboard.viewOptions.filter.title")}</H5>
             <div className="flex flex-row gap-2">
-              {FILTERS.map(({ value, label }) => (
+              {getFilters(t).map(({ value, label }) => (
                 <Button
                   key={value}
                   onClick={() => setParams({ type: value })}
@@ -95,7 +95,7 @@ function ProductList({ products, lang }: ProductsProps) {
                   aria-pressed={type === value}
                   size="lg"
                 >
-                  {t(label)}
+                  {label}
                 </Button>
               ))}
             </div>
@@ -183,7 +183,7 @@ function ProductList({ products, lang }: ProductsProps) {
                       {t("dashboard.badges.featured")}
                     </Badge>
                   )}
-                  <Badge>{t(TYPE_LABELS[product.type])}</Badge>
+                  <Badge>{typeLabel(t, product.type)}</Badge>
                 </div>
               </CardHeader>
               <CardContent>

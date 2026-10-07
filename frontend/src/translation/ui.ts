@@ -1,6 +1,6 @@
 import en from "./market.axonivy.com/en.json";
 import de from "./market.axonivy.com/de.json";
-import i18next, { type ParseKeys } from "i18next";
+import i18next from "i18next";
 import { initReactI18next } from "react-i18next";
 
 declare module "i18next" {

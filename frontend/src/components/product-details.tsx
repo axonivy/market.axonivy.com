@@ -12,15 +12,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ProductDependency } from "@/data/product-types";
 import type { Readme, ReadmeSections } from "@/data/readme";
 import { Trans, useTranslation } from "react-i18next";
-import type { ParseKeys } from "i18next";
+import type { TFunction } from "i18next";
 import "@/translation/ui";
 import type { Lang } from "@/translation/ui";
 
-const README_TABS: { value: keyof ReadmeSections; label: ParseKeys }[] = [
-  { value: "description", label: "productDetails.tabs.description" },
-  { value: "demo", label: "productDetails.tabs.demo" },
-  { value: "setup", label: "productDetails.tabs.setup" },
-  { value: "components", label: "productDetails.tabs.components" },
+const getReadmeTabs = (
+  t: TFunction,
+): { value: keyof ReadmeSections; label: string }[] => [
+  { value: "description", label: t("productDetails.tabs.description") },
+  { value: "demo", label: t("productDetails.tabs.demo") },
+  { value: "setup", label: t("productDetails.tabs.setup") },
+  { value: "components", label: t("productDetails.tabs.components") },
 ];
 
 export type MavenDependency = ProductDependency & {
@@ -42,15 +44,15 @@ export default function ProductDetails({
 
   const sections = readme?.sections;
   const tabs: { value: string; label: string; content: ReactNode }[] = [
-    ...README_TABS.filter(({ value }) => sections?.[value]).map(
-      ({ value, label }) => ({
+    ...getReadmeTabs(t)
+      .filter(({ value }) => sections?.[value])
+      .map(({ value, label }) => ({
         value,
-        label: t(label),
+        label,
         content: (
           <Markdown markdown={sections![value]!} baseUrl={readme!.baseUrl} />
         ),
-      }),
-    ),
+      })),
     ...(maven && !sections?.components
       ? [
           {

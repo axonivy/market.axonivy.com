@@ -1,106 +1,116 @@
 {
   "common": {
-    "download": "Download",
     "connector": "Connector",
     "connectors": "Connectors",
-    "util": "Util",
-    "utilities": "Utilities",
     "demo": "Demo",
-    "demos": "Demos"
+    "demos": "Demos",
+    "download": "Download",
+    "util": "Util",
+    "utilities": "Utilities"
   },
-  "nav": {
-    "doc": "Documentation",
-    "resources": "Resources",
-    "productInfo": "Product Information",
-    "releaseCycle": "Release Cycle",
-    "releaseCycleDescription": "Understand the release schedule",
-    "deprecation": "Deprecation",
-    "deprecationDescription": "Plan for upcoming changes",
-    "external": "External Resources",
-    "market": "Market",
-    "marketDescription": "Explore extensions and connectors",
-    "community": "Community",
-    "communityDescription": "Ask questions and share ideas",
-    "tutorial": "Tutorial",
-    "tutorialDescription": "Learn step by step",
-    "news": "News",
-    "team": "Team",
-    "menuOpen": "Open navigation menu",
-    "menuClose": "Close navigation menu",
-    "menuMobile": "Mobile navigation",
-    "home": "Home"
+  "dashboard": {
+    "badges": {
+      "deprecated": "Deprecated",
+      "featured": "Featured"
+    },
+    "contribution": "Contribute to the community and <a>build your own market extension</a>!",
+    "description": "Here you will find connectors to standard software solutions from leading providers such as Microsoft, Amazon, or Adobe, as well as ready-made process models, business solutions, and practical tools for document process, storage, or signing.",
+    "subtitle": "The Axon Ivy Market offers a unique experience to accelerate process automation.",
+    "title": "Axon Ivy Market",
+    "viewOptions": {
+      "filter": {
+        "all": "All",
+        "title": "Filter"
+      },
+      "search": {
+        "notFound": "Your search did not yield any results. \n Please modify your search terms or browse our categories for related content.",
+        "placeholder": "Search a keyword"
+      },
+      "sort": {
+        "az": "A-Z",
+        "featured": "Featured",
+        "title": "Sort by",
+        "za": "Z-A"
+      }
+    }
   },
   "footer": {
     "info": "Get the latest stable <a>Long Term Support</a> version of the Axon Ivy Platform - or download the <a>Leading Edge</a> version."
   },
-  "dashboard": {
-    "title": "Axon Ivy Market",
-    "subtitle": "The Axon Ivy Market offers a unique experience to accelerate process automation.",
-    "description": "Here you will find connectors to standard software solutions from leading providers such as Microsoft, Amazon, or Adobe, as well as ready-made process models, business solutions, and practical tools for document process, storage, or signing.",
-    "contribution": "Contribute to the community and <a>build your own market extension</a>!",
-    "viewOptions": {
-      "filter": { "title": "Filter", "all": "All" },
-      "sort": {
-        "title": "Sort by",
-        "featured": "Featured",
-        "az": "A-Z",
-        "za": "Z-A"
-      },
-      "search": {
-        "placeholder": "Search a keyword",
-        "notFound": "Your search did not yield any results. \n Please modify your search terms or browse our categories for related content."
-      }
-    },
-    "badges": { "featured": "Featured", "deprecated": "Deprecated" }
-  },
-  "productDetails": {
-    "type": "Type",
-    "deprecated": {
-      "title": "Deprecated",
-      "description": "This extension is deprecated and will no longer receive updates or support."
-    },
-    "install": { "title": "Install Now" },
-    "download": {
-      "artifact": "Choose artifact",
-      "targetPlatform": "Choose target platform",
-      "version": "Version",
-      "devVersion": "Show dev versions"
-    },
-    "tabs": {
-      "description": "Description",
-      "demo": "Demo",
-      "setup": "Installation Guide",
-      "components": "Components",
-      "dependencies": {
-        "maven": {
-          "title": "Maven",
-          "description": "You can consume it as maven artifact in your <code>pom.xml</code>"
-        }
-      }
-    },
-    "information": {
-      "title": "Information",
-      "table": {
-        "label": {
-          "implemented": "Implemented by",
-          "compatibility": "Compatibility",
-          "cost": "Cost",
-          "language": "Language",
-          "type": "Type",
-          "version": "Version",
-          "tags": "Tags",
-          "source": "Source",
-          "status": "Status",
-          "more": "More information"
-        },
-        "value": { "more": "Contact us" }
-      }
-    }
+  "nav": {
+    "community": "Community",
+    "communityDescription": "Ask questions and share ideas",
+    "deprecation": "Deprecation",
+    "deprecationDescription": "Plan for upcoming changes",
+    "doc": "Documentation",
+    "external": "External Resources",
+    "home": "Home",
+    "market": "Market",
+    "marketDescription": "Explore extensions and connectors",
+    "menuClose": "Close navigation menu",
+    "menuMobile": "Mobile navigation",
+    "menuOpen": "Open navigation menu",
+    "news": "News",
+    "productInfo": "Product Information",
+    "releaseCycle": "Release Cycle",
+    "releaseCycleDescription": "Understand the release schedule",
+    "resources": "Resources",
+    "team": "Team",
+    "tutorial": "Tutorial",
+    "tutorialDescription": "Learn step by step"
   },
   "notFound": {
-    "title": "Oops!",
-    "subtitle": "Error Code: 404",
     "description": "Not Found: Our website is taking a break. It seems that we cannot find the page you requested. You would be doing us a great favor by reporting it here:",
-    "linkHome": "Back to homepage"
+    "linkHome": "Back to homepage",
+    "subtitle": "Error Code: 404",
+    "title": "Oops!"
+  },
+  "productDetails": {
+    "deprecated": {
+      "description": "This extension is deprecated and will no longer receive updates or support.",
+      "title": "Deprecated"
+    },
+    "download": {
+      "artifact": "Choose artifact",
+      "devVersion": "Show dev versions",
+      "targetPlatform": "Choose target platform",
+      "version": "Version"
+    },
+    "information": {
+      "table": {
+        "label": {
+          "compatibility": "Compatibility",
+          "cost": "Cost",
+          "implemented": "Implemented by",
+          "language": "Language",
+          "more": "More information",
+          "source": "Source",
+          "status": "Status",
+          "tags": "Tags",
+          "type": "Type",
+          "version": "Version"
+        },
+        "value": {
+          "more": "Contact us"
+        }
+      },
+      "title": "Information"
+    },
+    "install": {
+      "title": "Install Now"
+    },
+    "tabs": {
+      "components": "Components",
+      "demo": "Demo",
+      "dependencies": {
+        "maven": {
+          "description": "You can consume it as maven artifact in your <code>pom.xml</code>",
+          "title": "Maven"
+        }
+      },
+      "description": "Description",
+      "setup": "Installation Guide"
+    },
+    "type": "Type"
   }
 }

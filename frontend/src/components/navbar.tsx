@@ -27,65 +27,62 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { useTranslation } from "react-i18next";
 import "@/translation/ui";
 import type { Lang } from "@/translation/ui";
-import type { ParseKeys } from "i18next";
+import type { TFunction } from "i18next";
 
 type NavLink = {
-  label: ParseKeys;
-  description?: ParseKeys;
+  label: string;
+  description?: string;
   href: string;
   external: boolean;
 };
 
-type NavGroup = {
-  label: ParseKeys;
-  items: { label: ParseKeys; items: NavLink[] }[];
-};
+type NavGroup = { label: string; items: { label: string; items: NavLink[] }[] };
 
-const navItems: (NavLink | NavGroup)[] = [
+const getNavItems = (t: TFunction): (NavLink | NavGroup)[] => [
   {
-    label: "common.download",
+    label: t("common.download"),
     href: "https://dev.axonivy.com/download",
     external: false,
   },
-  { label: "nav.doc", href: "https://dev.axonivy.com/doc", external: false },
+  { label: t("nav.doc"), href: "https://dev.axonivy.com/doc", external: false },
   {
-    label: "nav.resources",
+    label: t("nav.resources"),
     items: [
       {
-        label: "nav.productInfo",
+        label: t("nav.productInfo"),
         items: [
           {
-            label: "nav.releaseCycle",
-            description: "nav.releaseCycleDescription",
+            label: t("nav.releaseCycle"),
+            description: t("nav.releaseCycleDescription"),
             href: "https://dev.axonivy.com/download/release-cycle",
             external: false,
           },
           {
-            label: "nav.deprecation",
-            description: "nav.deprecationDescription",
+            label: t("nav.deprecation"),
+            description: t("nav.deprecationDescription"),
             href: "https://dev.axonivy.com/deprecation",
             external: false,
           },
         ],
       },
       {
-        label: "nav.external",
+        label: t("nav.external"),
         items: [
           {
-            label: "nav.market",
-            description: "nav.marketDescription",
+            label: t("nav.market"),
+            description: t("nav.marketDescription"),
             href: "/",
             external: true,
           },
           {
-            label: "nav.community",
-            description: "nav.communityDescription",
+            label: t("nav.community"),
+            description: t("nav.communityDescription"),
             href: "https://community.axonivy.com/",
             external: true,
           },
           {
-            label: "nav.tutorial",
-            description: "nav.tutorialDescription",
+            label: t("nav.tutorial"),
+            description: t("nav.tutorialDescription"),
             href: "https://axonivy.com/tutorial",
             external: true,
           },
@@ -93,8 +90,16 @@ const navItems: (NavLink | NavGroup)[] = [
       },
     ],
   },
-  { label: "nav.news", href: "https://dev.axonivy.com/news", external: false },
-  { label: "nav.team", href: "https://dev.axonivy.com/team", external: false },
+  {
+    label: t("nav.news"),
+    href: "https://dev.axonivy.com/news",
+    external: false,
+  },
+  {
+    label: t("nav.team"),
+    href: "https://dev.axonivy.com/team",
+    external: false,
+  },
 ];
 
 export default function Navbar({
@@ -111,10 +116,10 @@ export default function Navbar({
     <div className="relative">
       <NavigationMenu align="center" className="hidden md:flex">
         <NavigationMenuList>
-          {navItems.map((item) => {
+          {getNavItems(t).map((item) => {
             return "items" in item ? (
               <NavigationMenuItem key={item.label}>
-                <NavigationMenuTrigger>{t(item.label)}</NavigationMenuTrigger>
+                <NavigationMenuTrigger>{item.label}</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <div className="flex w-fit gap-4 p-2">
                     {item.items.map((subItem, index) => (
@@ -122,7 +127,7 @@ export default function Navbar({
                         {index > 0 && <Separator orientation="vertical" />}
                         <ul className="flex flex-1 flex-col">
                           <H6 className="dark:text-n700 p-2">
-                            {t(subItem.label)}
+                            {subItem.label}
                           </H6>
                           {subItem.items.map((subSubItem) => (
                             <li key={subSubItem.label}>
@@ -143,7 +148,7 @@ export default function Navbar({
                                     <span className="flex flex-col gap-0.5">
                                       <span className="flex items-center gap-1">
                                         <Base className="text-n900">
-                                          {t(subSubItem.label)}
+                                          {subSubItem.label}
                                         </Base>
                                         {subSubItem.external && (
                                           <IconArrowUpRight
@@ -154,7 +159,7 @@ export default function Navbar({
                                       </span>
                                       <span className="text-muted-foreground dark:text-n700 text-sm whitespace-nowrap">
                                         {subSubItem.description &&
-                                          t(subSubItem.description)}
+                                          subSubItem.description}
                                       </span>
                                     </span>
                                   </a>
@@ -180,7 +185,7 @@ export default function Navbar({
                       target={item.external ? "_blank" : "_self"}
                       rel={item.external ? "noopener noreferrer" : undefined}
                     >
-                      {t(item.label)}
+                      {item.label}
 
                       {item.external && (
                         <IconArrowUpRight
@@ -201,7 +206,7 @@ export default function Navbar({
         <button
           type="button"
           className="text-foreground focus-visible:ring-ring/50 relative z-50 inline-flex size-9 items-center justify-center rounded-lg focus-visible:ring-3 focus-visible:outline-1"
-          aria-label={t(isOpen ? "nav.menuClose" : "nav.menuOpen")}
+          aria-label={isOpen ? t("nav.menuClose") : t("nav.menuOpen")}
           aria-expanded={isOpen}
           onClick={() => setIsOpen((open) => !open)}
         >
@@ -222,14 +227,14 @@ export default function Navbar({
           >
             <nav aria-label={t("nav.menuMobile")} className="px-4 pt-4">
               <ul className="flex flex-col gap-1">
-                {navItems.map((item) =>
+                {getNavItems(t).map((item) =>
                   "items" in item ? (
                     <li key={item.label}>
                       <Collapsible className="flex w-full flex-col gap-2">
                         <CollapsibleTrigger
                           render={
                             <button className="group/button focus:bg-muted focus-visible:ring-ring/50 flex min-h-11 items-center gap-1 rounded-md px-3 text-sm font-medium focus-visible:ring-3 focus-visible:outline-1">
-                              {t(item.label)}
+                              {item.label}
                               <IconChevronDown className="ml-auto group-data-panel-open/button:rotate-180" />
                             </button>
                           }
@@ -239,7 +244,7 @@ export default function Navbar({
                             return (
                               <Fragment key={subItem.label}>
                                 <H6 className="py-2 pl-3 text-xs">
-                                  {t(subItem.label)}
+                                  {subItem.label}
                                 </H6>
                                 {subItem.items.map((subSubItem) => (
                                   <a
@@ -256,7 +261,7 @@ export default function Navbar({
                                     }
                                     onClick={() => setIsOpen(false)}
                                   >
-                                    {t(subSubItem.label)}
+                                    {subSubItem.label}
                                     {subSubItem.external && (
                                       <IconArrowUpRight
                                         className="mt-3 size-3 self-start stroke-2"
@@ -280,7 +285,7 @@ export default function Navbar({
                         rel={item.external ? "noopener noreferrer" : undefined}
                         onClick={() => setIsOpen(false)}
                       >
-                        {t(item.label)}
+                        {item.label}
                         {item.external && (
                           <IconArrowUpRight
                             className="mt-3 size-3 self-start stroke-2"

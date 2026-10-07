@@ -1,7 +1,7 @@
 ---
 import i18next, { type Lang } from "@/translation/ui";
 import Layout from "@/layouts/main.astro";
-import { getAllProducts, getProductById, TYPE_LABELS } from "@/data/products";
+import { getAllProducts, getProductById, typeLabel } from "@/data/products";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -77,7 +77,7 @@ const information: InformationRow[] = [
   },
   {
     label: t("productDetails.information.table.label.type"),
-    value: t(TYPE_LABELS[product.type]),
+    value: typeLabel(t, product.type),
   },
   {
     label: t("productDetails.information.table.label.version"),
@@ -159,7 +159,7 @@ const information: InformationRow[] = [
       {product.type === "demo" && (
         <IconClipboardCheck class="size-16 shrink-0" />
       )}
-      <Base>{t(TYPE_LABELS[product.type])}</Base>
+      <Base>{typeLabel(t, product.type)}</Base>
     </div>
     {product.deprecated && (
       <div class="flex flex-col gap-4 border border-info bg-info-bg p-4 rounded-md">
