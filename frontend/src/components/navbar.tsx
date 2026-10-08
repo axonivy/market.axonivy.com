@@ -28,6 +28,7 @@ import { useTranslation } from "react-i18next";
 import "@/translation/ui";
 import type { Lang } from "@/translation/ui";
 import type { TFunction } from "i18next";
+import { localePath } from "@/translation/language";
 
 type NavLink = {
   label: string;
@@ -38,7 +39,7 @@ type NavLink = {
 
 type NavGroup = { label: string; items: { label: string; items: NavLink[] }[] };
 
-const getNavItems = (t: TFunction): (NavLink | NavGroup)[] => [
+const getNavItems = (t: TFunction, lang: Lang): (NavLink | NavGroup)[] => [
   {
     label: t("common.download"),
     href: "https://dev.axonivy.com/download",
@@ -71,8 +72,8 @@ const getNavItems = (t: TFunction): (NavLink | NavGroup)[] => [
           {
             label: t("nav.market"),
             description: t("nav.marketDescription"),
-            href: "/",
-            external: true,
+            href: localePath(lang, "/"),
+            external: false,
           },
           {
             label: t("nav.community"),
@@ -116,7 +117,7 @@ export default function Navbar({
     <div className="relative">
       <NavigationMenu align="center" className="hidden md:flex">
         <NavigationMenuList>
-          {getNavItems(t).map((item) => {
+          {getNavItems(t, lang).map((item) => {
             return "items" in item ? (
               <NavigationMenuItem key={item.label}>
                 <NavigationMenuTrigger>{item.label}</NavigationMenuTrigger>
@@ -227,7 +228,7 @@ export default function Navbar({
           >
             <nav aria-label={t("nav.menuMobile")} className="px-4 pt-4">
               <ul className="flex flex-col gap-1">
-                {getNavItems(t).map((item) =>
+                {getNavItems(t, lang).map((item) =>
                   "items" in item ? (
                     <li key={item.label}>
                       <Collapsible className="flex w-full flex-col gap-2">
@@ -300,7 +301,7 @@ export default function Navbar({
             </nav>
             <DrawerFooter className="flex flex-row justify-start">
               <LanguageSwitcher lang={lang} urls={urls} />
-              <ModeToggle />
+              <ModeToggle lang={lang} />
             </DrawerFooter>
           </DrawerContent>
         </Drawer>

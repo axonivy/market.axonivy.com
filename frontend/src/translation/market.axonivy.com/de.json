@@ -1,4 +1,7 @@
 {
+  "ariaLabels": {
+    "toggleTheme": "Design wechseln"
+  },
   "common": {
     "connector": "Konnektor",
     "connectors": "Konnektoren",
@@ -54,7 +57,7 @@
     "productInfo": "Produktinformationen",
     "releaseCycle": "Release-Zyklus",
     "releaseCycleDescription": "Verstehe den Veröffentlichungsplan",
-    "resources": "Resourcen",
+    "resources": "Ressourcen",
     "team": "Team",
     "tutorial": "Tutorial",
     "tutorialDescription": "Lerne Schritt für Schritt"

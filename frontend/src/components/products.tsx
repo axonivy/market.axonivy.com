@@ -25,6 +25,7 @@ import {
 import "@/translation/ui";
 import type { Lang } from "@/translation/ui";
 import { useTranslation } from "react-i18next";
+import { localePath } from "@/translation/language";
 
 const SORT_VALUES = ["featured", "az", "za"] as const;
 type SortOrder = (typeof SORT_VALUES)[number];
@@ -148,7 +149,7 @@ function ProductList({ products, lang }: ProductsProps) {
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {visibleProducts.map((product) => (
-          <a href={`/${product.id}`} key={product.id}>
+          <a href={localePath(lang, `/${product.id}`)} key={product.id}>
             <Card className="min-h-66">
               <CardHeader className="flex flex-row justify-between">
                 <img

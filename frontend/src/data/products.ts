@@ -2,6 +2,7 @@ import type { ImageMetadata } from "astro";
 import type { IndexProduct, MarketIndex } from "../../scripts/fetch-market";
 import {
   isDownloadable,
+  type Localized,
   type Product,
   type ProductMeta,
   type ProductSummary,
@@ -9,6 +10,7 @@ import {
 import { FEATURED_PRODUCTS_IDS } from "@/data/featured";
 import { DEPRECATED_PRODUCTS_IDS } from "@/data/deprecated";
 import { compatibilityRange } from "@/data/versions";
+import type { Lang } from "@/translation/ui";
 
 export * from "./product-types";
 
@@ -30,6 +32,14 @@ const imageFiles = import.meta.glob<ImageMetadata>(
   "/.market/market/market/*/*/*.png",
   { eager: true, import: "default" },
 );
+
+export function localize(
+  values: Localized[] | undefined,
+  lang: Lang,
+  fallback: string,
+): string {
+  return values?.find((v) => v.locale === lang)?.value ?? fallback;
+}
 
 function loadIndex(): Map<string, IndexProduct> {
   const index = indexFiles["/.market/products.json"];
@@ -119,7 +129,7 @@ export function getProductById(id: string): Product | undefined {
   return getAllProducts().find((product) => product.id === id);
 }
 
-export function getProductSummaries(): ProductSummary[] {
+export function getProductSummaries(lang: Lang): ProductSummary[] {
   const products = getAllProducts();
   const unknown = FEATURED_PRODUCTS_IDS.filter(
     (id) => !products.some((product) => product.id === id),
@@ -130,12 +140,22 @@ export function getProductSummaries(): ProductSummary[] {
   }
 
   return products.map(
-    ({ id, name, description, type, logo, logoDark, deprecated }) => {
+    ({
+      id,
+      name,
+      names,
+      description,
+      descriptions,
+      type,
+      logo,
+      logoDark,
+      deprecated,
+    }) => {
       const rank = FEATURED_PRODUCTS_IDS.indexOf(id);
       return {
         id,
-        name,
-        description,
+        name: localize(names, lang, name),
+        description: localize(descriptions, lang, description),
         type,
         logo: logo.src,
         logoDark: logoDark?.src,

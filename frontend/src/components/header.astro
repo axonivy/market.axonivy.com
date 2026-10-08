@@ -47,8 +47,8 @@ const languageUrls = getLanguageUrls(Astro.url);
       </a>
       <Navbar lang={lang} urls={languageUrls} client:load />
       <div class="hidden gap-2 md:flex items-center">
-        <LanguageSwitcher lang={lang} urls={languageUrls} />
-        <ModeToggle client:load />
+        <LanguageSwitcher client:load lang={lang} urls={languageUrls} />
+        <ModeToggle client:load lang={lang} />
       </div>
     </div>
   </div>
