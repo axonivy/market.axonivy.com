@@ -4,23 +4,27 @@ import type {
   IndexDependency,
   IndexInstallable,
 } from "../../scripts/fetch-market";
+import type { TFunction } from "i18next";
 
 export const FILTER_VALUES = ["all", "connector", "utils", "demo"] as const;
 export type Filter = (typeof FILTER_VALUES)[number];
 export type ProductCategory = Exclude<Filter, "all">;
 
-export const FILTERS: { value: Filter; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "connector", label: "Connectors" },
-  { value: "utils", label: "Utilities" },
-  { value: "demo", label: "Demos" },
+export const getFilters = (
+  t: TFunction,
+): { value: Filter; label: string }[] => [
+  { value: "all", label: t("dashboard.viewOptions.filter.all") },
+  { value: "connector", label: t("common.connectors") },
+  { value: "utils", label: t("common.utilities") },
+  { value: "demo", label: t("common.demos") },
 ];
 
-export const TYPE_LABELS: Record<ProductCategory, string> = {
-  connector: "Connector",
-  utils: "Util",
-  demo: "Demo",
-};
+export const typeLabel = (t: TFunction, type: ProductCategory): string =>
+  ({
+    connector: t("common.connector"),
+    utils: t("common.util"),
+    demo: t("common.demo"),
+  })[type];
 
 type Localized = { locale: string; value: string };
 

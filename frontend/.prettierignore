@@ -4,3 +4,4 @@ dist/
 node_modules/
 public/market-cache/
 pnpm-lock.yaml
+src/translation/**/*.json

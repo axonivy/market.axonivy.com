@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import {
   IconArrowUpRight,
   IconChevronDown,
@@ -23,56 +23,66 @@ import {
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { Base, H6 } from "@/components/ui/typography";
 import { Separator } from "@/components/ui/separator";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { useTranslation } from "react-i18next";
+import "@/translation/ui";
+import type { Lang } from "@/translation/ui";
+import type { TFunction } from "i18next";
 
-const navItems = [
+type NavLink = {
+  label: string;
+  description?: string;
+  href: string;
+  external: boolean;
+};
+
+type NavGroup = { label: string; items: { label: string; items: NavLink[] }[] };
+
+const getNavItems = (t: TFunction): (NavLink | NavGroup)[] => [
   {
-    label: "Download",
+    label: t("common.download"),
     href: "https://dev.axonivy.com/download",
     external: false,
   },
+  { label: t("nav.doc"), href: "https://dev.axonivy.com/doc", external: false },
   {
-    label: "Documentation",
-    href: "https://dev.axonivy.com/doc",
-    external: false,
-  },
-  {
-    label: "Resources",
+    label: t("nav.resources"),
     items: [
       {
-        label: "Product information",
+        label: t("nav.productInfo"),
         items: [
           {
-            label: "Release cycle",
-            description: "Understand the release schedule",
+            label: t("nav.releaseCycle"),
+            description: t("nav.releaseCycleDescription"),
             href: "https://dev.axonivy.com/download/release-cycle",
             external: false,
           },
           {
-            label: "Deprecation",
-            description: "Plan for upcoming changes",
+            label: t("nav.deprecation"),
+            description: t("nav.deprecationDescription"),
             href: "https://dev.axonivy.com/deprecation",
             external: false,
           },
         ],
       },
       {
-        label: "External resources",
+        label: t("nav.external"),
         items: [
           {
-            label: "Market",
-            description: "Explore extensions and connectors",
+            label: t("nav.market"),
+            description: t("nav.marketDescription"),
             href: "/",
             external: true,
           },
           {
-            label: "Community",
-            description: "Ask questions and share ideas",
+            label: t("nav.community"),
+            description: t("nav.communityDescription"),
             href: "https://community.axonivy.com/",
             external: true,
           },
           {
-            label: "Tutorial",
-            description: "Learn step by step",
+            label: t("nav.tutorial"),
+            description: t("nav.tutorialDescription"),
             href: "https://axonivy.com/tutorial",
             external: true,
           },
@@ -80,25 +90,40 @@ const navItems = [
       },
     ],
   },
-  { label: "News", href: "https://dev.axonivy.com/news", external: false },
-  { label: "Team", href: "https://dev.axonivy.com/team", external: false },
+  {
+    label: t("nav.news"),
+    href: "https://dev.axonivy.com/news",
+    external: false,
+  },
+  {
+    label: t("nav.team"),
+    href: "https://dev.axonivy.com/team",
+    external: false,
+  },
 ];
 
-export default function Navbar() {
+export default function Navbar({
+  lang,
+  urls,
+}: {
+  lang: Lang;
+  urls: Record<Lang, string>;
+}) {
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useTranslation(undefined, { lng: lang });
 
   return (
     <div className="relative">
       <NavigationMenu align="center" className="hidden md:flex">
         <NavigationMenuList>
-          {navItems.map((item) => {
-            return item.items ? (
+          {getNavItems(t).map((item) => {
+            return "items" in item ? (
               <NavigationMenuItem key={item.label}>
                 <NavigationMenuTrigger>{item.label}</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <div className="flex w-fit gap-4 p-2">
                     {item.items.map((subItem, index) => (
-                      <>
+                      <Fragment key={subItem.label}>
                         {index > 0 && <Separator orientation="vertical" />}
                         <ul className="flex flex-1 flex-col">
                           <H6 className="dark:text-n700 p-2">
@@ -133,7 +158,8 @@ export default function Navbar() {
                                         )}
                                       </span>
                                       <span className="text-muted-foreground dark:text-n700 text-sm whitespace-nowrap">
-                                        {subSubItem.description}
+                                        {subSubItem.description &&
+                                          subSubItem.description}
                                       </span>
                                     </span>
                                   </a>
@@ -142,7 +168,7 @@ export default function Navbar() {
                             </li>
                           ))}
                         </ul>
-                      </>
+                      </Fragment>
                     ))}
                   </div>
                 </NavigationMenuContent>
@@ -180,7 +206,7 @@ export default function Navbar() {
         <button
           type="button"
           className="text-foreground focus-visible:ring-ring/50 relative z-50 inline-flex size-9 items-center justify-center rounded-lg focus-visible:ring-3 focus-visible:outline-1"
-          aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-label={isOpen ? t("nav.menuClose") : t("nav.menuOpen")}
           aria-expanded={isOpen}
           onClick={() => setIsOpen((open) => !open)}
         >
@@ -199,10 +225,10 @@ export default function Navbar() {
               borderRadius: 0,
             }}
           >
-            <nav aria-label="Mobile navigation" className="px-4 pt-4">
+            <nav aria-label={t("nav.menuMobile")} className="px-4 pt-4">
               <ul className="flex flex-col gap-1">
-                {navItems.map((item) =>
-                  item.items ? (
+                {getNavItems(t).map((item) =>
+                  "items" in item ? (
                     <li key={item.label}>
                       <Collapsible className="flex w-full flex-col gap-2">
                         <CollapsibleTrigger
@@ -216,7 +242,7 @@ export default function Navbar() {
                         <CollapsibleContent className="flex flex-col items-start gap-2 p-2.5 pt-0 text-sm">
                           {item.items.map((subItem) => {
                             return (
-                              <>
+                              <Fragment key={subItem.label}>
                                 <H6 className="py-2 pl-3 text-xs">
                                   {subItem.label}
                                 </H6>
@@ -244,7 +270,7 @@ export default function Navbar() {
                                     )}
                                   </a>
                                 ))}
-                              </>
+                              </Fragment>
                             );
                           })}
                         </CollapsibleContent>
@@ -273,6 +299,7 @@ export default function Navbar() {
               </ul>
             </nav>
             <DrawerFooter className="flex flex-row justify-start">
+              <LanguageSwitcher lang={lang} urls={urls} />
               <ModeToggle />
             </DrawerFooter>
           </DrawerContent>

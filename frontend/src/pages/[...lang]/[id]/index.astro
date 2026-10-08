@@ -1,6 +1,7 @@
 ---
+import i18next, { type Lang } from "@/translation/ui";
 import Layout from "@/layouts/main.astro";
-import { getAllProducts, getProductById, TYPE_LABELS } from "@/data/products";
+import { getAllProducts, getProductById, typeLabel } from "@/data/products";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -25,7 +26,9 @@ import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { loadReadme } from "@/data/readme";
 
 export function getStaticPaths() {
-  return getAllProducts().map((product) => ({ params: { id: product.id } }));
+  return getAllProducts().flatMap((product) =>
+    [undefined, "de"].map((lang) => ({ params: { lang, id: product.id } })),
+  );
 }
 
 const { id } = Astro.params;
@@ -35,7 +38,12 @@ if (!product) {
   return Astro.redirect("/404");
 }
 
-const readme = product.readme ? await loadReadme(product.readme) : undefined;
+const lang = (Astro.currentLocale ?? "en") as Lang;
+const t = i18next.getFixedT(lang);
+
+const readme = product.readme
+  ? await loadReadme(product.readme, lang)
+  : undefined;
 
 const maven =
   product.dependency && product.featuredVersion
@@ -43,6 +51,7 @@ const maven =
         ...product.dependency,
         productName: product.name,
         version: product.featuredVersion,
+        lang: lang,
       }
     : undefined;
 
@@ -54,21 +63,42 @@ type InformationRow = {
 };
 
 const information: InformationRow[] = [
-  { label: "Compatibility", value: product.compatibility },
-  { label: "Cost", value: product.cost },
-  { label: "Language", value: product.language },
-  { label: "Type", value: TYPE_LABELS[product.type] },
-  { label: "Version", value: product.featuredVersion ?? product.version },
-  { label: "Tags", value: product.tags?.join(", ") },
   {
-    label: "Source",
+    label: t("productDetails.information.table.label.compatibility"),
+    value: product.compatibility,
+  },
+  {
+    label: t("productDetails.information.table.label.cost"),
+    value: product.cost,
+  },
+  {
+    label: t("productDetails.information.table.label.language"),
+    value: product.language,
+  },
+  {
+    label: t("productDetails.information.table.label.type"),
+    value: typeLabel(t, product.type),
+  },
+  {
+    label: t("productDetails.information.table.label.version"),
+    value: product.featuredVersion ?? product.version,
+  },
+  {
+    label: t("productDetails.information.table.label.tags"),
+    value: product.tags?.join(", "),
+  },
+  {
+    label: t("productDetails.information.table.label.source"),
     value: product.sourceUrl && new URL(product.sourceUrl).hostname,
     href: product.sourceUrl,
   },
-  { label: "Status", image: product.statusBadgeUrl },
   {
-    label: "More information",
-    value: "Contact us",
+    label: t("productDetails.information.table.label.status"),
+    image: product.statusBadgeUrl,
+  },
+  {
+    label: t("productDetails.information.table.label.more"),
+    value: t("productDetails.information.table.value.more"),
     href: `https://www.axonivy.com/marketplace/contact/?market_solutions=${product.id}`,
   },
 ];
@@ -79,7 +109,7 @@ const information: InformationRow[] = [
     <Breadcrumb>
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink href="/">Home</BreadcrumbLink>
+          <BreadcrumbLink href="/">{t("nav.home")}</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
@@ -109,47 +139,49 @@ const information: InformationRow[] = [
         <H1>{product.name}</H1>
       </div>
       <div class="flex flex-row gap-4 items-center">
-        <Button className="h-12 px-6 text-base">Install Now</Button>
+        <Button className="h-12 px-6 text-base">
+          {t("productDetails.install.title")}
+        </Button>
         {!product.mavenDropins && (
           <DownloadProduct
             artifacts={product.artifacts}
             mainArtifactId={product.mainArtifactId}
+            lang={lang}
             client:load
           />
         )}
       </div>
     </div>
     <div class="flex flex-col gap-4">
-      <H5>Type</H5>
+      <H5>{t("productDetails.type")}</H5>
       {product.type === "connector" && <IconPlug class="size-16 shrink-0" />}
       {product.type === "utils" && <IconTools class="size-16 shrink-0" />}
       {product.type === "demo" && (
         <IconClipboardCheck class="size-16 shrink-0" />
       )}
-      <Base>{TYPE_LABELS[product.type]}</Base>
+      <Base>{typeLabel(t, product.type)}</Base>
     </div>
     {product.deprecated && (
       <div class="flex flex-col gap-4 border border-info bg-info-bg p-4 rounded-md">
         <div class="flex flex-row gap-2 items-center">
           <IconAlertTriangle class="size-10 shrink-0" />
-          <H3 className="uppercase">Deprecated</H3>
+          <H3 className="uppercase">{t("productDetails.deprecated.title")}</H3>
         </div>
-        <Base>
-          This extension is deprecated and will no longer receive updates or
-          support.
-        </Base>
+        <Base>{t("productDetails.deprecated.description")}</Base>
       </div>
     )}
     <div class="flex flex-col gap-12 md:flex-row">
       <div class="flex md:w-2/3">
-        <ProductDetails client:load readme={readme} maven={maven} />
+        <ProductDetails client:load readme={readme} maven={maven} lang={lang} />
       </div>
       <div class="flex flex-col gap-4 md:w-1/3">
-        <H4>Information</H4>
+        <H4>{t("productDetails.information.title")}</H4>
         <Table className="w-full">
           <TableBody>
             <TableRow>
-              <TableCell>Implemented by</TableCell>
+              <TableCell>
+                {t("productDetails.information.table.label.implemented")}
+              </TableCell>
               <TableCell className="text-right">
                 <a
                   href={product.vendorUrl}

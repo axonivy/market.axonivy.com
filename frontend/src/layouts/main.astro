@@ -3,16 +3,20 @@ import Header from "@/components/header.astro";
 import Footer from "@/components/footer.astro";
 import "@/styles/global.css";
 import { Font } from "astro:assets";
+import i18next, { type Lang } from "@/translation/ui";
+
+const lang = (Astro.currentLocale ?? "en") as Lang;
+const t = i18next.getFixedT(lang);
 ---
 
-<html lang="en">
+<html lang={lang}>
   <head>
     <Font cssVariable="--font-inter" preload />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
-    <title>Axon Ivy Market</title>
+    <title>{t("dashboard.title")}</title>
   </head>
   <body>
     <div class="flex min-h-screen flex-col">

@@ -1,4 +1,7 @@
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
+import path from "node:path";
+import type { Lang } from "@/translation/ui";
 
 export type ReadmeSections = {
   description: string;
@@ -17,11 +20,20 @@ const SECTION_PATTERNS = {
 
 type Section = keyof typeof SECTION_PATTERNS;
 
-export async function loadReadme(readme: {
-  file: string;
-  baseUrl: string;
-}): Promise<Readme> {
-  const markdown = await readFile(readme.file, "utf8");
+function localizedFile(file: string, lang: Lang): string {
+  if (lang === "en") return file;
+  const translated = path.join(
+    path.dirname(file),
+    `README_${lang.toUpperCase()}.md`,
+  );
+  return existsSync(translated) ? translated : file;
+}
+
+export async function loadReadme(
+  readme: { file: string; baseUrl: string },
+  lang: Lang,
+): Promise<Readme> {
+  const markdown = await readFile(localizedFile(readme.file, lang), "utf8");
 
   const starts = Object.fromEntries(
     Object.entries(SECTION_PATTERNS).map(([section, pattern]) => [

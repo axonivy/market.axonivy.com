@@ -11,39 +11,56 @@ import { Base, Code, H4 } from "@/components/ui/typography";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ProductDependency } from "@/data/product-types";
 import type { Readme, ReadmeSections } from "@/data/readme";
+import { Trans, useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
+import "@/translation/ui";
+import type { Lang } from "@/translation/ui";
 
-const README_TABS: { value: keyof ReadmeSections; label: string }[] = [
-  { value: "description", label: "Description" },
-  { value: "demo", label: "Demo" },
-  { value: "setup", label: "Installation Guide" },
-  { value: "components", label: "Components" },
+const getReadmeTabs = (
+  t: TFunction,
+): { value: keyof ReadmeSections; label: string }[] => [
+  { value: "description", label: t("productDetails.tabs.description") },
+  { value: "demo", label: t("productDetails.tabs.demo") },
+  { value: "setup", label: t("productDetails.tabs.setup") },
+  { value: "components", label: t("productDetails.tabs.components") },
 ];
 
 export type MavenDependency = ProductDependency & {
   productName: string;
   version: string;
+  lang: Lang;
 };
 
 export default function ProductDetails({
   readme,
   maven,
+  lang,
 }: {
   readme?: Readme;
   maven?: MavenDependency;
+  lang: Lang;
 }) {
+  const { t } = useTranslation(undefined, { lng: lang });
+
   const sections = readme?.sections;
   const tabs: { value: string; label: string; content: ReactNode }[] = [
-    ...README_TABS.filter(({ value }) => sections?.[value]).map(
-      ({ value, label }) => ({
+    ...getReadmeTabs(t)
+      .filter(({ value }) => sections?.[value])
+      .map(({ value, label }) => ({
         value,
         label,
         content: (
           <Markdown markdown={sections![value]!} baseUrl={readme!.baseUrl} />
         ),
-      }),
-    ),
+      })),
     ...(maven && !sections?.components
-      ? [{ value: "dependency", label: "Maven", content: <Maven {...maven} /> }]
+      ? [
+          {
+            value: "dependency",
+            label: t("productDetails.tabs.dependencies.maven.title"),
+            content: <Maven {...maven} lang={lang} />,
+          },
+        ]
       : []),
   ];
   const [selectedTab, setSelectedTab] = useState(tabs[0]?.value);
@@ -153,6 +170,7 @@ function Maven({
   artifactId,
   version,
   type,
+  lang,
 }: MavenDependency) {
   const snippet = [
     `<!-- ${productName} -->`,
@@ -163,11 +181,16 @@ function Maven({
     `  <type>${type}</type>`,
     "</dependency>",
   ].join("\n");
+  const { t } = useTranslation(undefined, { lng: lang });
 
   return (
     <div className="space-y-4">
       <Base>
-        You can consume it as maven artifact in your <Code>pom.xml</Code>
+        <Trans
+          t={t}
+          i18nKey="productDetails.tabs.dependencies.maven.description"
+          components={{ code: <Code /> }}
+        />
       </Base>
       <CodeBlock code={snippet} />
     </div>
