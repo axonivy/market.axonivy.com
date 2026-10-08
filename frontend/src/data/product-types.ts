@@ -26,7 +26,7 @@ export const typeLabel = (t: TFunction, type: ProductCategory): string =>
     demo: t("common.demo"),
   })[type];
 
-type Localized = { locale: string; value: string };
+export type Localized = { locale: string; value: string };
 
 export type ProductMeta = {
   id: string;

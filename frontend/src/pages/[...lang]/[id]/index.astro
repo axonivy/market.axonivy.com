@@ -1,7 +1,12 @@
 ---
 import i18next, { type Lang } from "@/translation/ui";
 import Layout from "@/layouts/main.astro";
-import { getAllProducts, getProductById, typeLabel } from "@/data/products";
+import {
+  getAllProducts,
+  getProductById,
+  localize,
+  typeLabel,
+} from "@/data/products";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -24,6 +29,7 @@ import ProductDetails from "@/components/product-details";
 import AxonIvyLogo from "@/assets/axonivy-logo-2021-rgb.svg";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { loadReadme } from "@/data/readme";
+import { localePath } from "@/translation/language";
 
 export function getStaticPaths() {
   return getAllProducts().flatMap((product) =>
@@ -40,6 +46,7 @@ if (!product) {
 
 const lang = (Astro.currentLocale ?? "en") as Lang;
 const t = i18next.getFixedT(lang);
+const name = localize(product.names, lang, product.name);
 
 const readme = product.readme
   ? await loadReadme(product.readme, lang)
@@ -49,7 +56,7 @@ const maven =
   product.dependency && product.featuredVersion
     ? {
         ...product.dependency,
-        productName: product.name,
+        productName: name,
         version: product.featuredVersion,
         lang: lang,
       }
@@ -109,11 +116,13 @@ const information: InformationRow[] = [
     <Breadcrumb>
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink href="/">{t("nav.home")}</BreadcrumbLink>
+          <BreadcrumbLink href={localePath(lang, "/")}>
+            {t("nav.home")}
+          </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbPage>{product.name}</BreadcrumbPage>
+          <BreadcrumbPage>{name}</BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
@@ -122,7 +131,7 @@ const information: InformationRow[] = [
       <div class="flex flex-row gap-8 items-center">
         <img
           src={product.logo.src}
-          alt={product.name}
+          alt={name}
           height={70}
           width={70}
           class={cn("rounded-md", product.logoDark && "dark:hidden")}
@@ -130,13 +139,13 @@ const information: InformationRow[] = [
         {product.logoDark && (
           <img
             src={product.logoDark.src}
-            alt={product.name}
+            alt={name}
             height={70}
             width={70}
             class="rounded-md hidden dark:block"
           />
         )}
-        <H1>{product.name}</H1>
+        <H1>{name}</H1>
       </div>
       <div class="flex flex-row gap-4 items-center">
         <Button className="h-12 px-6 text-base">

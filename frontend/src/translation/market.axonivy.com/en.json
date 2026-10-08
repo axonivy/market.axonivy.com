@@ -1,4 +1,7 @@
 {
+  "ariaLabels": {
+    "toggleTheme": "Toggle theme"
+  },
   "common": {
     "connector": "Connector",
     "connectors": "Connectors",

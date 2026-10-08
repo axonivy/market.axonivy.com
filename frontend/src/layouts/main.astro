@@ -4,13 +4,31 @@ import Footer from "@/components/footer.astro";
 import "@/styles/global.css";
 import { Font } from "astro:assets";
 import i18next, { type Lang } from "@/translation/ui";
+import { getLanguageUrls } from "@/translation/urls";
 
 const lang = (Astro.currentLocale ?? "en") as Lang;
 const t = i18next.getFixedT(lang);
+
+interface Props {
+  redirect?: boolean;
+}
+
+const { redirect = true } = Astro.props as Props;
 ---
 
 <html lang={lang}>
   <head>
+    {redirect && <script
+      is:inline
+      define:vars={{ urls: getLanguageUrls(Astro.url), lang }}
+    >
+      try {
+        const saved = localStorage.getItem("lang");
+        if (saved && saved !== lang && saved in urls) {
+          location.replace(urls[saved] + location.search + location.hash);
+        }
+      } catch {}
+    </script>}
     <Font cssVariable="--font-inter" preload />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
