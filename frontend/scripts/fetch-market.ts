@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { unzipSync } from "fflate";
 import {
   compareVersions,
@@ -10,7 +10,10 @@ import {
   newestFirst,
 } from "../src/data/versions.ts";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const ROOT = path.resolve(
+  process.env.MARKET_ROOT ??
+    path.join(path.dirname(fileURLToPath(import.meta.url)), ".."),
+);
 const MARKET_REPO_URL = "https://github.com/axonivy-market/market.git";
 const MARKET_REPO_DIR = path.join(ROOT, ".market", "market");
 const PRODUCTS_DIR = path.join(MARKET_REPO_DIR, "market");
@@ -19,7 +22,8 @@ const INDEX_FILE = path.join(ROOT, ".market", "products.json");
 const PUBLIC_DIR = path.join(ROOT, "public", "market-cache");
 const PUBLIC_URL = "/market-cache";
 
-const DEFAULT_REPO_URL = "https://maven.axonivy.com";
+const DEFAULT_REPO_URL =
+  process.env.MARKET_MAVEN_URL ?? "https://maven.axonivy.com";
 const DEFAULT_TYPE = "iar";
 const CONCURRENCY = 16;
 
@@ -192,9 +196,7 @@ async function fetchVersions(coordinates: Coordinates): Promise<string[]> {
     const xml = await fetchText(
       `${artifactBaseUrl(coordinates)}/maven-metadata.xml`,
     );
-    return xmlValues(xml, "version").filter(
-      (version, i, all) => all.indexOf(version) === i,
-    );
+    return xmlValues(xml, "version");
   } catch (error) {
     if (error instanceof NotFoundError) {
       warn(
@@ -655,7 +657,12 @@ async function main() {
   console.log(`Index written to ${path.relative(ROOT, INDEX_FILE)}`);
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}

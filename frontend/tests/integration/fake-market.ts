@@ -1,0 +1,237 @@
+import { execFile } from "node:child_process";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { createServer, type Server } from "node:http";
+import type { AddressInfo } from "node:net";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
+import { strToU8, zipSync } from "fflate";
+import type { MarketIndex } from "../../scripts/fetch-market.ts";
+
+const SCRIPT = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../scripts/fetch-market.ts",
+);
+
+type Files = Record<string, string | Uint8Array>;
+
+export const GROUP_ID = "com.axonivy.test";
+export const SNAPSHOT_BUILD = "20261001.120000-1";
+
+export function zip(files: Files): Uint8Array {
+  return zipSync(
+    Object.fromEntries(
+      Object.entries(files).map(([name, content]) => [
+        name,
+        typeof content === "string" ? strToU8(content) : content,
+      ]),
+    ),
+  );
+}
+
+export function snapshotMetadata(
+  ...entries: { extension: string; value: string; classifier?: string }[]
+): string {
+  const blocks = entries
+    .map(
+      ({ extension, value, classifier }) =>
+        `<snapshotVersion>${classifier ? `<classifier>${classifier}</classifier>` : ""}<extension>${extension}</extension><value>${value}</value></snapshotVersion>`,
+    )
+    .join("");
+  return `<metadata><versioning><snapshotVersions>${blocks}</snapshotVersions></versioning></metadata>`;
+}
+
+type ArtifactOptions = {
+  groupId?: string;
+  type?: string;
+  // Timestamp and build number of SNAPSHOT files.
+  build?: string;
+};
+
+// A static Maven repository served from memory. Unknown paths return 404.
+export class FakeMaven {
+  private files = new Map<string, string | Uint8Array>();
+  private statuses = new Map<string, number[]>();
+  private server?: Server;
+  url = "";
+  // Every requested path, in order.
+  requests: string[] = [];
+
+  async start() {
+    this.server = createServer((request, response) => {
+      const url = request.url ?? "";
+      this.requests.push(url);
+      const status = this.statuses.get(url)?.shift();
+      const file = this.files.get(url);
+      if (status !== undefined) {
+        response.statusCode = status;
+        response.end();
+      } else {
+        response.statusCode = file === undefined ? 404 : 200;
+        response.end(file);
+      }
+    });
+    await new Promise<void>((resolve) =>
+      this.server!.listen(0, "127.0.0.1", resolve),
+    );
+    this.url = `http://127.0.0.1:${(this.server.address() as AddressInfo).port}`;
+  }
+
+  async stop() {
+    await new Promise((resolve) => this.server?.close(resolve));
+  }
+
+  path(artifactId: string, groupId = GROUP_ID) {
+    return `/${groupId.replaceAll(".", "/")}/${artifactId}`;
+  }
+
+  set(path: string, content: string | Uint8Array) {
+    this.files.set(path, content);
+  }
+
+  // Answers the next requests to `path` with these statuses, then serves it normally.
+  respond(path: string, ...statuses: number[]) {
+    this.statuses.set(path, statuses);
+  }
+
+  requestCount(path: string) {
+    return this.requests.filter((request) => request === path).length;
+  }
+
+  // Publishes an artifact. SNAPSHOTs get a timestamped file name like on a real repo.
+  // A version mapped to null is listed in maven-metadata.xml but has no file.
+  artifact(
+    artifactId: string,
+    versions: Record<string, Files | null>,
+    {
+      groupId = GROUP_ID,
+      type = "zip",
+      build = SNAPSHOT_BUILD,
+    }: ArtifactOptions = {},
+  ) {
+    const base = this.path(artifactId, groupId);
+    const xmlVersions = Object.keys(versions)
+      .map((version) => `<version>${version}</version>`)
+      .join("");
+    this.set(
+      `${base}/maven-metadata.xml`,
+      `<metadata><versioning><versions>${xmlVersions}</versions></versioning></metadata>`,
+    );
+    for (const [version, files] of Object.entries(versions)) {
+      let fileVersion = version;
+      if (version.endsWith("-SNAPSHOT")) {
+        fileVersion = version.replace("SNAPSHOT", build);
+        this.set(
+          `${base}/${version}/maven-metadata.xml`,
+          snapshotMetadata({ extension: type, value: fileVersion }),
+        );
+      }
+      if (files) {
+        this.set(
+          `${base}/${version}/${artifactId}-${fileVersion}.${type}`,
+          zip(files),
+        );
+      }
+    }
+  }
+}
+
+type MetaArtifact = Record<string, unknown>;
+
+// A checkout of the market repo, in the folder layout fetch-market.ts expects.
+export class FakeMarket {
+  root = "";
+  // stdout and stderr of the last fetch.
+  log = "";
+
+  async create() {
+    this.root = await mkdtemp(path.join(tmpdir(), "fetch-market-"));
+  }
+
+  async remove() {
+    await rm(this.root, { recursive: true, force: true });
+  }
+
+  productDir(id: string) {
+    return path.join(this.root, ".market/market/market/connector", id);
+  }
+
+  // Adds a product whose meta.json points to `<id>-product` on the fake Maven.
+  // `artifacts` replaces that default, `files` are extra files next to meta.json.
+  async product(
+    id: string,
+    {
+      withMaven = true,
+      artifacts = undefined as MetaArtifact[] | undefined,
+      files = {} as Files,
+    } = {},
+  ) {
+    const dir = this.productDir(id);
+    await mkdir(dir, { recursive: true });
+    const meta = {
+      id,
+      name: id,
+      type: "connector",
+      mavenArtifacts:
+        artifacts ??
+        (withMaven
+          ? [
+              {
+                name: id,
+                groupId: GROUP_ID,
+                artifactId: `${id}-product`,
+                type: "zip",
+              },
+            ]
+          : []),
+    };
+    await writeFile(path.join(dir, "meta.json"), JSON.stringify(meta));
+    for (const [name, content] of Object.entries(files)) {
+      await mkdir(path.dirname(path.join(dir, name)), { recursive: true });
+      await writeFile(path.join(dir, name), content);
+    }
+  }
+
+  // Runs the real script (as a separate process, like `pnpm fetch-data`).
+  // Rejects if the script exits with an error.
+  async fetch(maven: FakeMaven): Promise<MarketIndex> {
+    try {
+      const { stdout, stderr } = await promisify(execFile)(
+        "node",
+        [SCRIPT, "--no-pull"],
+        {
+          env: {
+            ...process.env,
+            MARKET_ROOT: this.root,
+            MARKET_MAVEN_URL: maven.url,
+          },
+        },
+      );
+      this.log = stdout + stderr;
+    } catch (error) {
+      const { stdout = "", stderr = "" } = error as {
+        stdout?: string;
+        stderr?: string;
+      };
+      this.log = stdout + stderr;
+      throw error;
+    }
+    return JSON.parse(
+      await readFile(path.join(this.root, ".market/products.json"), "utf8"),
+    );
+  }
+
+  // Resolves a path from products.json (relative to MARKET_ROOT).
+  resolve(file: string) {
+    return path.join(this.root, file);
+  }
+
+  cacheDir(...parts: string[]) {
+    return path.join(this.root, ".market/cache", ...parts);
+  }
+
+  publicDir(...parts: string[]) {
+    return path.join(this.root, "public/market-cache", ...parts);
+  }
+}
