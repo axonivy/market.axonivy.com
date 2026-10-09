@@ -147,7 +147,7 @@ const information: InformationRow[] = [
         )}
         <H1>{name}</H1>
       </div>
-      <div class="flex flex-row gap-4 items-center">
+      <div class="flex-row gap-4 items-center hidden md:flex">
         <Button className="h-12 px-6 text-base">
           {t("productDetails.install.title")}
         </Button>
@@ -179,6 +179,19 @@ const information: InformationRow[] = [
         <Base>{t("productDetails.deprecated.description")}</Base>
       </div>
     )}
+    <div class="grid grid-cols-2 gap-2 items-center md:hidden w-full">
+      <Button className="h-12 text-base">
+        {t("productDetails.install.title")}
+      </Button>
+      {!product.mavenDropins && (
+        <DownloadProduct
+          artifacts={product.artifacts}
+          mainArtifactId={product.mainArtifactId}
+          lang={lang}
+          client:load
+        />
+      )}
+    </div>
     <div class="flex flex-col gap-12 md:flex-row">
       <div class="flex md:w-2/3">
         <ProductDetails client:load readme={readme} maven={maven} lang={lang} />
