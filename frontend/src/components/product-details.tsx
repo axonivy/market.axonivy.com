@@ -9,6 +9,10 @@ import remarkGfm from "remark-gfm";
 import { CodeBlock } from "@/components/ui/code-block";
 import { Base, Code, H4 } from "@/components/ui/typography";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 import type { ProductDependency } from "@/data/product-types";
 import type { Readme, ReadmeSections } from "@/data/readme";
 import { Trans, useTranslation } from "react-i18next";
@@ -88,15 +92,26 @@ export default function ProductDetails({
     <Tabs
       value={selectedTab}
       onValueChange={(value) => changeTab(value)}
-      className="min-w-0 space-y-12"
+      className="-mt-9 min-w-0 space-y-4 md:mt-0 md:space-y-12"
     >
-      <TabsList variant="line">
+      <TabsList variant="line" className="hidden md:flex">
         {tabs.map(({ value, label }) => (
           <TabsTrigger key={value} className="px-6 py-5" value={value}>
             <H4>{label}</H4>
           </TabsTrigger>
         ))}
       </TabsList>
+      <NativeSelect
+        className="w-full md:hidden [&_select]:h-10"
+        value={selectedTab}
+        onChange={(e) => changeTab(e.currentTarget.value)}
+      >
+        {tabs.map(({ value, label }) => (
+          <NativeSelectOption key={value} value={value} className="w-full">
+            {label}
+          </NativeSelectOption>
+        ))}
+      </NativeSelect>
       {tabs.map(({ value, content }) => (
         <TabsContent key={value} value={value}>
           {content}

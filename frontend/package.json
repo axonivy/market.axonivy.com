@@ -36,8 +36,7 @@
     "react-markdown": "^10.1.0",
     "rehype-raw": "^7.0.0",
     "rehype-sanitize": "^6.0.0",
-    "remark-gfm": "^4.0.1",
-    "vitest": "^5.0.3"
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@astrojs/compiler": "^4.0.0",
