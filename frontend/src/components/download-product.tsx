@@ -13,6 +13,7 @@ import {
 import { isDownloadable, type ProductArtifact } from "@/data/product-types";
 import { newestFirst, versionsToDisplay } from "@/data/versions";
 import { Checkbox } from "@/components/ui/checkbox";
+import "@/translation/ui";
 import type { Lang } from "@/translation/ui";
 import { useTranslation } from "react-i18next";
 

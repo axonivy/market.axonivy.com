@@ -9,6 +9,13 @@ export default defineConfig({
   reporter: "html",
   use: { baseURL: "http://localhost:4321", trace: "on-first-retry" },
 
+  webServer: {
+    command: "pnpm build && pnpm preview",
+    url: "http://localhost:4321",
+    reuseExistingServer: !process.env.CI,
+    timeout: 15 * 60 * 1000,
+  },
+
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
     { name: "firefox", use: { ...devices["Desktop Firefox"] } },
