@@ -110,7 +110,10 @@ export default function ProductDetails({
                           </H3>
                           <CollapsibleTrigger
                             render={
-                              <Button variant="ghost">
+                              <Button
+                                variant="ghost"
+                                className="hover:bg-transparent aria-expanded:bg-transparent dark:hover:bg-transparent"
+                              >
                                 <IconChevronDown className="group-data-panel-open/button:rotate-180" />
                               </Button>
                             }
@@ -171,7 +174,7 @@ export default function ProductDetails({
     >
       <TabsList variant="line" className="hidden md:flex">
         {tabs.map(({ value, label }) => (
-          <TabsTrigger key={value} className="px-6 py-5" value={value}>
+          <TabsTrigger key={value} className="px-5.25 py-4.5" value={value}>
             <H4>{label}</H4>
           </TabsTrigger>
         ))}

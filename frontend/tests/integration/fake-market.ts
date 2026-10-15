@@ -1,12 +1,12 @@
+import { strToU8, zipSync } from "fflate";
 import { execFile } from "node:child_process";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { createServer, type Server } from "node:http";
+import { createServer, type IncomingHttpHeaders, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { strToU8, zipSync } from "fflate";
 import type { MarketIndex } from "../../scripts/fetch-market.ts";
 
 const SCRIPT = path.resolve(
@@ -57,11 +57,13 @@ export class FakeMaven {
   url = "";
   // Every requested path, in order.
   requests: string[] = [];
+  headers: IncomingHttpHeaders[] = [];
 
   async start() {
     this.server = createServer((request, response) => {
       const url = request.url ?? "";
       this.requests.push(url);
+      this.headers.push(request.headers);
       const status = this.statuses.get(url)?.shift();
       const file = this.files.get(url);
       if (status !== undefined) {
@@ -137,6 +139,16 @@ export class FakeMaven {
   }
 }
 
+export class FakeGitHub extends FakeMaven {
+  releasesPath(repo: string, page = 1) {
+    return `/repos/${repo}/releases?per_page=100&page=${page}`;
+  }
+
+  releases(repo: string, releases: unknown[], page = 1) {
+    this.set(this.releasesPath(repo, page), JSON.stringify(releases));
+  }
+}
+
 type MetaArtifact = Record<string, unknown>;
 
 // A checkout of the market repo, in the folder layout fetch-market.ts expects.
@@ -165,6 +177,7 @@ export class FakeMarket {
       withMaven = true,
       artifacts = undefined as MetaArtifact[] | undefined,
       files = {} as Files,
+      sourceUrl = undefined as string | undefined,
     } = {},
   ) {
     const dir = this.productDir(id);
@@ -173,6 +186,7 @@ export class FakeMarket {
       id,
       name: id,
       type: "connector",
+      ...(sourceUrl && { sourceUrl }),
       mavenArtifacts:
         artifacts ??
         (withMaven
@@ -195,7 +209,10 @@ export class FakeMarket {
 
   // Runs the real script (as a separate process, like `pnpm fetch-data`).
   // Rejects if the script exits with an error.
-  async fetch(maven: FakeMaven): Promise<MarketIndex> {
+  async fetch(
+    maven: FakeMaven,
+    { github, token }: { github?: FakeGitHub; token?: string } = {},
+  ): Promise<MarketIndex> {
     try {
       const { stdout, stderr } = await promisify(execFile)(
         "node",
@@ -205,6 +222,8 @@ export class FakeMarket {
             ...process.env,
             MARKET_ROOT: this.root,
             MARKET_MAVEN_URL: maven.url,
+            MARKET_GITHUB_API_URL: github?.url ?? "http://127.0.0.1:1",
+            GITHUB_TOKEN: token ?? "",
           },
         },
       );

@@ -65,6 +65,7 @@ test.describe("a-trust", () => {
       "Demo",
       "Installation Guide",
       "Maven",
+      "Changelog",
     ]);
     await expect(
       page.getByRole("tab", { name: "Description" }),
@@ -146,6 +147,20 @@ test.describe("a-trust", () => {
       .first();
     await expect(link).toHaveAttribute("href", "https://www.a-trust.at");
     await expect(link).toHaveAttribute("target", "_blank");
+  });
+
+  test("shows the changelog from the GitHub releases", async ({ page }) => {
+    await page.getByRole("tab", { name: "Changelog" }).click();
+    await expect(page).toHaveURL(/#changelog$/);
+
+    const panel = page.getByRole("tabpanel");
+    await expect(
+      panel.getByRole("heading", { level: 4 }).first().getByRole("link"),
+    ).toHaveAttribute(
+      "href",
+      /^https:\/\/github\.com\/axonivy-market\/a-trust-connector\/releases\/tag\//,
+    );
+    await expect(panel.getByText("Latest", { exact: true })).toHaveCount(1);
   });
 });
 
