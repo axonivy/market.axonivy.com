@@ -2,6 +2,10 @@
   "ariaLabels": {
     "toggleTheme": "Toggle theme"
   },
+  "codeBlock": {
+    "copied": "copied",
+    "copy": "copy"
+  },
   "common": {
     "connector": "Connector",
     "connectors": "Connectors",
@@ -103,6 +107,7 @@
       "title": "Install Now"
     },
     "tabs": {
+      "changelog": "Changelog",
       "components": "Components",
       "demo": "Demo",
       "dependencies": {

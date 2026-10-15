@@ -1,4 +1,21 @@
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { CodeBlock } from "@/components/ui/code-block";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Base, Code, H3, H4, P } from "@/components/ui/typography";
+import type { ProductDependency } from "@/data/product-types";
+import type { Readme, ReadmeSections } from "@/data/readme";
+import "@/translation/ui";
+import type { Lang } from "@/translation/ui";
+import { IconChevronDown } from "@tabler/icons-react";
+import type { TFunction } from "i18next";
 import { useEffect, useState, type ReactNode } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import ReactMarkdown, {
   defaultUrlTransform,
   type Components,
@@ -6,19 +23,13 @@ import ReactMarkdown, {
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
-import { CodeBlock } from "@/components/ui/code-block";
-import { Base, Code, H4 } from "@/components/ui/typography";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { ChangelogRelease } from "../../scripts/fetch-market";
+import { Button } from "./ui/button";
 import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@/components/ui/native-select";
-import type { ProductDependency } from "@/data/product-types";
-import type { Readme, ReadmeSections } from "@/data/readme";
-import { Trans, useTranslation } from "react-i18next";
-import type { TFunction } from "i18next";
-import "@/translation/ui";
-import type { Lang } from "@/translation/ui";
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "./ui/collapsible";
 
 const getReadmeTabs = (
   t: TFunction,
@@ -38,10 +49,12 @@ export type MavenDependency = ProductDependency & {
 export default function ProductDetails({
   readme,
   maven,
+  changelog,
   lang,
 }: {
   readme?: Readme;
   maven?: MavenDependency;
+  changelog?: ChangelogRelease[];
   lang: Lang;
 }) {
   const { t } = useTranslation(undefined, { lng: lang });
@@ -54,7 +67,11 @@ export default function ProductDetails({
         value,
         label,
         content: (
-          <Markdown markdown={sections![value]!} baseUrl={readme!.baseUrl} />
+          <Markdown
+            markdown={sections![value]!}
+            baseUrl={readme!.baseUrl}
+            lang={lang}
+          />
         ),
       })),
     ...(maven && !sections?.components
@@ -63,6 +80,64 @@ export default function ProductDetails({
             value: "dependency",
             label: t("productDetails.tabs.dependencies.maven.title"),
             content: <Maven {...maven} lang={lang} />,
+          },
+        ]
+      : []),
+    ...(changelog?.length
+      ? [
+          {
+            value: "changelog",
+            label: t("productDetails.tabs.changelog"),
+            content: (
+              <div className="space-y-10">
+                {changelog.map((release) => (
+                  <Card key={release.url}>
+                    <Collapsible
+                      defaultOpen={true}
+                      className="flex flex-col gap-2"
+                    >
+                      <CardHeader className="gap-4">
+                        <div className="flex flex-row justify-between">
+                          <H3 className="flex flex-row items-center gap-4">
+                            <a
+                              href={release.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {release.name}
+                            </a>
+                            {release.latest && <Badge>Latest</Badge>}
+                          </H3>
+                          <CollapsibleTrigger
+                            render={
+                              <Button variant="ghost">
+                                <IconChevronDown className="group-data-panel-open/button:rotate-180" />
+                              </Button>
+                            }
+                          />
+                        </div>
+
+                        <P className="text-n800">
+                          {new Date(release.publishedAt).toLocaleDateString(
+                            lang,
+                            { timeZone: "UTC" },
+                          )}
+                        </P>
+                      </CardHeader>
+                      <CollapsibleContent>
+                        <CardContent>
+                          <Markdown
+                            markdown={release.body}
+                            baseUrl=""
+                            lang={lang}
+                          />
+                        </CardContent>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </Card>
+                ))}
+              </div>
+            ),
           },
         ]
       : []),
@@ -124,9 +199,11 @@ export default function ProductDetails({
 function Markdown({
   markdown,
   baseUrl,
+  lang,
 }: {
   markdown: string;
   baseUrl: string;
+  lang: Lang;
 }) {
   return (
     <div className="prose max-w-none">
@@ -134,7 +211,7 @@ function Markdown({
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw, rehypeSanitize]}
         urlTransform={(url, key) => resolveUrl(url, key, baseUrl)}
-        components={MARKDOWN_COMPONENTS}
+        components={MARKDOWN_COMPONENTS(lang)}
       >
         {markdown}
       </ReactMarkdown>
@@ -142,11 +219,18 @@ function Markdown({
   );
 }
 
-const MARKDOWN_COMPONENTS: Components = {
+const MARKDOWN_COMPONENTS = (lang: Lang): Components => ({
+  h2: ({ children }) => (
+    <>
+      <H4>{children}</H4>
+      <Separator />
+    </>
+  ),
   pre: ({ node }) => (
     <CodeBlock
       className="not-prose my-4"
       code={textContent(node).replace(/\n$/, "")}
+      lang={lang}
     />
   ),
   code: ({ children }) => <Code className="not-prose">{children}</Code>,
@@ -161,7 +245,7 @@ const MARKDOWN_COMPONENTS: Components = {
       {children}
     </a>
   ),
-};
+});
 
 type HastNode = { type: string; value?: string; children?: HastNode[] };
 
@@ -207,7 +291,7 @@ function Maven({
           components={{ code: <Code /> }}
         />
       </Base>
-      <CodeBlock code={snippet} />
+      <CodeBlock code={snippet} lang={lang} />
     </div>
   );
 }

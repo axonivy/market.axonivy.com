@@ -18,12 +18,14 @@ const MARKET_REPO_URL = "https://github.com/axonivy-market/market.git";
 const MARKET_REPO_DIR = path.join(ROOT, ".market", "market");
 const PRODUCTS_DIR = path.join(MARKET_REPO_DIR, "market");
 const CACHE_DIR = path.join(ROOT, ".market", "cache");
+const CHANGELOG_DIR = path.join(ROOT, ".market", "changelogs");
 const INDEX_FILE = path.join(ROOT, ".market", "products.json");
 const PUBLIC_DIR = path.join(ROOT, "public", "market-cache");
 const PUBLIC_URL = "/market-cache";
 
 const DEFAULT_REPO_URL =
   process.env.MARKET_MAVEN_URL ?? "https://maven.axonivy.com";
+const GITHUB_API_URL = process.env.GITHUB_API_URL ?? "https://api.github.com";
 const DEFAULT_TYPE = "iar";
 const CONCURRENCY = 16;
 
@@ -50,6 +52,7 @@ type Meta = {
   id: string;
   name: string;
   type: string;
+  sourceUrl?: string;
   mavenArtifacts?: MetaArtifact[];
 };
 
@@ -88,8 +91,17 @@ export type IndexProduct = {
   dependency?: IndexDependency;
   mavenDropins?: boolean;
   artifacts: IndexArtifact[];
+  changelog?: string;
   // Newest first
   installable: IndexInstallable[];
+};
+
+export type ChangelogRelease = {
+  name: string;
+  publishedAt: string;
+  url: string;
+  body: string;
+  latest: boolean;
 };
 
 export type MarketIndex = { generatedAt: string; products: IndexProduct[] };
@@ -112,10 +124,14 @@ function warn(message: string) {
 
 class NotFoundError extends Error {}
 
-async function fetchWithRetry(url: string, retries = 3): Promise<Response> {
+async function fetchWithRetry(
+  url: string,
+  retries = 3,
+  init?: RequestInit,
+): Promise<Response> {
   for (let attempt = 1; ; attempt++) {
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, init);
       if (response.status === 404) {
         throw new NotFoundError(`404 ${url}`);
       }
@@ -608,7 +624,74 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
     };
   }
 
+  if (meta.sourceUrl) {
+    const releases = await fetchReleases(meta.sourceUrl);
+    if (releases.length > 0) {
+      const file = path.join(CHANGELOG_DIR, `${meta.id}.json`);
+      await writeFile(file, JSON.stringify(releases, null, 2));
+      product.changelog = toPosix(path.relative(ROOT, file));
+    }
+  }
+
   return product;
+}
+
+// GitHub
+
+const GITHUB_HEADERS: HeadersInit = {
+  Accept: "application/vnd.github+json",
+  ...(process.env.GITHUB_TOKEN && {
+    Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+  }),
+};
+
+type GitHubRelease = {
+  name: string | null;
+  tag_name: string;
+  published_at: string | null;
+  html_url: string;
+  body: string | null;
+  draft: boolean;
+  prerelease: boolean;
+};
+
+function githubRepo(sourceUrl: string): string | undefined {
+  return sourceUrl
+    .match(/^https:\/\/github\.com\/([^/]+\/[^/#?]+)/)?.[1]
+    ?.replace(/\.git$/, "");
+}
+
+async function fetchReleases(sourceUrl: string): Promise<ChangelogRelease[]> {
+  const repo = githubRepo(sourceUrl);
+  if (!repo) return [];
+  const releases: GitHubRelease[] = [];
+  try {
+    for (let page = 1; ; page++) {
+      const response = await fetchWithRetry(
+        `${GITHUB_API_URL}/repos/${repo}/releases?per_page=100&page=${page}`,
+        3,
+        { headers: GITHUB_HEADERS },
+      );
+      const batch = (await response.json()) as GitHubRelease[];
+      releases.push(...batch);
+      if (batch.length < 100) break;
+    }
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      warn(`GitHub repo not found: ${repo}`);
+      return [];
+    }
+    throw error;
+  }
+  const published = releases.filter((release) => !release.draft);
+  const latest = published.find((release) => !release.prerelease);
+  return published.map((release) => ({
+    name: release.name || release.tag_name,
+    publishedAt: release.published_at ?? "",
+    url: release.html_url,
+    body: release.body ?? "",
+    latest: release === latest,
+  }));
 }
 
 // Main
@@ -637,6 +720,8 @@ async function main() {
 
   await rm(PUBLIC_DIR, { recursive: true, force: true });
   await mkdir(PUBLIC_DIR, { recursive: true });
+  await rm(CHANGELOG_DIR, { recursive: true, force: true });
+  await mkdir(CHANGELOG_DIR, { recursive: true });
 
   const metaFiles = await findMetaFiles();
   console.log(`Processing ${metaFiles.length} products…`);
