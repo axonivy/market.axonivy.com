@@ -7,7 +7,18 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
-  use: { baseURL: "http://localhost:4321", trace: "on-first-retry" },
+  use: {
+    baseURL: "http://localhost:4321",
+    trace: "on-first-retry",
+    screenshot: "only-on-failure",
+  },
+
+  webServer: {
+    command: "pnpm build && pnpm preview",
+    url: "http://localhost:4321",
+    reuseExistingServer: !process.env.CI,
+    timeout: 15 * 60 * 1000,
+  },
 
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },

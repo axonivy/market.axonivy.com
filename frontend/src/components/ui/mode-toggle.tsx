@@ -2,6 +2,7 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { IconMoon, IconSun } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
+import "@/translation/ui";
 import type { Lang } from "@/translation/ui";
 
 type Theme = "light" | "dark";
