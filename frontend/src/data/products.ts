@@ -79,6 +79,7 @@ function loadProducts(): Product[] {
         versions: data?.versions ?? [],
         featuredVersion: data?.featuredVersion,
         readme: data?.readme,
+        changelog: data?.changelog,
         dependency: data?.dependency,
         mavenDropins: data?.mavenDropins,
         artifacts: data?.artifacts ?? [],

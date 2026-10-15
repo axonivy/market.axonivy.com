@@ -77,6 +77,7 @@ export type Product = Omit<ProductMeta, "vendor" | "vendorUrl" | "cost"> & {
   versions: string[];
   featuredVersion?: string;
   readme?: { file: string; baseUrl: string };
+  changelog?: string;
   dependency?: ProductDependency;
   mavenDropins?: boolean;
   artifacts: ProductArtifact[];

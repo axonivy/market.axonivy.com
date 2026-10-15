@@ -30,6 +30,8 @@ import AxonIvyLogo from "@/assets/axonivy-logo-2021-rgb.svg";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { loadReadme } from "@/data/readme";
 import { localePath } from "@/translation/language";
+import type { ChangelogRelease } from "../../../../scripts/fetch-market";
+import { readFile } from "node:fs/promises";
 
 export function getStaticPaths() {
   return getAllProducts().flatMap((product) =>
@@ -50,6 +52,10 @@ const name = localize(product.names, lang, product.name);
 
 const readme = product.readme
   ? await loadReadme(product.readme, lang)
+  : undefined;
+
+const changelog: ChangelogRelease[] | undefined = product.changelog
+  ? JSON.parse(await readFile(product.changelog, "utf8"))
   : undefined;
 
 const maven =
@@ -194,7 +200,13 @@ const information: InformationRow[] = [
     </div>
     <div class="flex flex-col gap-12 md:flex-row">
       <div class="flex md:w-2/3">
-        <ProductDetails client:load readme={readme} maven={maven} lang={lang} />
+        <ProductDetails
+          client:load
+          readme={readme}
+          maven={maven}
+          changelog={changelog}
+          lang={lang}
+        />
       </div>
       <div class="flex flex-col gap-4 md:w-1/3">
         <H4>{t("productDetails.information.title")}</H4>

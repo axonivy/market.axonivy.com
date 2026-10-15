@@ -1,12 +1,15 @@
-import { useState } from "react";
-import { IconCheck, IconCopy } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { Lang } from "@/translation/ui";
+import { IconCheck, IconCopy } from "@tabler/icons-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
-type CodeBlockProps = { code: string; className?: string };
+type CodeBlockProps = { code: string; className?: string; lang: Lang };
 
-export function CodeBlock({ code, className }: CodeBlockProps) {
+export function CodeBlock({ code, className, lang }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
+  const { t } = useTranslation(undefined, { lng: lang });
 
   async function copyCode() {
     await navigator.clipboard.writeText(code);
@@ -29,14 +32,14 @@ export function CodeBlock({ code, className }: CodeBlockProps) {
         variant="outline"
         size="sm"
         onClick={copyCode}
-        aria-label={copied ? "Code copied" : "Copy code"}
+        aria-label={copied ? t("codeBlock.copied") : t("codeBlock.copy")}
       >
         {copied ? (
           <IconCheck className="size-4" aria-hidden="true" />
         ) : (
           <IconCopy className="size-4" aria-hidden="true" />
         )}
-        {copied ? "Copied" : "Copy"}
+        {copied ? t("codeBlock.copied") : t("codeBlock.copy")}
       </Button>
     </div>
   );
