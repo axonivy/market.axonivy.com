@@ -13,7 +13,7 @@ test("lists the products with the featured ones first", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Axon Ivy Market", level: 1 }),
   ).toBeVisible();
-  expect(await cards(page).count()).toBeGreaterThan(50);
+  await expect(cards(page).nth(50)).toBeVisible();
 
   const first = cards(page).first();
   await expect(first).toHaveAttribute("href", "/portal");
@@ -36,11 +36,11 @@ test("filters by type", async ({ page }) => {
   ).toHaveAttribute("aria-pressed", "true");
   await expect(card(page, "a-trust")).toBeVisible();
   await expect(card(page, "portal")).toHaveCount(0);
-  for (const connector of await cards(page).all()) {
-    await expect(
-      connector.getByText("Connector", { exact: true }),
-    ).toBeVisible();
-  }
+  await expect(
+    cards(page).filter({
+      hasNot: page.getByText("Connector", { exact: true }),
+    }),
+  ).toHaveCount(0);
 
   await page.getByRole("button", { name: "All" }).click();
   await expect(card(page, "portal")).toBeVisible();
@@ -53,6 +53,7 @@ test("searches name and description", async ({ page }) => {
   await expect(card(page, "a-trust")).toBeVisible();
 
   await search(page).fill("mobile phone signature");
+  await expect(page).toHaveURL(/[?&]q=mobile(\+|%20)phone(\+|%20)signature/);
   await expect(card(page, "a-trust")).toBeVisible();
 
   await search(page).fill("no product matches this");
@@ -63,18 +64,20 @@ test("searches name and description", async ({ page }) => {
 });
 
 test("sorts A-Z and Z-A", async ({ page }) => {
-  const names = () => cards(page).locator("h5").allTextContents();
+  const names = cards(page).locator("h5");
+  await expect(names.nth(50)).toBeVisible();
   const sorted = (list: string[]) =>
     [...list].sort((a, b) => a.localeCompare(b));
 
   await page.getByRole("combobox").selectOption("az");
   await expect(page).toHaveURL(/[?&]sort=az/);
-  const az = await names();
-  expect(az).toEqual(sorted(az));
+  await expect(names).toHaveText(sorted(await names.allTextContents()));
 
   await page.getByRole("combobox").selectOption("za");
-  const za = await names();
-  expect(za).toEqual(sorted(za).reverse());
+  await expect(page).toHaveURL(/[?&]sort=za/);
+  await expect(names).toHaveText(
+    sorted(await names.allTextContents()).reverse(),
+  );
 });
 
 test("restores filter, search and sort from the URL", async ({ page }) => {
