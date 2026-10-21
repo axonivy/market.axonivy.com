@@ -18,13 +18,8 @@ export function CodeBlock({ code, className, lang }: CodeBlockProps) {
   }
 
   return (
-    <div
-      className={cn(
-        "bg-n100 text-n900 flex items-start justify-between gap-4 rounded-md p-4",
-        className,
-      )}
-    >
-      <code className="font-code min-w-0 flex-1 text-sm wrap-break-word whitespace-pre-wrap">
+    <div className={cn("bg-n100 text-n900 relative rounded-md p-4", className)}>
+      <code className="font-code block text-sm wrap-break-word whitespace-pre-wrap">
         {code}
       </code>
       <Button
@@ -33,6 +28,7 @@ export function CodeBlock({ code, className, lang }: CodeBlockProps) {
         size="sm"
         onClick={copyCode}
         aria-label={copied ? t("codeBlock.copied") : t("codeBlock.copy")}
+        className="absolute top-2 right-2"
       >
         {copied ? (
           <IconCheck className="size-4" aria-hidden="true" />
