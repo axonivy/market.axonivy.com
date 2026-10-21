@@ -23,7 +23,7 @@ import ReactMarkdown, {
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
-import type { ChangelogRelease } from "../../scripts/fetch-market";
+import type { ChangelogRelease } from "../../scripts/fetch-changelog";
 import { Button } from "./ui/button";
 import {
   Collapsible,
