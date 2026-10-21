@@ -2,30 +2,34 @@ import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { pathToFileURL } from "node:url";
 import { unzipSync } from "fflate";
 import {
   compareVersions,
   isSnapshot,
   newestFirst,
 } from "../src/data/versions.ts";
+import {
+  fetchWithRetry,
+  INDEX_FILE,
+  mapLimit,
+  NotFoundError,
+  readJson,
+  ROOT,
+  toPosix,
+  warn,
+  warnings,
+} from "./shared.ts";
 
-const ROOT = path.resolve(
-  process.env.MARKET_ROOT ??
-    path.join(path.dirname(fileURLToPath(import.meta.url)), ".."),
-);
 const MARKET_REPO_URL = "https://github.com/axonivy-market/market.git";
 const MARKET_REPO_DIR = path.join(ROOT, ".market", "market");
 const PRODUCTS_DIR = path.join(MARKET_REPO_DIR, "market");
 const CACHE_DIR = path.join(ROOT, ".market", "cache");
-const CHANGELOG_DIR = path.join(ROOT, ".market", "changelogs");
-const INDEX_FILE = path.join(ROOT, ".market", "products.json");
 const PUBLIC_DIR = path.join(ROOT, "public", "market-cache");
 const PUBLIC_URL = "/market-cache";
 
 const DEFAULT_REPO_URL =
   process.env.MARKET_MAVEN_URL ?? "https://maven.axonivy.com";
-const GITHUB_API_URL = process.env.GITHUB_API_URL ?? "https://api.github.com";
 const DEFAULT_TYPE = "iar";
 const CONCURRENCY = 16;
 
@@ -96,14 +100,6 @@ export type IndexProduct = {
   installable: IndexInstallable[];
 };
 
-export type ChangelogRelease = {
-  name: string;
-  publishedAt: string;
-  url: string;
-  body: string;
-  latest: boolean;
-};
-
 export type MarketIndex = { generatedAt: string; products: IndexProduct[] };
 
 type CacheMarker = { zipUrl: string; full: boolean; missing?: boolean };
@@ -114,39 +110,7 @@ const stats = {
   downloaded: 0,
   cached: 0,
   missing: 0,
-  warnings: [] as string[],
 };
-
-function warn(message: string) {
-  stats.warnings.push(message);
-  console.warn(`  ⚠ ${message}`);
-}
-
-class NotFoundError extends Error {}
-
-async function fetchWithRetry(
-  url: string,
-  retries = 3,
-  init?: RequestInit,
-): Promise<Response> {
-  for (let attempt = 1; ; attempt++) {
-    try {
-      const response = await fetch(url, init);
-      if (response.status === 404) {
-        throw new NotFoundError(`404 ${url}`);
-      }
-      if (!response.ok) {
-        throw new Error(`${response.status} ${url}`);
-      }
-      return response;
-    } catch (error) {
-      if (error instanceof NotFoundError || attempt >= retries) {
-        throw error;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
-    }
-  }
-}
 
 async function fetchText(url: string) {
   return (await fetchWithRetry(url)).text();
@@ -156,42 +120,10 @@ async function fetchBytes(url: string) {
   return new Uint8Array(await (await fetchWithRetry(url)).arrayBuffer());
 }
 
-async function mapLimit<T, R>(
-  items: T[],
-  limit: number,
-  fn: (item: T) => Promise<R>,
-): Promise<R[]> {
-  const results: R[] = new Array(items.length);
-  let next = 0;
-  const workers = Array.from(
-    { length: Math.min(limit, items.length) },
-    async () => {
-      while (next < items.length) {
-        const index = next++;
-        results[index] = await fn(items[index]);
-      }
-    },
-  );
-  await Promise.all(workers);
-  return results;
-}
-
 function xmlValues(xml: string, tag: string): string[] {
   return [...xml.matchAll(new RegExp(`<${tag}>([^<]*)</${tag}>`, "g"))].map(
     (match) => match[1].trim(),
   );
-}
-
-async function readJson<T>(file: string): Promise<T | undefined> {
-  try {
-    return JSON.parse(await readFile(file, "utf8")) as T;
-  } catch {
-    return undefined;
-  }
-}
-
-function toPosix(file: string) {
-  return file.split(path.sep).join("/");
 }
 
 // Maven
@@ -624,74 +556,7 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
     };
   }
 
-  if (meta.sourceUrl) {
-    const releases = await fetchReleases(meta.sourceUrl);
-    if (releases.length > 0) {
-      const file = path.join(CHANGELOG_DIR, `${meta.id}.json`);
-      await writeFile(file, JSON.stringify(releases, null, 2));
-      product.changelog = toPosix(path.relative(ROOT, file));
-    }
-  }
-
   return product;
-}
-
-// GitHub
-
-const GITHUB_HEADERS: HeadersInit = {
-  Accept: "application/vnd.github+json",
-  ...(process.env.GITHUB_TOKEN && {
-    Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-  }),
-};
-
-type GitHubRelease = {
-  name: string | null;
-  tag_name: string;
-  published_at: string | null;
-  html_url: string;
-  body: string | null;
-  draft: boolean;
-  prerelease: boolean;
-};
-
-function githubRepo(sourceUrl: string): string | undefined {
-  return sourceUrl
-    .match(/^https:\/\/github\.com\/([^/]+\/[^/#?]+)/)?.[1]
-    ?.replace(/\.git$/, "");
-}
-
-async function fetchReleases(sourceUrl: string): Promise<ChangelogRelease[]> {
-  const repo = githubRepo(sourceUrl);
-  if (!repo) return [];
-  const releases: GitHubRelease[] = [];
-  try {
-    for (let page = 1; ; page++) {
-      const response = await fetchWithRetry(
-        `${GITHUB_API_URL}/repos/${repo}/releases?per_page=100&page=${page}`,
-        3,
-        { headers: GITHUB_HEADERS },
-      );
-      const batch = (await response.json()) as GitHubRelease[];
-      releases.push(...batch);
-      if (batch.length < 100) break;
-    }
-  } catch (error) {
-    if (error instanceof NotFoundError) {
-      warn(`GitHub repo not found: ${repo}`);
-      return [];
-    }
-    throw error;
-  }
-  const published = releases.filter((release) => !release.draft);
-  const latest = published.find((release) => !release.prerelease);
-  return published.map((release) => ({
-    name: release.name || release.tag_name,
-    publishedAt: release.published_at ?? "",
-    url: release.html_url,
-    body: release.body ?? "",
-    latest: release === latest,
-  }));
 }
 
 // Main
@@ -720,12 +585,20 @@ async function main() {
 
   await rm(PUBLIC_DIR, { recursive: true, force: true });
   await mkdir(PUBLIC_DIR, { recursive: true });
-  await rm(CHANGELOG_DIR, { recursive: true, force: true });
-  await mkdir(CHANGELOG_DIR, { recursive: true });
-
+  const previous = await readJson<MarketIndex>(INDEX_FILE);
   const metaFiles = await findMetaFiles();
   console.log(`Processing ${metaFiles.length} products…`);
   const products = await mapLimit(metaFiles, 4, processProduct);
+
+  // Keep changelogs from the last fetch-changelog run
+  for (const product of products) {
+    const changelog = previous?.products.find(
+      ({ id }) => id === product.id,
+    )?.changelog;
+    if (changelog && existsSync(path.join(ROOT, changelog))) {
+      product.changelog = changelog;
+    }
+  }
 
   const index: MarketIndex = {
     generatedAt: new Date().toISOString(),
@@ -737,7 +610,7 @@ async function main() {
   console.log(
     `\nDone in ${seconds}s: ${products.length} products, ` +
       `${stats.downloaded} zips downloaded, ${stats.cached} cached, ${stats.missing} missing, ` +
-      `${stats.warnings.length} warnings.`,
+      `${warnings.length} warnings.`,
   );
   console.log(`Index written to ${path.relative(ROOT, INDEX_FILE)}`);
 }

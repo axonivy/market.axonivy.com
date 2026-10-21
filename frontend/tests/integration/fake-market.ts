@@ -13,6 +13,10 @@ const SCRIPT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../../scripts/fetch-market.ts",
 );
+const CHANGELOG_SCRIPT = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../scripts/fetch-changelog.ts",
+);
 
 type Files = Record<string, string | Uint8Array>;
 
@@ -213,32 +217,43 @@ export class FakeMarket {
     maven: FakeMaven,
     { github, token }: { github?: FakeGitHub; token?: string } = {},
   ): Promise<MarketIndex> {
+    this.log = "";
+    await this.runScript(SCRIPT, {
+      MARKET_MAVEN_URL: maven.url,
+    });
+    if (github) {
+      await this.runScript(CHANGELOG_SCRIPT, {
+        GITHUB_API_URL: github.url,
+        GITHUB_TOKEN: token ?? "",
+      });
+    }
+    return JSON.parse(
+      await readFile(path.join(this.root, ".market/products.json"), "utf8"),
+    );
+  }
+
+  private async runScript(script: string, variables: NodeJS.ProcessEnv) {
     try {
       const { stdout, stderr } = await promisify(execFile)(
         "node",
-        [SCRIPT, "--no-pull"],
+        [script, ...(script === SCRIPT ? ["--no-pull"] : [])],
         {
           env: {
             ...process.env,
             MARKET_ROOT: this.root,
-            MARKET_MAVEN_URL: maven.url,
-            MARKET_GITHUB_API_URL: github?.url ?? "http://127.0.0.1:1",
-            GITHUB_TOKEN: token ?? "",
+            ...variables,
           },
         },
       );
-      this.log = stdout + stderr;
+      this.log += stdout + stderr;
     } catch (error) {
       const { stdout = "", stderr = "" } = error as {
         stdout?: string;
         stderr?: string;
       };
-      this.log = stdout + stderr;
+      this.log += stdout + stderr;
       throw error;
     }
-    return JSON.parse(
-      await readFile(path.join(this.root, ".market/products.json"), "utf8"),
-    );
   }
 
   // Resolves a path from products.json (relative to MARKET_ROOT).

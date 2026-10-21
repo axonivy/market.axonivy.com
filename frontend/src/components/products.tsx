@@ -1,20 +1,16 @@
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Base, H5 } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@/components/ui/native-select";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { IconBan, IconSearch, IconX } from "@tabler/icons-react";
-import { parseAsString, parseAsStringLiteral, useQueryStates } from "nuqs";
-import { NuqsAdapter } from "nuqs/adapters/react";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import { Base, H5 } from "@/components/ui/typography";
 import {
   FILTER_VALUES,
   getFilters,
@@ -22,10 +18,14 @@ import {
   type Filter,
   type ProductSummary,
 } from "@/data/product-types";
+import { cn } from "@/lib/utils";
+import { localePath } from "@/translation/language";
 import "@/translation/ui";
 import type { Lang } from "@/translation/ui";
+import { IconBan, IconSearch, IconX } from "@tabler/icons-react";
+import { parseAsString, parseAsStringLiteral, useQueryStates } from "nuqs";
+import { NuqsAdapter } from "nuqs/adapters/react";
 import { useTranslation } from "react-i18next";
-import { localePath } from "@/translation/language";
 
 const SORT_VALUES = ["featured", "az", "za"] as const;
 type SortOrder = (typeof SORT_VALUES)[number];

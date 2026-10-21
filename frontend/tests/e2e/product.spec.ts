@@ -129,11 +129,11 @@ test.describe("a-trust", () => {
 
     await page
       .getByRole("tabpanel")
-      .getByRole("button", { name: "Copy code" })
+      .getByRole("button", { name: "copy" })
       .click();
 
     await expect(
-      page.getByRole("tabpanel").getByRole("button", { name: "Code copied" }),
+      page.getByRole("tabpanel").getByRole("button", { name: "copied" }),
     ).toBeVisible();
     expect(await page.evaluate(() => navigator.clipboard.readText())).toContain(
       "<artifactId>a-trust-connector</artifactId>",
@@ -155,7 +155,7 @@ test.describe("a-trust", () => {
 
     const panel = page.getByRole("tabpanel");
     await expect(
-      panel.getByRole("heading", { level: 4 }).first().getByRole("link"),
+      panel.getByRole("heading", { level: 3 }).first().getByRole("link"),
     ).toHaveAttribute(
       "href",
       /^https:\/\/github\.com\/axonivy-market\/a-trust-connector\/releases\/tag\//,
