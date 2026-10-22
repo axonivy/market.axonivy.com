@@ -3,7 +3,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { H5, H6 } from "@/components/ui/typography";
 import Robot from "@/assets/robot.svg";
 import i18next, { type Lang } from "@/translation/ui";
-import { localePath } from "@/translation/language";
+import { localeRelativePath } from "@/translation/language";
 
 const lang = (Astro.currentLocale ?? "en") as Lang;
 const t = i18next.getFixedT(lang);
@@ -21,7 +21,7 @@ const t = i18next.getFixedT(lang);
     </H5>
     <a
       class={buttonVariants({ size: "lg" }) + " w-fit md:w-full"}
-      href={localePath(lang, "/")}
+      href={localeRelativePath(lang, "/", Astro.url.pathname)}
     >
       {t("notFound.linkHome")}
     </a>

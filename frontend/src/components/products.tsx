@@ -19,7 +19,7 @@ import {
   type ProductSummary,
 } from "@/data/product-types";
 import { cn } from "@/lib/utils";
-import { localePath } from "@/translation/language";
+import { localeRelativePath, relativePath } from "@/translation/language";
 import "@/translation/ui";
 import type { Lang } from "@/translation/ui";
 import { IconBan, IconSearch, IconX } from "@tabler/icons-react";
@@ -66,17 +66,25 @@ function getVisibleProducts(
     );
 }
 
-type ProductsProps = { products: ProductSummary[]; lang: Lang };
+type ProductsProps = {
+  products: ProductSummary[];
+  lang: Lang;
+  currentPath: string;
+};
 
-export default function Products({ products, lang }: ProductsProps) {
+export default function Products({
+  products,
+  lang,
+  currentPath,
+}: ProductsProps) {
   return (
     <NuqsAdapter>
-      <ProductList products={products} lang={lang} />
+      <ProductList products={products} lang={lang} currentPath={currentPath} />
     </NuqsAdapter>
   );
 }
 
-function ProductList({ products, lang }: ProductsProps) {
+function ProductList({ products, lang, currentPath }: ProductsProps) {
   const [{ type, sort, q }, setParams] = useQueryStates(productSearchParams);
   const visibleProducts = getVisibleProducts(products, type, q, sort);
   const { t } = useTranslation(undefined, { lng: lang });
@@ -149,11 +157,14 @@ function ProductList({ products, lang }: ProductsProps) {
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {visibleProducts.map((product) => (
-          <a href={localePath(lang, `/${product.id}`)} key={product.id}>
+          <a
+            href={localeRelativePath(lang, `/${product.id}`, currentPath)}
+            key={product.id}
+          >
             <Card className="min-h-66">
               <CardHeader className="flex flex-row justify-between">
                 <img
-                  src={product.logo}
+                  src={relativePath(currentPath, product.logo)}
                   alt=""
                   width={70}
                   height={70}
@@ -165,7 +176,7 @@ function ProductList({ products, lang }: ProductsProps) {
                 />
                 {product.logoDark && (
                   <img
-                    src={product.logoDark}
+                    src={relativePath(currentPath, product.logoDark)}
                     alt=""
                     width={70}
                     height={70}

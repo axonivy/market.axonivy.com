@@ -5,6 +5,7 @@ import "@/styles/global.css";
 import { Font } from "astro:assets";
 import i18next, { type Lang } from "@/translation/ui";
 import { getLanguageUrls } from "@/translation/urls";
+import { relativePath } from "@/translation/language";
 
 const lang = (Astro.currentLocale ?? "en") as Lang;
 const t = i18next.getFixedT(lang);
@@ -30,8 +31,8 @@ const { redirect = true } = Astro.props as Props;
       } catch {}
     </script>}
     <Font cssVariable="--font-inter" preload />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" type="image/svg+xml" href={relativePath(Astro.url.pathname, "/favicon.svg")} />
+    <link rel="icon" href={relativePath(Astro.url.pathname, "/favicon.ico")} />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
     <title>{t("dashboard.title")}</title>

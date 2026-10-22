@@ -28,8 +28,6 @@ import { useTranslation } from "react-i18next";
 import "@/translation/ui";
 import type { Lang } from "@/translation/ui";
 import type { TFunction } from "i18next";
-import { localePath } from "@/translation/language";
-
 type NavLink = {
   label: string;
   description?: string;
@@ -39,7 +37,10 @@ type NavLink = {
 
 type NavGroup = { label: string; items: { label: string; items: NavLink[] }[] };
 
-const getNavItems = (t: TFunction, lang: Lang): (NavLink | NavGroup)[] => [
+const getNavItems = (
+  t: TFunction,
+  homeUrl: string,
+): (NavLink | NavGroup)[] => [
   {
     label: t("common.download"),
     href: "https://dev.axonivy.com/download",
@@ -72,7 +73,7 @@ const getNavItems = (t: TFunction, lang: Lang): (NavLink | NavGroup)[] => [
           {
             label: t("nav.market"),
             description: t("nav.marketDescription"),
-            href: localePath(lang, "/"),
+            href: homeUrl,
             external: false,
           },
           {
@@ -117,7 +118,7 @@ export default function Navbar({
     <div className="relative">
       <NavigationMenu align="center" className="hidden md:flex">
         <NavigationMenuList>
-          {getNavItems(t, lang).map((item) => {
+          {getNavItems(t, urls[lang]).map((item) => {
             return "items" in item ? (
               <NavigationMenuItem key={item.label}>
                 <NavigationMenuTrigger>{item.label}</NavigationMenuTrigger>
@@ -228,7 +229,7 @@ export default function Navbar({
           >
             <nav aria-label={t("nav.menuMobile")} className="px-4 pt-4">
               <ul className="flex flex-col gap-1">
-                {getNavItems(t, lang).map((item) =>
+                {getNavItems(t, urls[lang]).map((item) =>
                   "items" in item ? (
                     <li key={item.label}>
                       <Collapsible className="flex w-full flex-col gap-2">

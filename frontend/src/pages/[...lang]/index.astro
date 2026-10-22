@@ -37,5 +37,10 @@ export function getStaticPaths() {
       </Base>
     </div>
   </div>
-  <Products client:load products={getProductSummaries(lang)} lang={lang} />
+  <Products
+    client:load
+    products={getProductSummaries(lang)}
+    lang={lang}
+    currentPath={Astro.url.pathname}
+  />
 </Layout>

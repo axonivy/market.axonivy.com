@@ -7,7 +7,7 @@ test("shows the German overview", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Axon Ivy Marktplatz", level: 1 }),
   ).toBeVisible();
-  const aTrust = page.locator('section a[href="/de/a-trust"]');
+  const aTrust = page.locator('section a[href$="a-trust/"]');
   await expect(aTrust).toContainText(
     "Verifiziere deine österreichischen Kunden",
   );
@@ -27,7 +27,7 @@ test("shows the German product page with the German README", async ({
   ).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Home", exact: true }),
-  ).toHaveAttribute("href", "/de");
+  ).toHaveAttribute("href", "../");
 });
 
 test("falls back to the English README", async ({ page }) => {
@@ -74,7 +74,7 @@ test("redirects to the saved language", async ({ page }) => {
 test("keeps the language when opening a product", async ({ page }) => {
   await page.goto("/de");
 
-  await page.locator('section a[href="/de/a-trust"]').click();
+  await page.locator('section a[href$="a-trust/"]').click();
 
   await expect(page).toHaveURL("/de/a-trust");
   await expect(page.locator("html")).toHaveAttribute("lang", "de");

@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "pnpm fetch-data && pnpm fetch-changelog && astro build",
+    "build": "pnpm fetch-data && pnpm fetch-changelog && astro build && node scripts/relativize-dist.mjs",
     "fetch-data": "node scripts/fetch-market.ts",
     "fetch-changelog": "node --env-file-if-exists=.env.local scripts/fetch-changelog.ts",
     "preview": "astro preview",

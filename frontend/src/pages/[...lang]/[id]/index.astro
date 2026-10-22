@@ -22,7 +22,7 @@ import {
 import { loadReadme } from "@/data/readme";
 import Layout from "@/layouts/main.astro";
 import { cn } from "@/lib/utils";
-import { localePath } from "@/translation/language";
+import { localeRelativePath } from "@/translation/language";
 import i18next, { type Lang } from "@/translation/ui";
 import {
   IconAlertTriangle,
@@ -122,7 +122,7 @@ const information: InformationRow[] = [
     <Breadcrumb>
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink href={localePath(lang, "/")}>
+          <BreadcrumbLink href={localeRelativePath(lang, "/", Astro.url.pathname)}>
             {t("nav.home")}
           </BreadcrumbLink>
         </BreadcrumbItem>
