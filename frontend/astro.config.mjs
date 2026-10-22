@@ -1,6 +1,6 @@
 // @ts-check
-import { defineConfig, fontProviders } from "astro/config";
 import tailwindcss from "@tailwindcss/vite";
+import { defineConfig, fontProviders } from "astro/config";
 
 import react from "@astrojs/react";
 
@@ -17,6 +17,7 @@ export default defineConfig({
   fonts: [
     {
       provider: fontProviders.local(),
+      display: "block",
       name: "Inter Variable",
       cssVariable: "--font-inter",
       options: {

@@ -1,30 +1,26 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { P } from "@/components/ui/typography";
+import { useIsDesigner } from "@/data/designer";
 import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@/components/ui/native-select";
+  getInitialShowDevVersions,
+  saveShowDevVersions,
+} from "@/data/dev-versions";
 import { isDownloadable, type ProductArtifact } from "@/data/product-types";
 import { newestFirst, versionsToDisplay } from "@/data/versions";
-import { Checkbox } from "@/components/ui/checkbox";
 import "@/translation/ui";
 import type { Lang } from "@/translation/ui";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-
-const SHOW_DEV_VERSIONS_KEY = "showDevVersions";
-
-function getInitialShowDevVersions(): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-  return localStorage.getItem(SHOW_DEV_VERSIONS_KEY) === "true";
-}
 
 export default function DownloadProduct({
   artifacts,
@@ -42,9 +38,10 @@ export default function DownloadProduct({
     getInitialShowDevVersions,
   );
   const [selectedVersion, setSelectedVersion] = useState<string>();
+  const isDesigner = useIsDesigner();
 
   function changeShowDevVersions(checked: boolean) {
-    localStorage.setItem(SHOW_DEV_VERSIONS_KEY, String(checked));
+    saveShowDevVersions(checked);
     setShowDevVersions(checked);
   }
 
@@ -68,14 +65,17 @@ export default function DownloadProduct({
   const artifact =
     available.find((artifact) => artifact.artifactId === artifactId) ??
     available[0];
-  if (!artifact) return null;
+  if (!artifact || isDesigner) return null;
   const downloadUrl = urlFor(artifact);
 
   return (
     <Popover>
       <PopoverTrigger
         render={
-          <Button variant="outline" className="h-12 px-6 text-base">
+          <Button
+            variant="outline"
+            className="designer:invisible h-12 px-6 text-base"
+          >
             {t("common.download")}
           </Button>
         }

@@ -62,6 +62,9 @@ export type ProductArtifact = IndexArtifact;
 export type ProductInstallable = IndexInstallable;
 export type ProductDependency = IndexDependency;
 
+export const contactUrl = (productId: string) =>
+  `https://www.axonivy.com/marketplace/contact/?market_solutions=${productId}`;
+
 export function isDownloadable(artifact: ProductArtifact): boolean {
   return !artifact.isProduct && artifact.versions.length > 0;
 }

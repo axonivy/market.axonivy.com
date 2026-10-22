@@ -147,10 +147,10 @@ function ProductList({ products, lang }: ProductsProps) {
           </InputGroup>
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {visibleProducts.map((product) => (
           <a href={localePath(lang, `/${product.id}`)} key={product.id}>
-            <Card className="min-h-66">
+            <Card className="h-full">
               <CardHeader className="flex flex-row justify-between">
                 <img
                   src={product.logo}
