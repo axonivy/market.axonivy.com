@@ -10,3 +10,5 @@
 /frontend/playwright/.cache/
 /frontend/playwright/.auth/
 /frontend/.env.local
+/frontend/report*.xml
+bom.json
