@@ -18,7 +18,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "i18n:extract": "i18next-cli extract",
-    "i18n:check": "i18next-cli extract --ci --dry-run"
+    "i18n:check": "i18next-cli extract --ci --dry-run",
+    "sbom": "pnpm sbom --sbom-format cyclonedx > bom.json"
   },
   "dependencies": {
     "@astrojs/check": "0.9.11",
@@ -42,7 +43,7 @@
   "devDependencies": {
     "@astrojs/compiler": "^4.0.0",
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "^1.63.0",
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^22.20.4",

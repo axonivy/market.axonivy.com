@@ -7,6 +7,7 @@ export default getViteConfig({
     // tests/e2e holds the Playwright tests.
     include: ["tests/integration/**/*.test.ts"],
     exclude: ["**/node_modules/**"],
-    outputFile: "report.xml",
+    reporters: ["default", "junit"],
+    outputFile: { junit: "report.xml" },
   },
 });
