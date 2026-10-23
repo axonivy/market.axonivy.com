@@ -15,6 +15,7 @@ The PHP app exposes JSON endpoints only; legacy Twig pages are not routed.
 - `GET /api/product/{id}/install?productVersion=...`
 - `GET /api/product-details/{id}/{version}/bestmatch?isShowDevVersion=...`
 - `GET /api/image/{id}` and `/api/image/{id}-dark`
+- `GET /openapi.json` for the generated OpenAPI 3.1 contract
 
 The backend reads the same generated files as the frontend. Set `MARKET_PRODUCTS_DIR` to the extracted `market-bundle/products` directory, `MARKET_INDEX_FILE` to the generated `products.json`, and `MARKET_CACHE_DIR` to the generated `public/market-cache` directory. Local Docker mounts these from `frontend`; deployments can provide them from the market Maven package or a GitHub Actions artifact.
 

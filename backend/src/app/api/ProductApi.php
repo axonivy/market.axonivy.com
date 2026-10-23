@@ -5,9 +5,39 @@ namespace app\api;
 use app\Config;
 use app\domain\market\Market;
 use app\domain\market\Product;
+use OpenApi\Attributes as OA;
 
 class ProductApi
 {
+  #[OA\Get(
+    path: '/api/product',
+    operationId: 'findProducts',
+    summary: 'Search products by type, keyword, and language',
+    tags: ['Product Controller'],
+    parameters: [
+      new OA\Parameter(
+        name: 'type',
+        in: 'query',
+        required: false,
+        schema: new OA\Schema(type: 'string', enum: ['all', 'connectors', 'utilities', 'solutions', 'demos'], default: 'all')
+      ),
+      new OA\Parameter(name: 'keyword', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+      new OA\Parameter(
+        name: 'language',
+        in: 'query',
+        required: false,
+        schema: new OA\Schema(type: 'string', enum: ['en', 'de'])
+      ),
+    ],
+    responses: [
+      new OA\Response(
+        response: 200,
+        description: 'Matching products',
+        content: new OA\JsonContent(type: 'array', items: new OA\Items(ref: '#/components/schemas/ProductModel'))
+      ),
+      new OA\Response(response: 400, description: 'Invalid filter', content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')),
+    ]
+  )]
   public function getProducts($request, $response, $args)
   {
     $query = $request->getQueryParams();
@@ -51,6 +81,32 @@ class ProductApi
     return $this->json($response, $products);
   }
 
+  #[OA\Get(
+    path: '/api/product/{id}/versions',
+    operationId: 'findProductVersionsById',
+    summary: 'Get product versions and artifact download URLs',
+    tags: ['Product Controller'],
+    parameters: [
+      new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string')),
+      new OA\Parameter(name: 'isShowDevVersion', in: 'query', required: false, schema: new OA\Schema(type: 'boolean', default: false)),
+      new OA\Parameter(
+        name: 'designerVersion',
+        in: 'query',
+        required: false,
+        description: 'Accepted for compatibility; currently does not change the returned versions.',
+        schema: new OA\Schema(type: 'string')
+      ),
+    ],
+    responses: [
+      new OA\Response(
+        response: 200,
+        description: 'Product versions and artifacts',
+        content: new OA\JsonContent(type: 'array', items: new OA\Items(ref: '#/components/schemas/MavenArtifactVersionModel'))
+      ),
+      new OA\Response(response: 404, description: 'Product not found', content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')),
+      new OA\Response(response: 503, description: 'Market index is unavailable', content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')),
+    ]
+  )]
   public function getVersions($request, $response, array $args)
   {
     $index = $this->marketIndex();
@@ -101,6 +157,31 @@ class ProductApi
     return $this->json($response, $result);
   }
 
+  #[OA\Get(
+    path: '/api/product/{id}/install',
+    operationId: 'findProductJsonContent',
+    summary: 'Get product JSON content for installation',
+    tags: ['Product Controller'],
+    parameters: [
+      new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string')),
+      new OA\Parameter(
+        name: 'productVersion',
+        in: 'query',
+        required: false,
+        description: 'The version is required for a successful response; omitting it returns 404.',
+        schema: new OA\Schema(type: 'string')
+      ),
+    ],
+    responses: [
+      new OA\Response(
+        response: 200,
+        description: 'Install descriptor',
+        content: new OA\JsonContent(ref: '#/components/schemas/InstallContent')
+      ),
+      new OA\Response(response: 404, description: 'Product, version, or install descriptor not found', content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')),
+      new OA\Response(response: 503, description: 'Market index is unavailable', content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')),
+    ]
+  )]
   public function getInstall($request, $response, array $args)
   {
     $index = $this->marketIndex();
@@ -154,6 +235,26 @@ class ProductApi
     return $this->json($response, $content);
   }
 
+  #[OA\Get(
+    path: '/api/product-details/{id}/{version}/bestmatch',
+    operationId: 'findBestMatchProductDetailsByVersion',
+    summary: 'Find the first available version in the requested major line',
+    tags: ['Product Details Controller'],
+    parameters: [
+      new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string')),
+      new OA\Parameter(name: 'version', in: 'path', required: true, schema: new OA\Schema(type: 'string')),
+      new OA\Parameter(name: 'isShowDevVersion', in: 'query', required: false, schema: new OA\Schema(type: 'boolean', default: false)),
+    ],
+    responses: [
+      new OA\Response(
+        response: 200,
+        description: 'Best matching version',
+        content: new OA\JsonContent(ref: '#/components/schemas/BestMatchVersion')
+      ),
+      new OA\Response(response: 404, description: 'Product or matching version not found', content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')),
+      new OA\Response(response: 503, description: 'Market index is unavailable', content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')),
+    ]
+  )]
   public function getBestMatch($request, $response, array $args)
   {
     $index = $this->marketIndex();
@@ -184,6 +285,25 @@ class ProductApi
     return $this->json($response, ['message' => "Cannot find version: $requestedVersion"], 404);
   }
 
+  #[OA\Get(
+    path: '/api/image/{id}',
+    operationId: 'findImageById',
+    summary: 'Get product logo image',
+    tags: ['Image Controller'],
+    parameters: [
+      new OA\Parameter(
+        name: 'id',
+        in: 'path',
+        required: true,
+        description: 'Product id, optionally suffixed with -dark for the dark logo.',
+        schema: new OA\Schema(type: 'string')
+      ),
+    ],
+    responses: [
+      new OA\Response(response: 200, description: 'PNG logo', content: new OA\MediaType(mediaType: 'image/png', schema: new OA\Schema(type: 'string', format: 'binary'))),
+      new OA\Response(response: 404, description: 'Logo not found', content: new OA\JsonContent(ref: '#/components/schemas/ErrorResponse')),
+    ]
+  )]
   public function getImage($request, $response, array $args)
   {
     $imageId = (string) ($args['id'] ?? '');

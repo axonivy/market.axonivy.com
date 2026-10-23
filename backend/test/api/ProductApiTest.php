@@ -235,6 +235,22 @@ class ProductApiTest extends TestCase
       ->bodyContains('Not found.');
   }
 
+  public function testServesOpenApiContractForAllStableApiRoutes(): void
+  {
+    $body = AppTester::assertThatGet('/openapi.json')
+      ->ok()
+      ->contentType('application/json; charset=utf-8')
+      ->getBody();
+    $contract = json_decode($body, true, flags: JSON_THROW_ON_ERROR);
+
+    self::assertSame('3.1.0', $contract['openapi']);
+    self::assertArrayHasKey('/api/product', $contract['paths']);
+    self::assertArrayHasKey('/api/product/{id}/versions', $contract['paths']);
+    self::assertArrayHasKey('/api/product/{id}/install', $contract['paths']);
+    self::assertArrayHasKey('/api/product-details/{id}/{version}/bestmatch', $contract['paths']);
+    self::assertArrayHasKey('/api/image/{id}', $contract['paths']);
+  }
+
   private function restoreEnvironmentVariable(string $name, string|false $value): void
   {
     if ($value === false) {
