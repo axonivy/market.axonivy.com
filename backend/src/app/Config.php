@@ -13,6 +13,10 @@ class Config
 
   public static function marketDirectory(): string
   {
+    $configuredDirectory = getenv('MARKET_PRODUCTS_DIR');
+    if ($configuredDirectory !== false && $configuredDirectory !== '') {
+      return rtrim($configuredDirectory, '/');
+    }
     return self::isProductionEnvironment() ? '/home/axonivya/data/market' : __DIR__ . '/../../src/web/_market';
   }
 
