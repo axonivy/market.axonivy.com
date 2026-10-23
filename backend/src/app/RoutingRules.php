@@ -11,6 +11,7 @@ use app\pages\product\json\ProductJsonAction;
 use app\pages\internal\MarketRCPTTAction;
 use app\pages\permalink\ProductLogoPermalinkAction;
 use app\api\StatusApi;
+use app\api\ProductApi;
 use app\pages\apibrowser\ApiBrowserAction;
 
 class RoutingRules
@@ -20,6 +21,7 @@ class RoutingRules
     $app->get('/', MarketAction::class);
 
     $app->get('/api/status', StatusApi::class);
+    $app->get('/api/product', [new ProductApi(), 'getProducts']);
     $app->get('/sitemap.xml', SitemapAction::class);
     $app->get('/api-browser', ApiBrowserAction::class);
 
