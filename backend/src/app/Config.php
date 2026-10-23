@@ -17,11 +17,14 @@ class Config
     if ($configuredDirectory !== false && $configuredDirectory !== '') {
       return rtrim($configuredDirectory, '/');
     }
+    if (self::isProductionEnvironment()) {
+      return '/home/axonivya/data/market';
+    }
     $frontendDirectory = dirname(__DIR__, 3) . '/frontend/.market/market-bundle/products';
     if (is_dir($frontendDirectory)) {
       return $frontendDirectory;
     }
-    return self::isProductionEnvironment() ? '/home/axonivya/data/market' : __DIR__ . '/../../src/web/_market';
+    return __DIR__ . '/../../src/web/_market';
   }
 
   public static function marketCacheDirectory(): string
@@ -30,11 +33,14 @@ class Config
     if ($configuredDirectory !== false && $configuredDirectory !== '') {
       return rtrim($configuredDirectory, '/');
     }
+    if (self::isProductionEnvironment()) {
+      return '/home/axonivya/data/market-cache';
+    }
     $frontendDirectory = dirname(__DIR__, 3) . '/frontend/public/market-cache';
     if (is_dir($frontendDirectory)) {
       return $frontendDirectory;
     }
-    return self::isProductionEnvironment() ? '/home/axonivya/data/market-cache' : __DIR__ . '/../../src/web/market-cache';
+    return __DIR__ . '/../../src/web/market-cache';
   }
 
   public static function marketIndexFile(): string
