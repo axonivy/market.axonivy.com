@@ -9,7 +9,6 @@
   <testsuites>
     <testsuite name="unit">
       <directory>test</directory>
-      <exclude>test/pages</exclude>
       <exclude>test/permalink</exclude>
     </testsuite>
   </testsuites>
