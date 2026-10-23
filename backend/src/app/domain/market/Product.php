@@ -28,8 +28,6 @@ class Product
   private bool $validate;
   private bool $contactUs;
 
-  private int $installationCount;
-
   private ProductFileResolver $fileResolver;
   private ?MavenArtifact $mavenArtifact;
   private array $additionalArtifacts;
@@ -233,14 +231,6 @@ class Product
   public function getUrl(): string
   {
     return '/' . $this->key;
-  }
-
-  public function getInstallationCount(): int
-  {
-    if (empty($this->installationCount)) {
-      $this->installationCount = MarketInstallCounter::getInstallCount($this->key);
-    }
-    return $this->installationCount;
   }
 
   public function getProductJsonUrl(string $version): string

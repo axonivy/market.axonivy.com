@@ -53,11 +53,6 @@ class Config
     return is_file($frontendFile) ? $frontendFile : '';
   }
 
-  public static function marketInstallationsFile(): string
-  {
-    return self::isProductionEnvironment() ? '/home/axonivya/data/market-installations.json' : '/tmp/market-installations.json';
-  }
-
   public static function unzipper(): string
   {
     return __DIR__ . '/download-zip.sh';
