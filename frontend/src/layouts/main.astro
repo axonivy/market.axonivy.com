@@ -48,6 +48,9 @@ const { redirect = true } = Astro.props as Props;
       } catch {}
       if (viewer === p.designerViewer) {
         document.documentElement.dataset.designer = version ?? "";
+        if (params.has(p.restClient)) {
+          document.documentElement.dataset.restClient = "";
+        }
       }
     </script>
     <Font cssVariable="--font-inter" preload />
@@ -59,7 +62,7 @@ const { redirect = true } = Astro.props as Props;
   </head>
   <body>
     <div class="flex min-h-screen flex-col">
-      <header class="shrink-0">
+      <header class="shrink-0 rest-client:hidden">
         <Header />
       </header>
 
@@ -67,6 +70,7 @@ const { redirect = true } = Astro.props as Props;
         <div
           class:list={[
             "mx-auto flex min-h-[calc(100vh-4.5rem)] w-full flex-col px-4 pt-32 pb-20 md:max-w-6xl",
+            "rest-client:min-h-0 rest-client:py-4",
           ]}
         >
           <slot />
@@ -74,7 +78,7 @@ const { redirect = true } = Astro.props as Props;
       </div>
     </div>
 
-    <footer>
+    <footer class="rest-client:hidden">
       <Footer />
     </footer>
   </body>

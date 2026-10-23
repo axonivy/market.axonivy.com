@@ -5,22 +5,39 @@ export const DESIGNER_PARAMS = {
   version: "ivy-version",
   newVersion: "ivy.version",
   designerViewer: "designer-market",
+  restClient: "resultsOnly",
 };
 
-export type DesignerEnv = { isDesigner: boolean; version?: string };
+export type DesignerEnv = {
+  isDesigner: boolean;
+  isRestClient: boolean;
+  version?: string;
+};
 
 export function getDesignerEnv(): DesignerEnv {
   if (typeof document === "undefined") {
-    return { isDesigner: false };
+    return { isDesigner: false, isRestClient: false };
   }
-  const version = document.documentElement.dataset.designer;
-  return { isDesigner: version !== undefined, version: version || undefined };
+  const { designer: version, restClient } = document.documentElement.dataset;
+  return {
+    isDesigner: version !== undefined,
+    isRestClient: restClient !== undefined,
+    version: version || undefined,
+  };
 }
 
 export function useIsDesigner(): boolean {
   return useSyncExternalStore(
     noSubscription,
     () => getDesignerEnv().isDesigner,
+    () => false,
+  );
+}
+
+export function useIsRestClient(): boolean {
+  return useSyncExternalStore(
+    noSubscription,
+    () => getDesignerEnv().isRestClient,
     () => false,
   );
 }

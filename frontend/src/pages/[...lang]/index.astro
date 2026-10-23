@@ -1,6 +1,7 @@
 ---
 import Products from "@/components/products";
 import { Base, H1, H4 } from "@/components/ui/typography";
+import { FILTER_VALUES } from "@/data/product-types";
 import { getProductSummaries } from "@/data/products";
 import Layout from "@/layouts/main.astro";
 import i18next, { type Lang } from "@/translation/ui";
@@ -38,4 +39,24 @@ export function getStaticPaths() {
     </div>
   </div>
   <Products client:load products={getProductSummaries(lang)} lang={lang} />
+  <script is:inline define:vars={{ filters: FILTER_VALUES }}>
+    {
+      const params = new URLSearchParams(location.search);
+      let type = params.get("type");
+      if (document.documentElement.dataset.restClient !== undefined) {
+        type = "connector";
+      } else if (!filters.includes(type)) {
+        type = "all";
+      }
+      const q = (params.get("search") ?? "").trim().toLocaleLowerCase();
+      for (const card of document.querySelectorAll("a[data-search]")) {
+        const matches =
+          (type === "all" || card.dataset.type === type) &&
+          card.dataset.search
+            .split("\n")
+            .some((text) => text.toLocaleLowerCase().includes(q));
+        card.hidden = !matches;
+      }
+    }
+  </script>
 </Layout>

@@ -11,6 +11,7 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select";
 import { Base, H5 } from "@/components/ui/typography";
+import { useIsRestClient } from "@/data/designer";
 import {
   FILTER_VALUES,
   getFilters,
@@ -33,7 +34,7 @@ type SortOrder = (typeof SORT_VALUES)[number];
 const productSearchParams = {
   type: parseAsStringLiteral(FILTER_VALUES).withDefault("all"),
   sort: parseAsStringLiteral(SORT_VALUES).withDefault("featured"),
-  q: parseAsString.withDefault(""),
+  search: parseAsString.withDefault(""),
 };
 
 function compareFeatured(a: ProductSummary, b: ProductSummary): number {
@@ -77,13 +78,20 @@ export default function Products({ products, lang }: ProductsProps) {
 }
 
 function ProductList({ products, lang }: ProductsProps) {
-  const [{ type, sort, q }, setParams] = useQueryStates(productSearchParams);
-  const visibleProducts = getVisibleProducts(products, type, q, sort);
+  const [{ type, sort, search: q }, setParams] =
+    useQueryStates(productSearchParams);
+  const isRestClient = useIsRestClient();
+  const visibleProducts = getVisibleProducts(
+    products,
+    isRestClient ? "connector" : type,
+    q,
+    sort,
+  );
   const { t } = useTranslation(undefined, { lng: lang });
 
   return (
-    <section className="designer:-mt-12 mt-12">
-      <div className="mb-8 flex flex-col gap-4">
+    <section className="designer:-mt-12 rest-client:mt-0 mt-12">
+      <div className="rest-client:hidden mb-8 flex flex-col gap-4">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div className="flex flex-row items-center gap-2 md:flex-col md:items-start">
             <H5>{t("dashboard.viewOptions.filter.title")}</H5>
@@ -131,7 +139,9 @@ function ProductList({ products, lang }: ProductsProps) {
             <InputGroupInput
               placeholder={t("dashboard.viewOptions.search.placeholder")}
               value={q}
-              onChange={(event) => setParams({ q: event.currentTarget.value })}
+              onChange={(event) =>
+                setParams({ search: event.currentTarget.value })
+              }
             />
             <InputGroupAddon>
               <IconSearch />
@@ -139,7 +149,7 @@ function ProductList({ products, lang }: ProductsProps) {
             {q && (
               <InputGroupAddon align="inline-end">
                 <IconX
-                  onClick={() => setParams({ q: "" })}
+                  onClick={() => setParams({ search: "" })}
                   className="hover:cursor-pointer"
                 />
               </InputGroupAddon>
@@ -149,7 +159,12 @@ function ProductList({ products, lang }: ProductsProps) {
       </div>
       <div className="designer:grid-cols-2 designer:sm:grid-cols-3 designer:md:grid-cols-4 designer:lg:grid-cols-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {visibleProducts.map((product) => (
-          <a href={localePath(lang, `/${product.id}`)} key={product.id}>
+          <a
+            href={localePath(lang, `/${product.id}`)}
+            key={product.id}
+            data-type={product.type}
+            data-search={`${product.name}\n${product.description}`}
+          >
             <Card className="h-full">
               <CardHeader className="designer:flex-col designer:gap-4 flex flex-row justify-between">
                 <img
@@ -159,7 +174,7 @@ function ProductList({ products, lang }: ProductsProps) {
                   height={70}
                   loading="lazy"
                   className={cn(
-                    "rounded-md object-contain",
+                    "rest-client:w-12 rest-client:h-12 rounded-md object-contain",
                     product.logoDark && "dark:hidden",
                   )}
                 />
@@ -170,7 +185,7 @@ function ProductList({ products, lang }: ProductsProps) {
                     width={70}
                     height={70}
                     loading="lazy"
-                    className="hidden rounded-md object-contain dark:block"
+                    className="rest-client:w-12 rest-client:h-12 hidden rounded-md object-contain dark:block"
                   />
                 )}
                 <div className="flex flex-row gap-1">
