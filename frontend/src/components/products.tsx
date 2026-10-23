@@ -82,7 +82,7 @@ function ProductList({ products, lang }: ProductsProps) {
   const { t } = useTranslation(undefined, { lng: lang });
 
   return (
-    <section className="mt-12">
+    <section className="designer:-mt-12 mt-12">
       <div className="mb-8 flex flex-col gap-4">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div className="flex flex-row items-center gap-2 md:flex-col md:items-start">
@@ -147,11 +147,11 @@ function ProductList({ products, lang }: ProductsProps) {
           </InputGroup>
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="designer:grid-cols-2 designer:sm:grid-cols-3 designer:md:grid-cols-4 designer:lg:grid-cols-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {visibleProducts.map((product) => (
           <a href={localePath(lang, `/${product.id}`)} key={product.id}>
             <Card className="h-full">
-              <CardHeader className="flex flex-row justify-between">
+              <CardHeader className="designer:flex-col designer:gap-4 flex flex-row justify-between">
                 <img
                   src={product.logo}
                   alt=""
@@ -189,7 +189,7 @@ function ProductList({ products, lang }: ProductsProps) {
               </CardHeader>
               <CardContent>
                 <H5>{product.name}</H5>
-                <Base>{product.description}</Base>
+                <Base className="designer:hidden">{product.description}</Base>
               </CardContent>
             </Card>
           </a>
