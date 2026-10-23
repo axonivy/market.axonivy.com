@@ -81,6 +81,24 @@ async function listFiles(dir: string): Promise<string[]> {
     .sort();
 }
 
+it("downloads the bundle from the latest completed master workflow", async () => {
+  await market.product("demo");
+
+  const index = await market.fetch(maven);
+
+  expect(find(index, "demo").id).toBe("demo");
+  expect(market.marketApiRequests).toEqual([
+    "/repos/axonivy-market/market/actions/workflows/ci.yml/runs?branch=master&status=completed&per_page=20",
+    "/repos/axonivy-market/market/actions/runs/123/artifacts?per_page=100",
+    "/repos/axonivy-market/market/actions/artifacts/456/zip",
+  ]);
+  expect(
+    market.marketApiHeaders.every(
+      ({ authorization }) => authorization === "Bearer market-test-token",
+    ),
+  ).toBe(true);
+});
+
 describe("README source", () => {
   it("takes the README from the newest version's zip, SNAPSHOT included", async () => {
     maven.artifact("demo-product", {
@@ -122,49 +140,19 @@ describe("README source", () => {
     ).toEqual(["_product.json"]);
   });
 
-  it("falls back to the README in the market repo when the zip has none", async () => {
+  it("does not use a README that is not part of the uploaded artifact", async () => {
     maven.artifact("demo-product", {
       "1.0.0": { "product.json": PRODUCT_JSON },
     });
-    await market.product("demo", {
-      files: {
-        "README.md": "README from git",
-        "README_DE.md": "README aus git",
-        "images/screen.png": PNG,
-        "logo.png": PNG,
-      },
-    });
+    await market.product("demo", { files: { "README.md": "Not uploaded" } });
 
     const [product] = (await market.fetch(maven)).products;
 
-    expect(product.readme?.baseUrl).toBe("/market-cache/demo/_local/");
-    expect(product.readme?.file).toBe(
-      ".market/market/market/connector/demo/README.md",
-    );
-    expect(await readFile(market.resolve(product.readme!.file), "utf8")).toBe(
-      "README from git",
-    );
-    expect(await listFiles(market.publicDir("demo/_local"))).toEqual([
-      "images/screen.png",
-      "logo.png",
-    ]);
+    expect(product.readme).toBeUndefined();
+    expect(existsSync(market.publicDir("demo/_local"))).toBe(false);
   });
 
-  it("falls back to the README in the market repo for products without Maven artifacts", async () => {
-    await market.product("demo", {
-      withMaven: false,
-      files: { "README.md": "README from git" },
-    });
-
-    const [product] = (await market.fetch(maven)).products;
-
-    expect(product.readme?.baseUrl).toBe("/market-cache/demo/_local/");
-    expect(await readFile(market.resolve(product.readme!.file), "utf8")).toBe(
-      "README from git",
-    );
-  });
-
-  it("has no README when neither the zip nor the market repo has one", async () => {
+  it("has no README when the product zip has none", async () => {
     maven.artifact("demo-product", {
       "1.0.0": { "product.json": PRODUCT_JSON },
     });
@@ -173,7 +161,6 @@ describe("README source", () => {
     const [product] = (await market.fetch(maven)).products;
 
     expect(product.readme).toBeUndefined();
-    expect(existsSync(market.publicDir("demo/_local"))).toBe(false);
   });
 
   it("publishes only assets, not the READMEs, product.json or cache marker", async () => {

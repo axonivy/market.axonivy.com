@@ -1,4 +1,3 @@
-import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -21,9 +20,12 @@ import {
   warnings,
 } from "./shared.ts";
 
-const MARKET_REPO_URL = "https://github.com/axonivy-market/market.git";
-const MARKET_REPO_DIR = path.join(ROOT, ".market", "market");
-const PRODUCTS_DIR = path.join(MARKET_REPO_DIR, "market");
+const MARKET_REPO = "axonivy-market/market";
+const MARKET_WORKFLOW = "ci.yml";
+const MARKET_ARTIFACT = "artifact";
+const GITHUB_API_URL = process.env.GITHUB_API_URL ?? "https://api.github.com";
+const MARKET_BUNDLE_DIR = path.join(ROOT, ".market", "market-bundle");
+const PRODUCTS_DIR = path.join(MARKET_BUNDLE_DIR, "products");
 const CACHE_DIR = path.join(ROOT, ".market", "cache");
 const PUBLIC_DIR = path.join(ROOT, "public", "market-cache");
 const PUBLIC_URL = "/market-cache";
@@ -106,11 +108,7 @@ type CacheMarker = { zipUrl: string; full: boolean; missing?: boolean };
 
 // Helpers
 
-const stats = {
-  downloaded: 0,
-  cached: 0,
-  missing: 0,
-};
+const stats = { downloaded: 0, cached: 0, missing: 0 };
 
 async function fetchText(url: string) {
   return (await fetchWithRetry(url)).text();
@@ -118,6 +116,69 @@ async function fetchText(url: string) {
 
 async function fetchBytes(url: string) {
   return new Uint8Array(await (await fetchWithRetry(url)).arrayBuffer());
+}
+
+type WorkflowRun = { id: number };
+type WorkflowRuns = { workflow_runs?: WorkflowRun[] };
+type WorkflowArtifact = { id: number; name: string; expired: boolean };
+type WorkflowArtifacts = { artifacts?: WorkflowArtifact[] };
+
+async function fetchMarketBundle(): Promise<Uint8Array> {
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) {
+    throw new Error(
+      "GITHUB_TOKEN is not set. Set it to download the market Actions artifact.",
+    );
+  }
+  const headers: HeadersInit = {
+    Accept: "application/vnd.github+json",
+    Authorization: `Bearer ${token}`,
+    "X-GitHub-Api-Version": "2022-11-28",
+  };
+  const api = `${GITHUB_API_URL}/repos/${MARKET_REPO}`;
+  const runsResponse = await fetchWithRetry(
+    `${api}/actions/workflows/${MARKET_WORKFLOW}/runs?branch=master&status=completed&per_page=20`,
+    3,
+    { headers },
+  );
+  const { workflow_runs: runs = [] } =
+    (await runsResponse.json()) as WorkflowRuns;
+
+  for (const { id } of runs) {
+    let artifacts: WorkflowArtifact[];
+    try {
+      const response = await fetchWithRetry(
+        `${api}/actions/runs/${id}/artifacts?per_page=100`,
+        3,
+        { headers },
+      );
+      ({ artifacts = [] } = (await response.json()) as WorkflowArtifacts);
+    } catch (error) {
+      if (error instanceof NotFoundError) continue;
+      throw error;
+    }
+
+    const artifact = artifacts.find(
+      ({ name, expired }) => name === MARKET_ARTIFACT && !expired,
+    );
+    if (!artifact) continue;
+
+    try {
+      const response = await fetchWithRetry(
+        `${api}/actions/artifacts/${artifact.id}/zip`,
+        3,
+        { headers },
+      );
+      return new Uint8Array(await response.arrayBuffer());
+    } catch (error) {
+      if (error instanceof NotFoundError) continue;
+      throw error;
+    }
+  }
+
+  throw new Error(
+    `No unexpired "${MARKET_ARTIFACT}" artifact found in completed master runs of ${MARKET_REPO}/${MARKET_WORKFLOW}`,
+  );
 }
 
 function xmlValues(xml: string, tag: string): string[] {
@@ -441,20 +502,11 @@ function isMavenDropinsOnly(productJson: ProductJson): boolean {
 
 async function findMetaFiles(): Promise<string[]> {
   const files: string[] = [];
-  for (const type of await readdir(PRODUCTS_DIR, { withFileTypes: true })) {
-    if (!type.isDirectory()) continue;
-    for (const product of await readdir(path.join(PRODUCTS_DIR, type.name), {
-      withFileTypes: true,
-    })) {
-      const file = path.join(
-        PRODUCTS_DIR,
-        type.name,
-        product.name,
-        "meta.json",
-      );
-      if (product.isDirectory() && existsSync(file)) {
-        files.push(file);
-      }
+  for (const product of await readdir(PRODUCTS_DIR, { withFileTypes: true })) {
+    if (!product.isDirectory()) continue;
+    const file = path.join(PRODUCTS_DIR, product.name, "meta.json");
+    if (existsSync(file)) {
+      files.push(file);
     }
   }
   return files.sort();
@@ -549,32 +601,23 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
 
 // Main
 
-function updateMarketRepo() {
-  if (process.argv.includes("--no-pull")) {
-    console.log("Skipping git pull (--no-pull)");
-  } else if (existsSync(path.join(MARKET_REPO_DIR, ".git"))) {
-    console.log("Updating market repo…");
-    execFileSync("git", ["-C", MARKET_REPO_DIR, "pull", "--ff-only"], {
-      stdio: "inherit",
-    });
-  } else {
-    console.log("Cloning market repo…");
-    execFileSync(
-      "git",
-      ["clone", "--depth", "1", MARKET_REPO_URL, MARKET_REPO_DIR],
-      { stdio: "inherit" },
-    );
-  }
-}
-
 async function main() {
   const start = Date.now();
-  updateMarketRepo();
+  console.log("Downloading latest market artifact from master…");
+  const bundle = await fetchMarketBundle();
+  await rm(MARKET_BUNDLE_DIR, { recursive: true, force: true });
+  await mkdir(MARKET_BUNDLE_DIR, { recursive: true });
+  await extractZip(bundle, MARKET_BUNDLE_DIR);
 
   await rm(PUBLIC_DIR, { recursive: true, force: true });
   await mkdir(PUBLIC_DIR, { recursive: true });
   const previous = await readJson<MarketIndex>(INDEX_FILE);
   const metaFiles = await findMetaFiles();
+  if (metaFiles.length === 0) {
+    throw new Error(
+      "Market artifact contains no products/<id>/meta.json files",
+    );
+  }
   console.log(`Processing ${metaFiles.length} products…`);
   const products = await mapLimit(metaFiles, 4, processProduct);
 

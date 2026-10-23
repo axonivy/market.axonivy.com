@@ -24,12 +24,12 @@ const indexFiles = import.meta.glob<MarketIndex>("/.market/products.json", {
 });
 
 const metaFiles = import.meta.glob<ProductMeta>(
-  "/.market/market/market/*/*/meta.json",
+  "/.market/market-bundle/products/*/meta.json",
   { eager: true, import: "default" },
 );
 
 const imageFiles = import.meta.glob<ImageMetadata>(
-  "/.market/market/market/*/*/*.png",
+  "/.market/market-bundle/products/*/*.png",
   { eager: true, import: "default" },
 );
 
