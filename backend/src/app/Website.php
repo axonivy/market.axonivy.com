@@ -2,15 +2,13 @@
 
 namespace app;
 
-use DI\Container;
 use Middlewares\TrailingSlash;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\App;
+use Slim\Exception\HttpException;
 use Slim\Exception\HttpNotFoundException;
 use Slim\Factory\AppFactory;
 use Slim\Psr7\Response;
-use Slim\Views\Twig;
-use DI\ContainerBuilder;
 use Throwable;
 
 class Website
@@ -19,22 +17,10 @@ class Website
 
   function __construct()
   {
-    $container = $this->createDiContainer();
-    $this->app = AppFactory::createFromContainer($container);
-    $view = $this->configureTemplateEngine();
+    $this->app = AppFactory::create();
     $this->installTrailingSlashRedirect();
     $this->installRoutes();
     $this->installErrorHandling();
-    $this->installViewerMiddleware($view);
-  }
-
-  private function createDiContainer(): Container
-  {
-    $builder = new ContainerBuilder();
-    $builder->addDefinitions([
-      Twig::class => Twig::create(__DIR__ . '/../app/pages')
-    ]);
-    return $builder->build();
   }
 
   public function getApp(): App
@@ -47,33 +33,9 @@ class Website
     $this->app->run();
   }
 
-  private function configureTemplateEngine(): Twig
-  {
-    $container = $this->app->getContainer();
-    $view = $container->get(Twig::class);
-    $view->getEnvironment()->addGlobal('BASE_URL', $this->baseUrl());
-    return $view;
-  }
-
-  private function baseUrl()
-  {
-    if (isset($_SERVER['HTTPS'])) {
-      $protocol = ($_SERVER['HTTPS'] && $_SERVER['HTTPS'] != "off") ? "https" : "http";
-    } else {
-      $protocol = 'http';
-    }
-    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    return $protocol . "://" . $host;
-  }
-
   private function installTrailingSlashRedirect()
   {
     $this->app->add((new TrailingSlash(false))->redirect());
-  }
-
-  private function installViewerMiddleware(Twig $view)
-  {
-    $this->app->add(new ViewerMiddleware($view));
   }
 
   private function installRoutes()
@@ -83,24 +45,19 @@ class Website
 
   private function installErrorHandling()
   {
-    $container = $this->app->getContainer();
-    $errorMiddleware = $this->app->addErrorMiddleware(true, true, true);
-    $errorMiddleware->setErrorHandler(HttpNotFoundException::class, function (ServerRequestInterface $request, Throwable $exception, bool $displayErrorDetails) use ($container) {
+    $errorMiddleware = $this->app->addErrorMiddleware(false, true, true);
+    $jsonErrorHandler = function (ServerRequestInterface $request, Throwable $exception, bool $displayErrorDetails) {
       $response = new Response();
-      $data = ['message' => $exception->getMessage()];
-      return $container->get(Twig::class)
-        ->render($response, '_error/404.twig', $data)
-        ->withStatus(404);
-    });
-
-    if (Config::isProductionEnvironment()) {
-      $errorMiddleware->setDefaultErrorHandler(function (ServerRequestInterface $request, Throwable $exception, bool $displayErrorDetails) use ($container) {
-        $response = new Response();
-        $data = ['message' => $exception->getMessage()];
-        return $container->get(Twig::class)
-          ->render($response, '_error/500.twig', $data)
-          ->withStatus(500);
-      });
-    }
+      $status = $exception instanceof HttpException && $exception->getCode() >= 400
+        ? $exception->getCode()
+        : 500;
+      $message = $status < 500 ? $exception->getMessage() : 'Internal Server Error';
+      $response->getBody()->write(json_encode(['message' => $message]));
+      return $response
+        ->withStatus($status)
+        ->withHeader('Content-Type', 'application/json; charset=utf-8');
+    };
+    $errorMiddleware->setErrorHandler(HttpNotFoundException::class, $jsonErrorHandler);
+    $errorMiddleware->setDefaultErrorHandler($jsonErrorHandler);
   }
 }

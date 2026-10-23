@@ -39,11 +39,6 @@ class StatusApi
         'name' => $product->getName(),
         'url' => $product->getUrl()
       ];
-      $info = $product->getMavenProductInfo();
-      if ($info != null) {        
-        $p['newest-version'] = $info->getNewestVersion();
-        $p['oldest-version'] = $info->getOldestVersion();
-      }
       $products[] = $p;
     }
     return $products;

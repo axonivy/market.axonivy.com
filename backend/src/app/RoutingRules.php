@@ -2,36 +2,19 @@
 
 namespace app;
 
-use app\pages\market\MarketAction;
-use app\pages\product\ProductAction;
-use app\pages\sitemap\SitemapAction;
-use app\permalink\LibraryPermalinkAction;
-use app\permalink\DocPermalinkAction;
-use app\pages\product\json\ProductJsonAction;
-use app\pages\internal\MarketRCPTTAction;
-use app\pages\permalink\ProductLogoPermalinkAction;
-use app\api\StatusApi;
 use app\api\ProductApi;
-use app\pages\apibrowser\ApiBrowserAction;
+use app\api\StatusApi;
 
 class RoutingRules
 {
   public static function installRoutes($app)
   {
-    $app->get('/', MarketAction::class);
-
+    $productApi = new ProductApi();
     $app->get('/api/status', StatusApi::class);
-    $app->get('/api/product', [new ProductApi(), 'getProducts']);
-    $app->get('/sitemap.xml', SitemapAction::class);
-    $app->get('/api-browser', ApiBrowserAction::class);
-
-    $app->get('/internal/market-rcptt', MarketRCPTTAction::class);
-
-    $app->get('/market-cache/{key}/{artifactId}/{version}/logo.png', ProductLogoPermalinkAction::class);
-    $app->get('/market-cache/{key}/{artifactId}/{version}/_product.json', ProductJsonAction::class);
-
-    $app->get('/{key}/{version}/doc[/{path:.*}]', DocPermalinkAction::class);
-    $app->get('/{key}/{version}/lib/{name}', LibraryPermalinkAction::class);
-    $app->get('/{key}[/{version}]', ProductAction::class);
+    $app->get('/api/product', [$productApi, 'getProducts']);
+    $app->get('/api/product/{id}/versions', [$productApi, 'getVersions']);
+    $app->get('/api/product/{id}/install', [$productApi, 'getInstall']);
+    $app->get('/api/product-details/{id}/{version}/bestmatch', [$productApi, 'getBestMatch']);
+    $app->get('/api/image/{id}', [$productApi, 'getImage']);
   }
 }
