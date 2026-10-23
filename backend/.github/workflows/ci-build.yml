@@ -1,0 +1,59 @@
+name: CI Build
+run-name: Build on branch ${{github.ref_name}} triggered by ${{github.actor}}
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 22 * * *'
+
+env:
+  DIST_FILE: ivy-website-market.tar
+
+jobs:
+  build:
+    runs-on: ["ubuntu-latest"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up PHP
+
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: |
+            gd
+            zip
+
+      - name: Composer install
+        shell: sh
+        run: |
+          composer install --no-dev --no-progress
+          tar -cf ${{ env.DIST_FILE }} --exclude=src/web/_market --exclude=src/web/market-cache src vendor
+
+      - name: Archive build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.DIST_FILE }}
+          path: |
+            ${{ env.DIST_FILE }}
+
+      - name: Run test
+        shell: sh
+        run: |
+          composer install --no-progress
+          ./vendor/bin/phpunit --log-junit phpunit-junit.xml
+
+      - name: Public test report
+        uses: EnricoMi/publish-unit-test-result-action/linux@v2
+        if: success() || failure()
+        with:
+          files: "**/phpunit-junit.xml"
+
+      - name: Editor checker
+        uses: editorconfig-checker/action-editorconfig-checker@main
+      - run: editorconfig-checker -f github-actions -exclude '\.enricomi-publish-action-venv'
+
+      - name: Clean up
+        run: |
+          rm -rf *

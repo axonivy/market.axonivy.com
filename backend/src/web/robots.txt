@@ -1,0 +1,3 @@
+Sitemap: https://market.axonivy.com/sitemap.xml
+
+User-agent: *
