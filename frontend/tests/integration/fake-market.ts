@@ -229,22 +229,15 @@ export class FakeMarket {
             .map(([name, content]) => [`products/${id}/${name}`, content]),
         ),
       );
-      marketApi.set(
-        "/repos/axonivy-market/market/actions/workflows/ci.yml/runs?branch=master&status=completed&per_page=20",
-        JSON.stringify({ workflow_runs: [{ id: 123 }] }),
+      maven.artifact(
+        "market-test",
+        { "0.0.1-SNAPSHOT": artifactFiles },
+        { groupId: "com.axonivy.market", type: "zip" },
       );
-      marketApi.set(
-        "/repos/axonivy-market/market/actions/runs/123/artifacts?per_page=100",
-        JSON.stringify({
-          artifacts: [{ id: 456, name: "artifact", expired: false }],
-        }),
-      );
-      marketApi.set(
-        "/repos/axonivy-market/market/actions/artifacts/456/zip",
-        zip(artifactFiles),
-      );
+      marketApi.set("/user", JSON.stringify({ login: "market-user" }));
       await this.runScript(SCRIPT, {
         MARKET_MAVEN_URL: maven.url,
+        MARKET_PACKAGE_REPO_URL: maven.url,
         GITHUB_API_URL: marketApi.url,
         GITHUB_TOKEN: "market-test-token",
       });

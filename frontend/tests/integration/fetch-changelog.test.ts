@@ -59,7 +59,7 @@ it("requires a token before requesting GitHub", async () => {
   expect(market.log).toContain("GITHUB_TOKEN is not set");
 });
 
-it("sends the token only to GitHub", async () => {
+it("sends the changelog token only to GitHub", async () => {
   github.releases(REPO, [release("1.0.0")]);
   maven.artifact("demo-product", { "1.0.0": { "product.json": PRODUCT_JSON } });
   await market.product("demo", { sourceUrl: SOURCE_URL });
@@ -69,7 +69,9 @@ it("sends the token only to GitHub", async () => {
     "Bearer test-token",
   ]);
   expect(
-    maven.headers.every((headers) => headers.authorization === undefined),
+    maven.headers.every(
+      ({ authorization }) => authorization !== `Bearer ${TOKEN}`,
+    ),
   ).toBe(true);
 });
 

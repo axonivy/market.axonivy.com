@@ -81,21 +81,25 @@ async function listFiles(dir: string): Promise<string[]> {
     .sort();
 }
 
-it("downloads the bundle from the latest completed master workflow", async () => {
+it("downloads the latest market Maven SNAPSHOT using the GitHub package token", async () => {
   await market.product("demo");
 
   const index = await market.fetch(maven);
 
   expect(find(index, "demo").id).toBe("demo");
-  expect(market.marketApiRequests).toEqual([
-    "/repos/axonivy-market/market/actions/workflows/ci.yml/runs?branch=master&status=completed&per_page=20",
-    "/repos/axonivy-market/market/actions/runs/123/artifacts?per_page=100",
-    "/repos/axonivy-market/market/actions/artifacts/456/zip",
-  ]);
+  expect(market.marketApiRequests).toEqual(["/user"]);
   expect(
     market.marketApiHeaders.every(
       ({ authorization }) => authorization === "Bearer market-test-token",
     ),
+  ).toBe(true);
+  const packageAuth = `Basic ${Buffer.from("market-user:market-test-token").toString("base64")}`;
+  const packageHeaders = maven.headers.filter((_, index) =>
+    maven.requests[index].startsWith("/com/axonivy/market/market-test/"),
+  );
+  expect(packageHeaders.length).toBeGreaterThan(0);
+  expect(
+    packageHeaders.every(({ authorization }) => authorization === packageAuth),
   ).toBe(true);
 });
 

@@ -20,10 +20,10 @@ import {
   warnings,
 } from "./shared.ts";
 
-const MARKET_REPO = "axonivy-market/market";
-const MARKET_WORKFLOW = "ci.yml";
-const MARKET_ARTIFACT = "artifact";
 const GITHUB_API_URL = process.env.GITHUB_API_URL ?? "https://api.github.com";
+const MARKET_PACKAGE_REPO_URL =
+  process.env.MARKET_PACKAGE_REPO_URL ??
+  "https://maven.pkg.github.com/axonivy-market/market";
 const MARKET_BUNDLE_DIR = path.join(ROOT, ".market", "market-bundle");
 const PRODUCTS_DIR = path.join(MARKET_BUNDLE_DIR, "products");
 const CACHE_DIR = path.join(ROOT, ".market", "cache");
@@ -52,6 +52,14 @@ type MetaArtifact = {
     artifactId: string;
     lastVersion: string;
   }[];
+};
+
+const MARKET_PACKAGE: MetaArtifact = {
+  name: "Market bundle",
+  groupId: "com.axonivy.market",
+  artifactId: "market-test",
+  type: "zip",
+  repoUrl: MARKET_PACKAGE_REPO_URL,
 };
 
 type Meta = {
@@ -110,74 +118,13 @@ type CacheMarker = { zipUrl: string; full: boolean; missing?: boolean };
 
 const stats = { downloaded: 0, cached: 0, missing: 0 };
 
-async function fetchText(url: string) {
-  return (await fetchWithRetry(url)).text();
+async function fetchText(url: string, init?: RequestInit) {
+  return (await fetchWithRetry(url, 3, init)).text();
 }
 
-async function fetchBytes(url: string) {
-  return new Uint8Array(await (await fetchWithRetry(url)).arrayBuffer());
-}
-
-type WorkflowRun = { id: number };
-type WorkflowRuns = { workflow_runs?: WorkflowRun[] };
-type WorkflowArtifact = { id: number; name: string; expired: boolean };
-type WorkflowArtifacts = { artifacts?: WorkflowArtifact[] };
-
-async function fetchMarketBundle(): Promise<Uint8Array> {
-  const token = process.env.GITHUB_TOKEN;
-  if (!token) {
-    throw new Error(
-      "GITHUB_TOKEN is not set. Set it to download the market Actions artifact.",
-    );
-  }
-  const headers: HeadersInit = {
-    Accept: "application/vnd.github+json",
-    Authorization: `Bearer ${token}`,
-    "X-GitHub-Api-Version": "2022-11-28",
-  };
-  const api = `${GITHUB_API_URL}/repos/${MARKET_REPO}`;
-  const runsResponse = await fetchWithRetry(
-    `${api}/actions/workflows/${MARKET_WORKFLOW}/runs?branch=master&status=completed&per_page=20`,
-    3,
-    { headers },
-  );
-  const { workflow_runs: runs = [] } =
-    (await runsResponse.json()) as WorkflowRuns;
-
-  for (const { id } of runs) {
-    let artifacts: WorkflowArtifact[];
-    try {
-      const response = await fetchWithRetry(
-        `${api}/actions/runs/${id}/artifacts?per_page=100`,
-        3,
-        { headers },
-      );
-      ({ artifacts = [] } = (await response.json()) as WorkflowArtifacts);
-    } catch (error) {
-      if (error instanceof NotFoundError) continue;
-      throw error;
-    }
-
-    const artifact = artifacts.find(
-      ({ name, expired }) => name === MARKET_ARTIFACT && !expired,
-    );
-    if (!artifact) continue;
-
-    try {
-      const response = await fetchWithRetry(
-        `${api}/actions/artifacts/${artifact.id}/zip`,
-        3,
-        { headers },
-      );
-      return new Uint8Array(await response.arrayBuffer());
-    } catch (error) {
-      if (error instanceof NotFoundError) continue;
-      throw error;
-    }
-  }
-
-  throw new Error(
-    `No unexpired "${MARKET_ARTIFACT}" artifact found in completed master runs of ${MARKET_REPO}/${MARKET_WORKFLOW}`,
+async function fetchBytes(url: string, init?: RequestInit) {
+  return new Uint8Array(
+    await (await fetchWithRetry(url, 3, init)).arrayBuffer(),
   );
 }
 
@@ -200,10 +147,14 @@ function artifactBaseUrl({ repoUrl, groupId, artifactId }: Coordinates) {
   return `${repoUrl.replace(/\/$/, "")}/${groupId.replaceAll(".", "/")}/${artifactId}`;
 }
 
-async function fetchVersions(coordinates: Coordinates): Promise<string[]> {
+async function fetchVersions(
+  coordinates: Coordinates,
+  init?: RequestInit,
+): Promise<string[]> {
   try {
     const xml = await fetchText(
       `${artifactBaseUrl(coordinates)}/maven-metadata.xml`,
+      init,
     );
     return xmlValues(xml, "version");
   } catch (error) {
@@ -224,6 +175,7 @@ async function fetchVersions(coordinates: Coordinates): Promise<string[]> {
 async function resolveUrl(
   coordinates: Coordinates,
   version: string,
+  init?: RequestInit,
 ): Promise<string | undefined> {
   const base = `${artifactBaseUrl(coordinates)}/${version}`;
   const { artifactId, type } = coordinates;
@@ -231,7 +183,7 @@ async function resolveUrl(
     return `${base}/${artifactId}-${version}.${type}`;
   }
   try {
-    const xml = await fetchText(`${base}/maven-metadata.xml`);
+    const xml = await fetchText(`${base}/maven-metadata.xml`, init);
     const snapshot = [
       ...xml.matchAll(/<snapshotVersion>([\s\S]*?)<\/snapshotVersion>/g),
     ]
@@ -258,6 +210,7 @@ async function resolveUrl(
 
 async function resolveArtifactVersions(
   artifact: MetaArtifact,
+  init?: RequestInit,
 ): Promise<ArtifactVersion[]> {
   const repoUrl = artifact.repoUrl ?? DEFAULT_REPO_URL;
   const type = artifact.type ?? DEFAULT_TYPE;
@@ -269,7 +222,7 @@ async function resolveArtifactVersions(
   };
 
   const candidates = new Map<string, Coordinates>();
-  for (const version of await fetchVersions(current)) {
+  for (const version of await fetchVersions(current, init)) {
     candidates.set(version, current);
   }
   for (const archived of artifact.archivedArtifacts ?? []) {
@@ -279,7 +232,7 @@ async function resolveArtifactVersions(
       groupId: archived.groupId,
       artifactId: archived.artifactId,
     };
-    for (const version of await fetchVersions(coordinates)) {
+    for (const version of await fetchVersions(coordinates, init)) {
       if (
         !candidates.has(version) &&
         compareVersions(version, archived.lastVersion) <= 0
@@ -293,13 +246,45 @@ async function resolveArtifactVersions(
     [...candidates],
     CONCURRENCY,
     async ([version, coordinates]) => {
-      const url = await resolveUrl(coordinates, version);
+      const url = await resolveUrl(coordinates, version, init);
       return url ? { version, url } : undefined;
     },
   );
   return resolved
     .filter((entry): entry is ArtifactVersion => entry !== undefined)
     .sort((a, b) => newestFirst(a.version, b.version));
+}
+
+async function githubPackageAuth(): Promise<RequestInit> {
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) {
+    throw new Error(
+      "GITHUB_TOKEN is not set. A classic PAT with read:packages is required to download the market Maven package.",
+    );
+  }
+
+  const userResponse = await fetchWithRetry(`${GITHUB_API_URL}/user`, 3, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const { login } = (await userResponse.json()) as { login?: string };
+  if (!login) {
+    throw new Error("Could not determine the GitHub username for GITHUB_TOKEN");
+  }
+  return {
+    headers: {
+      Authorization: `Basic ${Buffer.from(`${login}:${token}`).toString("base64")}`,
+    },
+  };
+}
+
+async function fetchMarketBundle(): Promise<Uint8Array> {
+  const auth = await githubPackageAuth();
+  const [latest] = await resolveArtifactVersions(MARKET_PACKAGE, auth);
+  if (!latest) {
+    throw new Error("Market Maven SNAPSHOT not found");
+  }
+  console.log(`Fetching ${latest.url}`);
+  return fetchBytes(latest.url, auth);
 }
 
 // Product zips
@@ -603,7 +588,6 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
 
 async function main() {
   const start = Date.now();
-  console.log("Downloading latest market artifact from master…");
   const bundle = await fetchMarketBundle();
   await rm(MARKET_BUNDLE_DIR, { recursive: true, force: true });
   await mkdir(MARKET_BUNDLE_DIR, { recursive: true });
