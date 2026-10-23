@@ -1,1 +1,27 @@
 # market.axonivy.com
+
+Static Axon Ivy Market website, built with [Astro](https://astro.build) and React. All code lives in [`frontend/`](frontend).
+
+## Prerequisites
+
+- [Node.js](https://nodejs.org) 22.18 or newer
+- [pnpm](https://pnpm.io/installation), e.g. `npm install -g pnpm`
+
+## Getting started
+
+```sh
+cd frontend
+pnpm install
+pnpm fetch-data   # download market data into .market/ (needed once, and to refresh)
+pnpm dev          # http://localhost:4321
+```
+
+### Changelogs (optional)
+
+Changelogs are fetched from GitHub releases and need a [GitHub token](https://github.com/settings/tokens) (no scopes needed). Put it in `frontend/.env.local`:
+
+```sh
+GITHUB_TOKEN=<your-token>
+```
+
+Then run `pnpm fetch-changelog`.
