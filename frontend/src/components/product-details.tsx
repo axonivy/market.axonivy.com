@@ -199,7 +199,7 @@ export default function ProductDetails({
   );
 }
 
-function Markdown({
+export function Markdown({
   markdown,
   baseUrl,
   lang,
