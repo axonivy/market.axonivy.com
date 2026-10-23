@@ -1,0 +1,47 @@
+pipeline {
+  agent any
+  
+  triggers {
+    cron 'H 22 * * *'
+  }
+  
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '120', artifactNumToKeepStr: '3'))
+    skipStagesAfterUnstable()
+  }
+  
+  stages {
+    stage('check editorconfig') {
+      steps {
+        script {
+          docker.image('mstruebing/editorconfig-checker').inside {
+            sh 'ec -no-color'
+          }
+        }
+      }
+    }
+
+    stage('Backend Tests') {
+      agent {
+        dockerfile {
+          dir 'docker/apache'
+        }
+      }
+      steps {
+        sh 'composer install --no-interaction --no-progress'
+        script {
+          def testExitCode = sh(
+            script: './vendor/bin/phpunit --log-junit phpunit-junit.xml',
+            returnStatus: true
+          )
+          withChecks('Backend Tests') {
+            junit testDataPublishers: [[$class: 'StabilityTestDataPublisher']], testResults: 'phpunit-junit.xml'
+          }
+          if (testExitCode != 0) {
+            error("Backend tests failed with exit code ${testExitCode}")
+          }
+        }
+      }
+    }
+  }
+}
