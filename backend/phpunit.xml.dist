@@ -3,8 +3,6 @@
   <coverage/>
   <php>
     <ini name="error_reporting" value="2"/>
-    <env name="MARKET_PRODUCTS_DIR" value="src/web/_market" force="true"/>
-    <env name="MARKET_CACHE_DIR" value="src/web/market-cache" force="true"/>
   </php>
   <testsuites>
     <testsuite name="unit">
