@@ -1,5 +1,8 @@
 # market.axonivy.com
 
+[![translation-status](https://hosted.weblate.org/widget/axonivy/market-axonivy-com/svg-badge.svg)](https://hosted.weblate.org/engage/axonivy/)
+
+
 Static Axon Ivy Market website, built with [Astro](https://astro.build) and React. All code lives in [`frontend/`](frontend).
 
 ## Prerequisites
