@@ -1,0 +1,9 @@
+services:
+  web:
+    build: ./docker/apache
+    volumes:
+      - ./:/var/www/html
+      - ./docker/apache/000-default.conf:/etc/apache2/sites-available/000-default.conf
+    ports:
+       - 80:80
+
