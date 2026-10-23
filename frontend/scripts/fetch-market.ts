@@ -544,18 +544,6 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
   }
   artifacts.push(...(await resolveInstallerArtifacts(meta, productJsons)));
 
-  if (!product.readme && existsSync(path.join(metaDir, "README.md"))) {
-    const relativeDir = `${meta.id}/_local`;
-    await cp(metaDir, path.join(PUBLIC_DIR, relativeDir), {
-      recursive: true,
-      filter: (source) => !/(README.*\.md|meta\.json)$/.test(source),
-    });
-    product.readme = {
-      file: toPosix(path.relative(ROOT, path.join(metaDir, "README.md"))),
-      baseUrl: `${PUBLIC_URL}/${relativeDir}/`,
-    };
-  }
-
   return product;
 }
 
