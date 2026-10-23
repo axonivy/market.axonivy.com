@@ -1,6 +1,6 @@
 import { strToU8, zipSync } from "fflate";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { createServer, type IncomingHttpHeaders, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
@@ -155,11 +155,15 @@ export class FakeGitHub extends FakeMaven {
 
 type MetaArtifact = Record<string, unknown>;
 
-// A checkout of the market repo, in the folder layout fetch-market.ts expects.
+const LOGO_PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
+
 export class FakeMarket {
   root = "";
   // stdout and stderr of the last fetch.
   log = "";
+  marketApiRequests: string[] = [];
+  marketApiHeaders: IncomingHttpHeaders[] = [];
+  private products = new Map<string, Files>();
 
   async create() {
     this.root = await mkdtemp(path.join(tmpdir(), "fetch-market-"));
@@ -169,12 +173,7 @@ export class FakeMarket {
     await rm(this.root, { recursive: true, force: true });
   }
 
-  productDir(id: string) {
-    return path.join(this.root, ".market/market/market/connector", id);
-  }
-
-  // Adds a product whose meta.json points to `<id>-product` on the fake Maven.
-  // `artifacts` replaces that default, `files` are extra files next to meta.json.
+  // Adds product files to the artifact served by the fake Actions API.
   async product(
     id: string,
     {
@@ -184,8 +183,6 @@ export class FakeMarket {
       sourceUrl = undefined as string | undefined,
     } = {},
   ) {
-    const dir = this.productDir(id);
-    await mkdir(dir, { recursive: true });
     const meta = {
       id,
       name: id,
@@ -204,11 +201,11 @@ export class FakeMarket {
             ]
           : []),
     };
-    await writeFile(path.join(dir, "meta.json"), JSON.stringify(meta));
-    for (const [name, content] of Object.entries(files)) {
-      await mkdir(path.dirname(path.join(dir, name)), { recursive: true });
-      await writeFile(path.join(dir, name), content);
-    }
+    this.products.set(id, {
+      "logo.png": LOGO_PNG,
+      ...files,
+      "meta.json": JSON.stringify(meta),
+    });
   }
 
   // Runs the real script (as a separate process, like `pnpm fetch-data`).
@@ -218,9 +215,37 @@ export class FakeMarket {
     { github, token }: { github?: FakeGitHub; token?: string } = {},
   ): Promise<MarketIndex> {
     this.log = "";
-    await this.runScript(SCRIPT, {
-      MARKET_MAVEN_URL: maven.url,
-    });
+    const marketApi = new FakeGitHub();
+    await marketApi.start();
+    try {
+      const artifactFiles = Object.fromEntries(
+        [...this.products].flatMap(([id, files]) =>
+          Object.entries(files)
+            .filter(
+              ([name]) =>
+                !name.includes("/") &&
+                (name.endsWith(".json") || /^logo.*\.png$/.test(name)),
+            )
+            .map(([name, content]) => [`products/${id}/${name}`, content]),
+        ),
+      );
+      maven.artifact(
+        "market-test",
+        { "0.0.1-SNAPSHOT": artifactFiles },
+        { groupId: "com.axonivy.market", type: "zip" },
+      );
+      marketApi.set("/user", JSON.stringify({ login: "market-user" }));
+      await this.runScript(SCRIPT, {
+        MARKET_MAVEN_URL: maven.url,
+        MARKET_PACKAGE_REPO_URL: maven.url,
+        GITHUB_API_URL: marketApi.url,
+        GITHUB_TOKEN: "market-test-token",
+      });
+    } finally {
+      this.marketApiRequests = [...marketApi.requests];
+      this.marketApiHeaders = [...marketApi.headers];
+      await marketApi.stop();
+    }
     if (github) {
       await this.runScript(CHANGELOG_SCRIPT, {
         GITHUB_API_URL: github.url,
@@ -234,17 +259,9 @@ export class FakeMarket {
 
   private async runScript(script: string, variables: NodeJS.ProcessEnv) {
     try {
-      const { stdout, stderr } = await promisify(execFile)(
-        "node",
-        [script, ...(script === SCRIPT ? ["--no-pull"] : [])],
-        {
-          env: {
-            ...process.env,
-            MARKET_ROOT: this.root,
-            ...variables,
-          },
-        },
-      );
+      const { stdout, stderr } = await promisify(execFile)("node", [script], {
+        env: { ...process.env, MARKET_ROOT: this.root, ...variables },
+      });
       this.log += stdout + stderr;
     } catch (error) {
       const { stdout = "", stderr = "" } = error as {
