@@ -1,3 +1,4 @@
+import { test as unhydrated } from "@playwright/test";
 import { expect, test, type Page } from "./fixtures.ts";
 
 const cards = (page: Page) => page.locator("section a[href]");
@@ -48,12 +49,14 @@ test("filters by type", async ({ page }) => {
 
 test("searches name and description", async ({ page }) => {
   await search(page).fill("a-trust");
-  await expect(page).toHaveURL(/[?&]q=a-trust/);
+  await expect(page).toHaveURL(/[?&]search=a-trust/);
   await expect(cards(page)).toHaveCount(1);
   await expect(card(page, "a-trust")).toBeVisible();
 
   await search(page).fill("mobile phone signature");
-  await expect(page).toHaveURL(/[?&]q=mobile(\+|%20)phone(\+|%20)signature/);
+  await expect(page).toHaveURL(
+    /[?&]search=mobile(\+|%20)phone(\+|%20)signature/,
+  );
   await expect(card(page, "a-trust")).toBeVisible();
 
   await search(page).fill("no product matches this");
@@ -81,7 +84,7 @@ test("sorts A-Z and Z-A", async ({ page }) => {
 });
 
 test("restores filter, search and sort from the URL", async ({ page }) => {
-  await page.goto("/?type=utils&q=utils&sort=za");
+  await page.goto("/?type=utils&search=utils&sort=za");
 
   await expect(page.getByRole("button", { name: "Utilities" })).toHaveAttribute(
     "aria-pressed",
@@ -100,4 +103,74 @@ test("opens a product", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "A-Trust", level: 1 }),
   ).toBeVisible();
+});
+
+test.describe("in the New REST Client wizard of the Designer", () => {
+  const REST_CLIENT =
+    "/?ivy-viewer=designer-market&ivy-version=12.0.0&type=connector&resultsOnly&search=";
+
+  test("shows only the matching connectors", async ({ page }) => {
+    await page.goto(`${REST_CLIENT}a-trust`);
+
+    await expect(page.locator("html")).toHaveAttribute("data-rest-client", "");
+    await expect(search(page)).toBeHidden();
+    await expect(page.getByRole("combobox")).toBeHidden();
+    await expect(cards(page)).toHaveCount(1);
+    await expect(card(page, "a-trust")).toHaveAttribute("href", "/a-trust");
+  });
+
+  test("lists connectors only", async ({ page }) => {
+    await page.goto(REST_CLIENT);
+
+    await expect(card(page, "a-trust")).toBeVisible();
+    await expect(card(page, "portal")).toHaveCount(0);
+  });
+
+  test("is not active outside the Designer", async ({ page }) => {
+    await page.goto("/?type=connector&resultsOnly&search=");
+
+    await expect(page.locator("html")).not.toHaveAttribute("data-rest-client");
+    await expect(search(page)).toBeVisible();
+  });
+
+  test("is not kept when navigating", async ({ page }) => {
+    await page.goto(`${REST_CLIENT}a-trust`);
+    await page.goto("/");
+
+    await expect(page.locator("html")).toHaveAttribute("data-designer");
+    await expect(page.locator("html")).not.toHaveAttribute("data-rest-client");
+  });
+});
+
+unhydrated.describe("before hydration", () => {
+  const visibleCards = (page: Page) => cards(page).filter({ visible: true });
+
+  unhydrated.beforeEach(async ({ page }) => {
+    await page.route(/\/_astro\/.*\.js$/, (route) => route.abort());
+  });
+
+  unhydrated("shows only the products matching the URL", async ({ page }) => {
+    await page.goto("/?type=utils&search=utils");
+
+    await expect(card(page, "db-utils")).toBeVisible();
+    await expect(card(page, "a-trust")).toBeHidden();
+  });
+
+  unhydrated(
+    "shows only connectors in the REST client wizard",
+    async ({ page }) => {
+      await page.goto(
+        "/?ivy-viewer=designer-market&ivy-version=12.0.0&type=utils&resultsOnly&search=a",
+      );
+
+      await expect(card(page, "a-trust")).toBeVisible();
+      await expect(card(page, "db-utils")).toBeHidden();
+    },
+  );
+
+  unhydrated("ignores an unknown type", async ({ page }) => {
+    await page.goto("/?type=unknown");
+
+    await expect(visibleCards(page)).toHaveCount(await cards(page).count());
+  });
 });
