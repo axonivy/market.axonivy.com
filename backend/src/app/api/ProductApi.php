@@ -16,7 +16,8 @@ class ProductApi
     $types = [
       'all' => null,
       'connectors' => ['connector'],
-      'utilities' => ['utils', 'utility', 'utilities'],
+      'utilities' => ['util', 'utils', 'utility', 'utilities'],
+      'solutions' => ['solution'],
       'demos' => ['demo', 'demos'],
     ];
 
@@ -63,12 +64,10 @@ class ProductApi
 
     $query = $request->getQueryParams();
     $showDevVersions = $this->booleanQuery($query['isShowDevVersion'] ?? false);
-    $designerVersion = $query['designerVersion'] ?? '';
-    $designerVersion = is_string($designerVersion) ? $designerVersion : '';
     $versions = $this->displayVersions(
       $product['versions'] ?? [],
       $showDevVersions,
-      $designerVersion
+      true
     );
     $result = [];
 
@@ -116,10 +115,13 @@ class ProductApi
     $query = $request->getQueryParams();
     $requestedVersion = $query['productVersion'] ?? '';
     $requestedVersion = is_string($requestedVersion) ? $requestedVersion : '';
+    if ($requestedVersion === '') {
+      return $this->json($response, ['message' => 'Product version is required'], 404);
+    }
     $installables = $product['installable'] ?? [];
     $installable = null;
     foreach ($installables as $candidate) {
-      if ($requestedVersion === '' || ($candidate['version'] ?? '') === $requestedVersion) {
+      if (($candidate['version'] ?? '') === $requestedVersion) {
         $installable = $candidate;
         break;
       }
@@ -166,29 +168,20 @@ class ProductApi
     $query = $request->getQueryParams();
     $versions = $this->displayVersions(
       $product['versions'] ?? [],
-      $this->booleanQuery($query['isShowDevVersion'] ?? false),
-      ''
+      $this->booleanQuery($query['isShowDevVersion'] ?? false)
     );
     if ($versions === []) {
       return $this->json($response, ['message' => 'No matching version found'], 404);
     }
 
     $requestedVersion = (string) ($args['version'] ?? '');
-    if (in_array($requestedVersion, $versions, true)) {
-      return $this->json($response, ['version' => $requestedVersion]);
-    }
-    $prefix = $this->minorVersionPrefix($requestedVersion);
-    if ($prefix !== '') {
-      foreach ($versions as $version) {
-        if (
-          str_starts_with($version, $prefix) &&
-          version_compare($version, $requestedVersion, '<')
-        ) {
-          return $this->json($response, ['version' => $version]);
-        }
+    $targetMajor = explode('.', $requestedVersion, 2)[0];
+    foreach ($versions as $version) {
+      if (explode('.', $version, 2)[0] === $targetMajor) {
+        return $this->json($response, ['version' => $version]);
       }
     }
-    return $this->json($response, ['version' => $versions[0]]);
+    return $this->json($response, ['message' => "Cannot find version: $requestedVersion"], 404);
   }
 
   public function getImage($request, $response, array $args)
@@ -289,43 +282,46 @@ class ProductApi
     return null;
   }
 
-  private function displayVersions(array $versions, bool $showDevVersions, string $designerVersion): array
+  private function displayVersions(
+    array $versions,
+    bool $showDevVersions,
+    bool $fallbackToDevVersions = false
+  ): array
   {
-    if ($showDevVersions) {
-      return array_values($versions);
-    }
-    $prefix = $this->minorVersionPrefix($designerVersion);
-    $displayable = array_values(array_filter(
-      $versions,
-      fn($version) => !$this->isDevVersion($version) || ($prefix !== '' && str_starts_with($version, $prefix))
-    ));
-    if ($prefix === '') {
-      return $displayable;
-    }
-
     $releasedBugfixes = [];
-    foreach ($displayable as $version) {
-      if (!$this->isDevVersion($version)) {
+    foreach ($versions as $version) {
+      if ($this->isReleasedVersion($version)) {
         $releasedBugfixes[] = $this->bugfixVersion($version);
       }
     }
-    return array_values(array_filter(
-      $displayable,
-      fn($version) => !$this->isDevVersion($version) || !in_array($this->bugfixVersion($version), $releasedBugfixes, true)
+    $displayable = array_values(array_filter(
+      array_unique($versions),
+      fn($version) => $this->isReleasedVersion($version) || (
+        $showDevVersions &&
+        $this->isValidDevVersion($version) &&
+        !in_array($this->bugfixVersion($version), $releasedBugfixes, true)
+      )
     ));
+    if (!$showDevVersions && $fallbackToDevVersions && $displayable === []) {
+      return $this->displayVersions($versions, true);
+    }
+    return $displayable;
   }
 
   private function isDevVersion(string $version): bool
   {
-    return str_contains($version, '-SNAPSHOT') || str_contains($version, '-m');
+    return str_contains($version, '-');
   }
 
-  private function minorVersionPrefix(string $version): string
+  private function isReleasedVersion(string $version): bool
   {
-    if (!preg_match('/^(\d+\.\d+)/', $version, $matches)) {
-      return '';
-    }
-    return $matches[1];
+    return !$this->isDevVersion($version) && preg_match('/^\d+(?:\.\d+)*$/', $version) === 1;
+  }
+
+  private function isValidDevVersion(string $version): bool
+  {
+    $baseVersion = explode('-', $version, 2)[0];
+    return $this->isDevVersion($version) && preg_match('/^\d+(?:\.\d+)*$/', $baseVersion) === 1;
   }
 
   private function bugfixVersion(string $version): string
