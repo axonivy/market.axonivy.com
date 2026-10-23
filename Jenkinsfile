@@ -66,7 +66,7 @@ pipeline {
     stage('Backend Tests') {
       steps {
         script {
-          docker.build('php', '-f backend/docker/apache/Dockerfile backend').inside {
+          docker.build('php', '-f backend/docker/apache/Dockerfile backend/docker/apache').inside {
             dir ('backend') {
               sh 'composer install --no-interaction --no-progress'
               def testExitCode = sh(
