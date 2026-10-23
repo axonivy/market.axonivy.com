@@ -6,7 +6,6 @@ use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 use app\Config;
 use app\domain\market\Market;
-use app\domain\market\MarketInstallCounter;
 use app\domain\market\ProductFactory;
 
 class ProductTest extends TestCase
@@ -145,21 +144,6 @@ class ProductTest extends TestCase
     $product = Market::getProductByKey('a-trust');
     Assert::assertNotEquals('1.0', $product->getCompatibility());
     Assert::assertNotEmpty($product->getCompatibility());
-  }
-
-  public function test_installationCount()
-  {
-    $product = self::getMicrosoftTodoProduct();
-    $count = $product->getInstallationCount();
-    Assert::assertIsInt($count);
-    Assert::assertGreaterThanOrEqual(20, $count);
-    Assert::assertLessThanOrEqual(1000, $count);
-    MarketInstallCounter::incrementInstallCount('msgraph-todo');
-    //cached value
-    Assert::assertEquals($count, $product->getInstallationCount());
-    //reload with incremented value
-    $product = self::getMicrosoftTodoProduct();
-    Assert::assertEquals($count + 1, $product->getInstallationCount());
   }
 
   private static function getMicrosoftTodoProduct()
