@@ -19,7 +19,6 @@ class ProductFactory
     $shortDesc = $json->description ?? '';
 
     $vendor = $json->vendor ?? 'Axon Ivy AG';
-    $vendorImage = $json->vendorImage ?? '/images/misc/axonivy-logo-black.svg';
     $vendorUrl = $json->vendorUrl ?? 'https://www.axonivy.com';
 
     $platformReview = $json->platformReview ?? '4.0';
@@ -36,7 +35,7 @@ class ProductFactory
     $additionalArtifacts = self::createMavenArtifacts($json);
 
     return new Product($key, $json->name, $version, $shortDesc, $listed, $type, $tags,
-      $vendor, $vendorImage, $vendorUrl, $platformReview, $cost, $sourceUrl, $statusBadgeUrl, $language, $industry, $compatibility, $validate, $contactUs, $mavenArtifact, $additionalArtifacts);
+      $vendor, $vendorUrl, $platformReview, $cost, $sourceUrl, $statusBadgeUrl, $language, $industry, $compatibility, $validate, $contactUs, $mavenArtifact, $additionalArtifacts);
   }
 
   private static function createMavenArtifact($json): ?MavenArtifact

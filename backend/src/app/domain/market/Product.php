@@ -17,7 +17,6 @@ class Product
   private string $type;
   private array $tags;
   private string $vendor;
-  private string $vendorImage;
   private string $vendorUrl;
   private string $platformReview;
   private string $cost;
@@ -36,7 +35,7 @@ class Product
   private array $additionalArtifacts;
 
   public function __construct(string $key, string $name, string $version, string $shortDesc, bool $listed, 
-    string $type, array $tags, string $vendor, string $vendorImage, string $vendorUrl, string $platformReview, string $cost, string $sourceUrl, string $statusBadgeUrl, string $language, string $industry,
+    string $type, array $tags, string $vendor, string $vendorUrl, string $platformReview, string $cost, string $sourceUrl, string $statusBadgeUrl, string $language, string $industry,
     string $compatibility, bool $validate, bool $contactUs, ?MavenArtifact $mavenArtifact, array $additionalArtifacts)
   {
     $this->key = $key;
@@ -47,7 +46,6 @@ class Product
     $this->type = $type;
     $this->tags = $tags;
     $this->vendor = $vendor;
-    $this->vendorImage = $vendorImage;
     $this->vendorUrl = $vendorUrl;
     $this->platformReview = $platformReview;
     $this->cost = $cost;
@@ -117,14 +115,6 @@ class Product
   public function getVendor(): string
   {
     return $this->vendor;
-  }
-
-  public function getVendorImage(): string
-  {
-    if (str_starts_with($this->vendorImage, "/")) {
-      return $this->vendorImage;
-    }
-    return $this->fileResolver->assetBaseUrl_unversionized() . '/' . $this->vendorImage;
   }
 
   public function getVendorUrl(): string
