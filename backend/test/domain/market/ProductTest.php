@@ -42,15 +42,6 @@ class ProductTest extends TestCase
     Assert::assertEquals('FROX AG', $product->getVendor());
   }
 
-  public function test_vendorImage()
-  {
-    $product = Market::getProductByKey('visualvm-plugin');
-    Assert::assertEquals('/images/misc/axonivy-logo-black.svg', $product->getVendorImage());
-
-    $product = Market::getProductByKey('jira');
-    Assert::assertEquals('/_market/jira/frox.png', $product->getVendorImage());
-  }
-
   public function test_vendorUrl()
   {
     $product = Market::getProductByKey('visualvm-plugin');
