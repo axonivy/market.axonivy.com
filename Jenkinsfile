@@ -13,7 +13,6 @@ pipeline {
   stages {
     stage('build') {
       steps {
-
         script {
           docker.build('node', '-f build/Dockerfile.node .').inside {
             dir ('frontend') {
@@ -91,28 +90,25 @@ pipeline {
       when {
         branch 'master'
       }
-      agent {
-        docker {
-          image 'axonivy/build-container:ssh-client-1'
-        }
-      }
       steps {
-        sshagent(['zugprojenkins-ssh']) {
-          script {
-            def targetFolder = "/home/axonivya/deployment/ivy-website-market-" + new Date().format("yyyy-MM-dd_HH-mm-ss-SSS");
-            def targetFile =  targetFolder + ".tar"
-            def host = 'axonivya@dev.axonivy.com'
+        script {
+          docker.image('axonivy/build-container:ssh-client-1').inside {
+            sshagent(['zugprojenkins-ssh']) {
+              def targetFolder = "/home/axonivya/deployment/ivy-website-market-" + new Date().format("yyyy-MM-dd_HH-mm-ss-SSS");
+              def targetFile =  targetFolder + ".tar"
+              def host = 'axonivya@dev.axonivy.com'
 
-            // copy
-            sh "scp frontend/ivy-website-market.tar $host:$targetFile"
+              // copy
+              sh "scp frontend/ivy-website-market.tar $host:$targetFile"
 
-            // untar
-            sh "ssh $host mkdir $targetFolder"
-            sh "ssh $host tar -xf $targetFile -C $targetFolder"
-            sh "ssh $host rm -f $targetFile"
+              // untar
+              sh "ssh $host mkdir $targetFolder"
+              sh "ssh $host tar -xf $targetFile -C $targetFolder"
+              sh "ssh $host rm -f $targetFile"
 
-            // symlink
-            sh "ssh $host ln -fns $targetFolder/dist /home/axonivya/www/axonivya.myhostpoint.ch/linktoweb"
+              // symlink
+              sh "ssh $host ln -fns $targetFolder/dist /home/axonivya/www/axonivya.myhostpoint.ch/linktoweb"
+            }
           }
         }
       }
