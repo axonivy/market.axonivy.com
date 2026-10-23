@@ -138,62 +138,69 @@ const information: InformationRow[] = [
       </BreadcrumbList>
     </Breadcrumb>
 
-    <div class="flex flex-row gap-8 justify-between items-start">
-      <div class="flex flex-row gap-8 items-center">
-        <img
-          src={product.logo.src}
-          alt={name}
-          height={70}
-          width={70}
-          class={cn("rounded-md", product.logoDark && "dark:hidden")}
-        />
-        {product.logoDark && (
+    <div class="flex flex-col gap-12 designer:flex-row designer:md:flex-col designer:justify-between designer:items-center designer:md:items-start">
+      <div class="flex flex-row gap-8 justify-between items-start designer:md:w-full">
+        <div class="flex flex-row gap-8 items-center">
           <img
-            src={product.logoDark.src}
+            src={product.logo.src}
             alt={name}
             height={70}
             width={70}
-            class="rounded-md hidden dark:block"
+            class={cn("rounded-md", product.logoDark && "dark:hidden")}
           />
-        )}
-        <H1>{name}</H1>
+          {product.logoDark && (
+            <img
+              src={product.logoDark.src}
+              alt={name}
+              height={70}
+              width={70}
+              class="rounded-md hidden dark:block"
+            />
+          )}
+          <H1>{name}</H1>
+        </div>
+        <div class="flex-row gap-4 items-center hidden md:flex">
+          {contactUs ? (
+            <a
+              href={contactUrl(product.id)}
+              target="_blank"
+              class={cn(buttonVariants(), "h-12 px-6 text-base")}
+            >
+              {t("productDetails.contactUs")}
+            </a>
+          ) : (
+            <InstallProduct
+              installable={product.installable}
+              deprecated={product.deprecated}
+              lang={lang}
+              client:load
+            />
+          )}
+          {showDownload && (
+            <DownloadProduct
+              artifacts={product.artifacts}
+              mainArtifactId={product.mainArtifactId}
+              lang={lang}
+              client:load
+            />
+          )}
+        </div>
       </div>
-      <div class="flex-row gap-4 items-center hidden md:flex">
-        {contactUs ? (
-          <a
-            href={contactUrl(product.id)}
-            target="_blank"
-            class={cn(buttonVariants(), "h-12 px-6 text-base")}
-          >
-            {t("productDetails.contactUs")}
-          </a>
-        ) : (
-          <InstallProduct
-            installable={product.installable}
-            deprecated={product.deprecated}
-            lang={lang}
-            client:load
-          />
+      <div class="flex flex-col gap-4">
+        <H5 className="designer:hidden">{t("productDetails.type")}</H5>
+        {product.type === "connector" && (
+          <IconPlug class="size-16 shrink-0 designer:size-8" />
         )}
-        {showDownload && (
-          <DownloadProduct
-            artifacts={product.artifacts}
-            mainArtifactId={product.mainArtifactId}
-            lang={lang}
-            client:load
-          />
+        {product.type === "utils" && (
+          <IconTools class="size-16 shrink-0 designer:size-8" />
         )}
+        {product.type === "demo" && (
+          <IconClipboardCheck class="size-16 shrink-0 designer:size-8" />
+        )}
+        <Base>{typeLabel(t, product.type)}</Base>
       </div>
     </div>
-    <div class="flex flex-col gap-4">
-      <H5>{t("productDetails.type")}</H5>
-      {product.type === "connector" && <IconPlug class="size-16 shrink-0" />}
-      {product.type === "utils" && <IconTools class="size-16 shrink-0" />}
-      {product.type === "demo" && (
-        <IconClipboardCheck class="size-16 shrink-0" />
-      )}
-      <Base>{typeLabel(t, product.type)}</Base>
-    </div>
+
     {product.deprecated && (
       <div class="flex flex-col gap-4 border border-info bg-info-bg p-4 rounded-md">
         <div class="flex flex-row gap-2 items-center">
@@ -203,7 +210,7 @@ const information: InformationRow[] = [
         <Base>{t("productDetails.deprecated.description")}</Base>
       </div>
     )}
-    <div class="grid grid-cols-2 gap-2 items-center md:hidden w-full">
+    <div class="grid grid-cols-2 gap-2 items-center md:hidden w-full designer:mb-4">
       {contactUs ? (
         <a
           href={contactUrl(product.id)}
