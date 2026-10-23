@@ -25,4 +25,12 @@ export function useIsDesigner(): boolean {
   );
 }
 
+export function useDesignerVersion(): string | undefined {
+  return useSyncExternalStore(
+    noSubscription,
+    () => getDesignerEnv().version,
+    () => undefined,
+  );
+}
+
 const noSubscription = () => () => {};

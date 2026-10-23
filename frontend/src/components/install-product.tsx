@@ -10,13 +10,17 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { P } from "@/components/ui/typography";
-import { useIsDesigner } from "@/data/designer";
+import { useDesignerVersion, useIsDesigner } from "@/data/designer";
 import {
   getInitialShowDevVersions,
   saveShowDevVersions,
 } from "@/data/dev-versions";
 import type { ProductInstallable } from "@/data/product-types";
-import { newestFirst, versionsToDisplay } from "@/data/versions";
+import {
+  bestMatchVersion,
+  newestFirst,
+  versionsToDisplay,
+} from "@/data/versions";
 import { cn } from "@/lib/utils";
 import { localePath } from "@/translation/language";
 import "@/translation/ui";
@@ -41,6 +45,7 @@ export default function InstallProduct({
 }) {
   const { t } = useTranslation(undefined, { lng: lang });
   const isDesigner = useIsDesigner();
+  const designerVersion = useDesignerVersion();
   const [showDevVersions, setShowDevVersions] = useState(
     getInitialShowDevVersions,
   );
@@ -104,7 +109,7 @@ export default function InstallProduct({
   const version =
     selectedVersion && versions.includes(selectedVersion)
       ? selectedVersion
-      : versions[0];
+      : bestMatchVersion(versions, designerVersion);
   const url = installable.find(
     (installable) => installable.version === version,
   )?.url;

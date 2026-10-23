@@ -88,25 +88,25 @@ test.describe("in the Designer", () => {
     await page.goto("/a-trust");
   });
 
-  test("installs the newest release", async ({ page, baseURL }) => {
+  test("installs the newest release of the Designer version", async ({
+    page,
+    baseURL,
+  }) => {
     const { version, install } = designer(page);
     await expect(page.getByRole("button", { name: "Install Now" })).toHaveCount(
       0,
     );
     await expect(page.getByRole("button", { name: "Download" })).toHaveCount(0);
-    await expect(version.locator("option").first()).toHaveJSProperty(
-      "selected",
-      true,
-    );
+    await expect(version).toHaveValue("12.0.2");
+    await expect(version.locator("option").first()).not.toHaveText(/12\.0\.2/);
     await expect(
       version.locator("option").filter({ hasText: /-SNAPSHOT$/ }),
     ).toHaveCount(0);
 
     await install.click();
 
-    const newest = await version.inputValue();
     expect(await installed(page)).toEqual([
-      expect.stringMatching(productJson(baseURL, newest)),
+      expect.stringMatching(productJson(baseURL, "12.0.2")),
     ]);
   });
 
@@ -133,6 +133,7 @@ test.describe("in the Designer", () => {
         .filter({ hasText: /-SNAPSHOT$/ })
         .first(),
     ).toBeAttached();
+    await expect(version).toHaveValue("12.0.3-SNAPSHOT");
   });
 
   test("stays in Designer mode after switching language", async ({ page }) => {
@@ -159,6 +160,26 @@ test("accepts the ivy.version param of newer Designers", async ({ page }) => {
 
   await expect(page.locator("html")).toHaveAttribute("data-designer", "13.1.0");
   await expect(designer(page).install).toBeVisible();
+  await expect(designer(page).version).toHaveValue("13.1.2");
+});
+
+test.describe("without a version of the Designer release", () => {
+  test("selects the newest older version", async ({ page }) => {
+    await page.goto("/a-trust?ivy-viewer=designer-market&ivy-version=12.5.0");
+
+    await expect(designer(page).version).toHaveValue("12.0.2");
+  });
+
+  test("selects the newest version", async ({ page }) => {
+    await page.goto("/a-trust?ivy-viewer=designer-market&ivy-version=9.0.0");
+
+    const { version } = designer(page);
+    await expect(version).toHaveValue("13.2.0");
+    await expect(version.locator("option").first()).toHaveJSProperty(
+      "selected",
+      true,
+    );
+  });
 });
 
 test("ignores other viewers", async ({ page }) => {

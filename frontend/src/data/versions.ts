@@ -79,6 +79,20 @@ export function compatibilityRange(
     : `${oldest} - ${newest}${suffix}`;
 }
 
+export function bestMatchVersion(
+  versions: string[],
+  designerVersion?: string,
+): string | undefined {
+  if (!designerVersion) return versions[0];
+  return (
+    versions.find(
+      (version) => majorMinor(version) === majorMinor(designerVersion),
+    ) ??
+    versions.find((version) => compareVersions(version, designerVersion) < 0) ??
+    versions[0]
+  );
+}
+
 export function versionsToDisplay(
   versions: string[],
   showDevVersions: boolean,
