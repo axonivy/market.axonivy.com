@@ -31,6 +31,8 @@ html {
 }
 
 @custom-variant dark (&:is(.dark *));
+/* <html data-designer> is set by the head script in layouts/main.astro. */
+@custom-variant designer (&:is([data-designer] *));
 
 @theme inline {
   --font-heading: var(--font-sans);

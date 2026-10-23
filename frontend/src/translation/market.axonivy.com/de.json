@@ -73,6 +73,7 @@
     "title": "Oops!"
   },
   "productDetails": {
+    "contactUs": "Kontaktiere uns",
     "deprecated": {
       "description": "Diese Erweiterung ist veraltet und erhält keine Updates oder Unterstützung mehr.",
       "title": "Veraltet"
@@ -104,6 +105,10 @@
       "title": "Informationen"
     },
     "install": {
+      "deprecatedWarning": "Die Installation veralteter Erweiterungen wird nicht empfohlen. Verwendung auf eigene Verantwortung.",
+      "designerTitle": "Installieren",
+      "noInstaller": "Kein Installer verfügbar",
+      "openInDesigner": "Bitte öffne den <market>Axon Ivy Market</market> in deinem <designer>Axon Ivy Designer</designer> (mindestens Version 9.2.0).",
       "title": "Jetzt installieren"
     },
     "tabs": {

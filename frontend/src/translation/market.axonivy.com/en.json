@@ -73,6 +73,7 @@
     "title": "Oops!"
   },
   "productDetails": {
+    "contactUs": "Contact us",
     "deprecated": {
       "description": "This extension is deprecated and will no longer receive updates or support.",
       "title": "Deprecated"
@@ -104,6 +105,10 @@
       "title": "Information"
     },
     "install": {
+      "deprecatedWarning": "Installing deprecated extensions is not recommended. Use at your own discretion.",
+      "designerTitle": "Install",
+      "noInstaller": "No installer available",
+      "openInDesigner": "Please open the <market>Axon Ivy Market</market> inside your <designer>Axon Ivy Designer</designer> (minimum version 9.2.0).",
       "title": "Install Now"
     },
     "tabs": {

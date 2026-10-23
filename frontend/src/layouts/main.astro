@@ -5,6 +5,7 @@ import "@/styles/global.css";
 import { Font } from "astro:assets";
 import i18next, { type Lang } from "@/translation/ui";
 import { getLanguageUrls } from "@/translation/urls";
+import { DESIGNER_PARAMS } from "@/data/designer";
 
 const lang = (Astro.currentLocale ?? "en") as Lang;
 const t = i18next.getFixedT(lang);
@@ -29,6 +30,26 @@ const { redirect = true } = Astro.props as Props;
         }
       } catch {}
     </script>}
+    <script is:inline define:vars={{ p: DESIGNER_PARAMS }}>
+      const params = new URLSearchParams(location.search);
+      let viewer = params.get(p.viewer);
+      let version = params.get(p.version) ?? params.get(p.newVersion);
+      try {
+        if (viewer === p.designerViewer) {
+          sessionStorage.setItem(p.viewer, viewer);
+        } else {
+          viewer = sessionStorage.getItem(p.viewer);
+        }
+        if (version !== null) {
+          sessionStorage.setItem(p.version, version);
+        } else {
+          version = sessionStorage.getItem(p.version);
+        }
+      } catch {}
+      if (viewer === p.designerViewer) {
+        document.documentElement.dataset.designer = version ?? "";
+      }
+    </script>
     <Font cssVariable="--font-inter" preload />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />

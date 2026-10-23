@@ -1,8 +1,8 @@
 ---
-import { H1, H4, Base } from "@/components/ui/typography";
-import Layout from "@/layouts/main.astro";
 import Products from "@/components/products";
+import { Base, H1, H4 } from "@/components/ui/typography";
 import { getProductSummaries } from "@/data/products";
+import Layout from "@/layouts/main.astro";
 import i18next, { type Lang } from "@/translation/ui";
 
 const lang = (Astro.currentLocale ?? "en") as Lang;
@@ -17,11 +17,11 @@ export function getStaticPaths() {
 ---
 
 <Layout>
-  <div class="flex flex-col gap-8">
+  <div class="flex flex-col gap-8 designer:gap-0">
     <H1>{t("dashboard.title")}</H1>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <H4 className="max-w-5/6">{t("dashboard.subtitle")}</H4>
-      <Base className="text-n900">
+      <H4 className="max-w-5/6 designer:hidden">{t("dashboard.subtitle")}</H4>
+      <Base className="text-n900 designer:hidden">
         {t("dashboard.description")}
         <br />
         {beforeLink}

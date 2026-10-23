@@ -1,6 +1,7 @@
 ---
 import AxonIvyLogo from "@/assets/axonivy-logo-2021-rgb.svg";
 import DownloadProduct from "@/components/download-product";
+import InstallProduct from "@/components/install-product";
 import ProductDetails from "@/components/product-details";
 import {
   Breadcrumb,
@@ -10,9 +11,10 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Base, H1, H3, H4, H5 } from "@/components/ui/typography";
+import { contactUrl } from "@/data/product-types";
 import {
   getAllProducts,
   getProductById,
@@ -68,6 +70,9 @@ const maven =
       }
     : undefined;
 
+const contactUs = !product.sourceUrl;
+const showDownload = !contactUs && !product.mavenDropins;
+
 type InformationRow = {
   label: string;
   value?: string;
@@ -112,7 +117,7 @@ const information: InformationRow[] = [
   {
     label: t("productDetails.information.table.label.more"),
     value: t("productDetails.information.table.value.more"),
-    href: `https://www.axonivy.com/marketplace/contact/?market_solutions=${product.id}`,
+    href: contactUrl(product.id),
   },
 ];
 ---
@@ -154,10 +159,23 @@ const information: InformationRow[] = [
         <H1>{name}</H1>
       </div>
       <div class="flex-row gap-4 items-center hidden md:flex">
-        <Button className="h-12 px-6 text-base">
-          {t("productDetails.install.title")}
-        </Button>
-        {!product.mavenDropins && (
+        {contactUs ? (
+          <a
+            href={contactUrl(product.id)}
+            target="_blank"
+            class={cn(buttonVariants(), "h-12 px-6 text-base")}
+          >
+            {t("productDetails.contactUs")}
+          </a>
+        ) : (
+          <InstallProduct
+            installable={product.installable}
+            deprecated={product.deprecated}
+            lang={lang}
+            client:load
+          />
+        )}
+        {showDownload && (
           <DownloadProduct
             artifacts={product.artifacts}
             mainArtifactId={product.mainArtifactId}
@@ -186,10 +204,23 @@ const information: InformationRow[] = [
       </div>
     )}
     <div class="grid grid-cols-2 gap-2 items-center md:hidden w-full">
-      <Button className="h-12 text-base">
-        {t("productDetails.install.title")}
-      </Button>
-      {!product.mavenDropins && (
+      {contactUs ? (
+        <a
+          href={contactUrl(product.id)}
+          target="_blank"
+          class={cn(buttonVariants(), "col-span-2 h-12 text-base")}
+        >
+          {t("productDetails.contactUs")}
+        </a>
+      ) : (
+        <InstallProduct
+          installable={product.installable}
+          deprecated={product.deprecated}
+          lang={lang}
+          client:load
+        />
+      )}
+      {showDownload && (
         <DownloadProduct
           artifacts={product.artifacts}
           mainArtifactId={product.mainArtifactId}
@@ -250,8 +281,8 @@ const information: InformationRow[] = [
               .filter((row) => row.value || row.image)
               .map(({ label, value, href, image }) => (
                 <TableRow>
-                  <TableCell>{label}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="align-top">{label}</TableCell>
+                  <TableCell className="text-right whitespace-normal items-start">
                     {image ? (
                       <img src={image} alt={label} class="ml-auto" />
                     ) : href ? (
