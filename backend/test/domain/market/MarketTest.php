@@ -4,6 +4,7 @@ namespace test\domain\market;
 
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
+use app\Config;
 use app\domain\market\Market;
 use app\domain\market\Product;
 
@@ -41,8 +42,7 @@ class MarketTest extends TestCase
   {
     $products = Market::search(Market::all(), '');
 
-    $path = __DIR__ . '/../../../src/web/_market';
-    $total_items  = count(glob("$path/*/meta.json"));
+    $total_items = count(glob(Config::marketDirectory() . '/*/meta.json'));
     Assert::assertEquals($total_items, count($products));
   }
 

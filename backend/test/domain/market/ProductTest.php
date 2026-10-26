@@ -4,9 +4,7 @@ namespace test\domain\market;
 
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
-use app\Config;
 use app\domain\market\Market;
-use app\domain\market\ProductFactory;
 
 class ProductTest extends TestCase
 {
@@ -37,7 +35,7 @@ class ProductTest extends TestCase
     $product = Market::getProductByKey('visualvm-plugin');
     Assert::assertEquals('Axon Ivy AG', $product->getVendor());
 
-    $product = Market::getProductByKey('jira');
+    $product = Market::getProductByKey('jira-connector');
     Assert::assertEquals('FROX AG', $product->getVendor());
   }
 
@@ -46,7 +44,7 @@ class ProductTest extends TestCase
     $product = Market::getProductByKey('visualvm-plugin');
     Assert::assertEquals('https://www.axonivy.com', $product->getVendorUrl());
 
-    $product = Market::getProductByKey('jira');
+    $product = Market::getProductByKey('jira-connector');
     Assert::assertEquals('https://www.frox.ch', $product->getVendorUrl());
   }
 
@@ -148,6 +146,6 @@ class ProductTest extends TestCase
 
   private static function getMicrosoftTodoProduct()
   {
-    return ProductFactory::create('msgraph-todo', Config::marketDirectory() . '/microsoft365/toDo/meta.json');
+    return Market::getProductByKey('msgraph-todo');
   }
 }

@@ -324,7 +324,23 @@ class ProductFileResolver
   
   public function file_productJson(string $version): string
   {
-    return $this->productFilePath($version, 'product.json');
+    $versionizedFolder = $this->folder_versionized($version);
+    foreach (['_product.json', 'product.json'] as $file) {
+      $path = $versionizedFolder . '/' . $file;
+      if (is_file($path)) {
+        return $path;
+      }
+    }
+
+    $unversionizedFolder = $this->folder_unversionized();
+    foreach (['_product.json', 'product.json'] as $file) {
+      $path = $unversionizedFolder . '/' . $file;
+      if (is_file($path)) {
+        return $path;
+      }
+    }
+
+    return $versionizedFolder . '/_product.json';
   }
   
   private function folder_versionized(string $version): string

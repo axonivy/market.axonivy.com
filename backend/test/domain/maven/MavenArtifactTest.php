@@ -66,7 +66,7 @@ class MavenArtifactTest extends TestCase
 
   public function testGetMavenArtifact()
   {
-    $artifact = Market::getProductByKey('workflow')->getMavenProductInfo()->getProductArtifact();
+    $artifact = Market::getProductByKey('workflow-demo')->getMavenProductInfo()->getProductArtifact();
     $this->assertEquals('Workflow Demos Product', $artifact->getName());
   }
 
@@ -78,13 +78,13 @@ class MavenArtifactTest extends TestCase
 
   public function testGetWorkflowDemo()
   {
-    $artifact = Market::getProductByKey('workflow')->getMavenProductInfo()->getProductArtifact();
+    $artifact = Market::getProductByKey('workflow-demo')->getMavenProductInfo()->getProductArtifact();
     $this->assertEquals('Workflow Demos Product', $artifact->getName());
   }
 
   public function testMavenArtifact()
   {
-    $artifact = Market::getProductByKey('connectivity')->getMavenProductInfo()->getProductArtifact();
+    $artifact = Market::getProductByKey('connectivity-demo')->getMavenProductInfo()->getProductArtifact();
     $this->assertEquals('Connectivity Demos Product', $artifact->getName());
     $this->assertEquals('com.axonivy.demo', $artifact->getGroupId());
     $this->assertEquals('connectivity-demos-product', $artifact->getArtifactId());
@@ -114,7 +114,7 @@ class MavenArtifactTest extends TestCase
     $artifact = self::getMavenArtifact('ivy-demos-app', 'zip');
     Assert::assertEquals('zip', $artifact->getType());
 
-    $artifact = Market::getProductByKey('workflow')->getMavenProductInfo()->getProductArtifact();
+    $artifact = Market::getProductByKey('workflow-demo')->getMavenProductInfo()->getProductArtifact();
     Assert::assertEquals('zip', $artifact->getType());
   }
 
