@@ -11,7 +11,7 @@ use OpenApi\Attributes as OA;
     version: '1.0.0',
     description: 'Product search, artifact versions, installation descriptors, and product images.'
   ),
-  servers: [new OA\Server(url: '/')],
+  servers: [new OA\Server(url: '/stable')],
   components: new OA\Components(schemas: [
     new OA\Schema(
       schema: 'ProductModel',

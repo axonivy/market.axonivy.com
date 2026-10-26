@@ -356,10 +356,10 @@ class ProductApi
     ];
 
     if (is_file($directory . '/logo.png')) {
-      $model['logoUrl'] = '/api/image/' . rawurlencode($key);
+      $model['logoUrl'] = '/stable/api/image/' . rawurlencode($key);
     }
     if (is_file($directory . '/logo-dark.png')) {
-      $model['logoDarkUrl'] = '/api/image/' . rawurlencode($key . '-dark');
+      $model['logoDarkUrl'] = '/stable/api/image/' . rawurlencode($key . '-dark');
     }
     if (!empty($meta['statusBadgeUrl'])) {
       $model['badgeUrl'] = $meta['statusBadgeUrl'];

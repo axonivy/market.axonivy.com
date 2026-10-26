@@ -116,19 +116,19 @@ class ProductApiTest extends TestCase
   public function testSearchesProductsByTypeKeywordAndLanguage(): void
   {
     AppTester::assertThatGet(
-      '/api/product?type=connectors&keyword=trust&language=en'
+      '/stable/api/product?type=connectors&keyword=trust&language=en'
     )
       ->ok()
       ->contentType('application/json; charset=utf-8')
       ->bodyContains('"id":"a-trust"')
       ->bodyContains('"names":{"en":"A-Trust"}')
-      ->bodyContains('"logoUrl":"/api/image/a-trust"')
+      ->bodyContains('"logoUrl":"/stable/api/image/a-trust"')
       ->bodyDoesNotContain('"id":"aspose-email-demo"');
   }
 
   public function testFiltersSolutionProducts(): void
   {
-    AppTester::assertThatGet('/api/product?type=solutions')
+    AppTester::assertThatGet('/stable/api/product?type=solutions')
       ->ok()
       ->bodyContains('"id":"sample-solution"')
       ->bodyDoesNotContain('"id":"a-trust"');
@@ -136,7 +136,7 @@ class ProductApiTest extends TestCase
 
   public function testFiltersUtilitiesUsingV2AndV3MetadataTypes(): void
   {
-    AppTester::assertThatGet('/api/product?type=utilities')
+    AppTester::assertThatGet('/stable/api/product?type=utilities')
       ->ok()
       ->bodyContains('"id":"sample-utility"')
       ->bodyContains('"id":"sample-utils"')
@@ -145,14 +145,14 @@ class ProductApiTest extends TestCase
 
   public function testRejectsUnknownProductType(): void
   {
-    AppTester::assertThatGet('/api/product?type=unknown')
+    AppTester::assertThatGet('/stable/api/product?type=unknown')
       ->statusCode(400)
       ->bodyContains('Invalid product type');
   }
 
   public function testListsArtifactVersionsAndDownloadUrls(): void
   {
-    AppTester::assertThatGet('/api/product/a-trust/versions?isShowDevVersion=true')
+    AppTester::assertThatGet('/stable/api/product/a-trust/versions?isShowDevVersion=true')
       ->ok()
       ->bodyContains('"version":"3.0.0-SNAPSHOT"')
       ->bodyDoesNotContain('"version":"1.0.0-SNAPSHOT"')
@@ -162,7 +162,7 @@ class ProductApiTest extends TestCase
 
   public function testDesignerVersionDoesNotChangeDevVersionFiltering(): void
   {
-    AppTester::assertThatGet('/api/product/a-trust/versions?designerVersion=1.0.0&isShowDevVersion=true')
+    AppTester::assertThatGet('/stable/api/product/a-trust/versions?designerVersion=1.0.0&isShowDevVersion=true')
       ->ok()
       ->bodyContains('"version":"3.0.0-SNAPSHOT"')
       ->bodyDoesNotContain('"version":"1.0.0-SNAPSHOT"');
@@ -170,7 +170,7 @@ class ProductApiTest extends TestCase
 
   public function testShowsDevVersionsByDefaultWhenNoReleaseExists(): void
   {
-    AppTester::assertThatGet('/api/product/snapshot-only/versions')
+    AppTester::assertThatGet('/stable/api/product/snapshot-only/versions')
       ->ok()
       ->bodyContains('"version":"0.9.0-SNAPSHOT"')
       ->bodyContains('"downloadUrl":"https://maven.example/snapshot-only-0.9.0-SNAPSHOT.zip"');
@@ -178,7 +178,7 @@ class ProductApiTest extends TestCase
 
   public function testReturnsCachedInstallJson(): void
   {
-    AppTester::assertThatGet('/api/product/a-trust/install?productVersion=2.0.0')
+    AppTester::assertThatGet('/stable/api/product/a-trust/install?productVersion=2.0.0')
       ->ok()
       ->contentType('application/json; charset=utf-8')
       ->bodyContains('"version":"2.0.0"')
@@ -187,42 +187,42 @@ class ProductApiTest extends TestCase
 
   public function testInstallRequiresAProductVersion(): void
   {
-    AppTester::assertThatGet('/api/product/a-trust/install')
+    AppTester::assertThatGet('/stable/api/product/a-trust/install')
       ->statusCode(404)
       ->bodyContains('Product version is required');
   }
 
   public function testReturnsBestMatchingVersion(): void
   {
-    AppTester::assertThatGet('/api/product-details/a-trust/2.0.0/bestmatch?isShowDevVersion=true')
+    AppTester::assertThatGet('/stable/api/product-details/a-trust/2.0.0/bestmatch?isShowDevVersion=true')
       ->ok()
       ->bodyContains('"version":"2.9.0"');
   }
 
   public function testBestMatchReturnsNotFoundWithoutSameMajorVersion(): void
   {
-    AppTester::assertThatGet('/api/product-details/a-trust/4.0.0/bestmatch')
+    AppTester::assertThatGet('/stable/api/product-details/a-trust/4.0.0/bestmatch')
       ->statusCode(404)
       ->bodyContains('Cannot find version: 4.0.0');
   }
 
   public function testBestMatchDoesNotFallBackToDevVersionsWhenNoReleaseExists(): void
   {
-    AppTester::assertThatGet('/api/product-details/snapshot-only/0.9.0/bestmatch')
+    AppTester::assertThatGet('/stable/api/product-details/snapshot-only/0.9.0/bestmatch')
       ->statusCode(404)
       ->bodyContains('No matching version found');
   }
 
   public function testReturnsNotFoundForUnknownProductVersionRequest(): void
   {
-    AppTester::assertThatGet('/api/product/missing/versions')
+    AppTester::assertThatGet('/stable/api/product/missing/versions')
       ->statusCode(404)
       ->bodyContains('Product not found');
   }
 
   public function testServesProductLogo(): void
   {
-    AppTester::assertThatGet('/api/image/a-trust')
+    AppTester::assertThatGet('/stable/api/image/a-trust')
       ->ok()
       ->contentType('image/png');
   }
@@ -237,24 +237,20 @@ class ProductApiTest extends TestCase
 
   public function testServesOpenApiContractForAllStableApiRoutes(): void
   {
-    $body = AppTester::assertThatGet('/openapi.json')
+    $body = AppTester::assertThatGet('/stable/openapi.json')
       ->ok()
       ->contentType('application/json; charset=utf-8')
       ->getBody();
     $contract = json_decode($body, true, flags: JSON_THROW_ON_ERROR);
 
     self::assertSame('3.1.0', $contract['openapi']);
+    self::assertSame('/stable', $contract['servers'][0]['url']);
     self::assertArrayHasKey('/api/product', $contract['paths']);
     self::assertArrayHasKey('/api/product/{id}/versions', $contract['paths']);
     self::assertArrayHasKey('/api/product/{id}/install', $contract['paths']);
     self::assertArrayHasKey('/api/product-details/{id}/{version}/bestmatch', $contract['paths']);
     self::assertArrayHasKey('/api/image/{id}', $contract['paths']);
 
-    $stableBody = AppTester::assertThatGet('/stable/openapi.json')
-      ->ok()
-      ->contentType('application/json; charset=utf-8')
-      ->getBody();
-    self::assertSame($body, $stableBody);
   }
 
   private function restoreEnvironmentVariable(string $name, string|false $value): void

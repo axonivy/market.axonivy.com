@@ -93,14 +93,14 @@ class MarketTest extends TestCase
   {
     $products = Market::searchByTag(Market::listed(), ['DEMO']);
     $keys = array_map(fn (Product $p) => $p->getKey(), $products);
-    Assert::assertContains('connectivity', $keys);
+    Assert::assertContains('connectivity-demo', $keys);
   }
 
   public function test_searchByMultipleTags()
   {
     $products = Market::searchByTag(Market::listed(), ['DEMO', 'WORKFLOW-UI']);
     $keys = array_map(fn (Product $p) => $p->getKey(), $products);
-    Assert::assertContains('connectivity', $keys);
+    Assert::assertContains('connectivity-demo', $keys);
     Assert::assertContains('portal', $keys);
   }
 }
