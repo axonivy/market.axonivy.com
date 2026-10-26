@@ -53,8 +53,4 @@ class Config
     return is_file($frontendFile) ? $frontendFile : '';
   }
 
-  public static function unzipper(): string
-  {
-    return __DIR__ . '/download-zip.sh';
-  }
 }

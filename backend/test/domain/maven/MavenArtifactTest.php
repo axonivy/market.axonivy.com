@@ -5,7 +5,6 @@ namespace test\domain\maven;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 use app\domain\market\Market;
-use app\domain\market\ProductMavenArtifactDownloader;
 use app\domain\maven\MavenArtifact;
 
 class MavenArtifactTest extends TestCase
@@ -110,7 +109,6 @@ class MavenArtifactTest extends TestCase
     $artifact = self::getMavenArtifact('visualvm-plugin', 'nbm');
     Assert::assertEquals('nbm', $artifact->getType());
 
-    (new ProductMavenArtifactDownloader())->download(Market::getProductByKey('demos-app'), "10.0.0");
     $artifact = self::getMavenArtifact('ivy-demos-app', 'zip');
     Assert::assertEquals('zip', $artifact->getType());
 
@@ -123,7 +121,6 @@ class MavenArtifactTest extends TestCase
     $artifact = self::getMavenArtifact('visualvm-plugin', 'nbm');
     Assert::assertFalse($artifact->getMakesSenseAsMavenDependency());
 
-    (new ProductMavenArtifactDownloader())->download(Market::getProductByKey('doc-factory'), "10.0.0");
     $artifact = self::getMavenArtifact('doc-factory', 'iar');
     Assert::assertTrue($artifact->getMakesSenseAsMavenDependency());
   }
@@ -139,37 +136,31 @@ class MavenArtifactTest extends TestCase
     $artifact = self::getMavenArtifact('visualvm-plugin', 'nbm');
     Assert::assertFalse($artifact->isDocumentation());
 
-    (new ProductMavenArtifactDownloader())->download(Market::getProductByKey('doc-factory'), "10.0.0");
     $artifact = self::getMavenArtifact('doc-factory-doc', 'zip');
     Assert::assertTrue($artifact->isDocumentation());
   }
 
   public function test_name()
   {
-    (new ProductMavenArtifactDownloader())->download(Market::getProductByKey('visualvm-plugin'), "8.0.0");
     $artifact = self::getMavenArtifact('visualvm-plugin', 'nbm');
     Assert::assertEquals('Visual VM Plugin', $artifact->getName());
 
-    (new ProductMavenArtifactDownloader())->download(Market::getProductByKey('doc-factory'), "10.0.0");
     $artifact = self::getMavenArtifact('doc-factory-doc', 'zip');
     Assert::assertEquals('DocFactory Documentation', $artifact->getName());
   }
 
   public function test_getTargetGroupIdFromVersion() {
-    (new ProductMavenArtifactDownloader())->download(Market::getProductByKey('portal'), "10.0.0");
     $artifact = MavenArtifactTest::getMavenArtifact('portal-app', 'zip');
     Assert::assertEquals('ch.ivyteam.ivy.project.portal', $artifact->getTargetGroupIdFromVersion("10.0.0"));
     Assert::assertEquals('com.axonivy.portal', $artifact->getTargetGroupIdFromVersion("11.1.0"));
   }
 
   public function test_getTargetArtifactIdFromVersion() {
-    (new ProductMavenArtifactDownloader())->download(Market::getProductByKey('portal'), "10.0.0");
     $artifact = MavenArtifactTest::getMavenArtifact('portal-app', 'zip');
     Assert::assertEquals('portal-app', $artifact->getTargetArtifactIdFromVersion("10.0.0"));
   }
 
   public function test_getBaseUrlFromVersion() {
-    (new ProductMavenArtifactDownloader())->download(Market::getProductByKey('portal'), "10.0.0");
     $artifact = MavenArtifactTest::getMavenArtifact('portal-app', 'zip');
     Assert::assertEquals($artifact->getRepoUrl() . "ch/ivyteam/ivy/project/portal/portal-app", $artifact->getBaseUrlFromVersion("10.0.0"));
     Assert::assertEquals($artifact->getRepoUrl() . "ch/ivyteam/ivy/project/portal/portal-app", $artifact->getBaseUrlFromVersion("8.0.38"));
