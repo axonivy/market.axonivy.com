@@ -220,7 +220,7 @@ class MavenArtifact
       $bugfixVersion = $ver->getBugfixVersion();
       foreach ($versions as $v) {
         $relVer = new Version($v);
-        if ($relVer->isOffical() && $relVer->getBugfixVersion() == $bugfixVersion) {
+        if ($relVer->isOfficial() && $relVer->getBugfixVersion() == $bugfixVersion) {
           return false;
         }
       }
@@ -240,7 +240,7 @@ class MavenArtifact
       $releasedVersion = $ver->getBugfixVersion();
       foreach ($versions as $v) {
         $rel = new Version($v);
-        if ($rel->isOffical() && $rel->getBugfixVersion() == $releasedVersion) {
+        if ($rel->isOfficial() && $rel->getBugfixVersion() == $releasedVersion) {
           return false;
         }
       }

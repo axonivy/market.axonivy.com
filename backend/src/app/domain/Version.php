@@ -25,17 +25,17 @@ class Version
 
   public function isMajor(): bool
   {
-    return substr_count($this->getNumbersOnly(), '.') == 0 && $this->isOffical();
+    return substr_count($this->getNumbersOnly(), '.') == 0 && $this->isOfficial();
   }
 
   public function isMinor(): bool
   {
-    return substr_count($this->getNumbersOnly(), '.') == 1 && $this->isOffical();
+    return substr_count($this->getNumbersOnly(), '.') == 1 && $this->isOfficial();
   }
 
   public function isBugfix(): bool
   {
-    return substr_count($this->getNumbersOnly(), '.') == 2 && $this->isOffical();
+    return substr_count($this->getNumbersOnly(), '.') == 2 && $this->isOfficial();
   }
 
   public function isSnapshot(): bool
@@ -48,7 +48,7 @@ class Version
     return str_contains($this->versionNumber, '-m');
   }
 
-  public function isOffical(): bool
+  public function isOfficial(): bool
   {
     return !$this->isSnapshot() && !$this->isSprint();
   }

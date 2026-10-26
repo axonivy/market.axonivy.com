@@ -144,19 +144,19 @@ class VersionTest extends TestCase
     Assert::assertTrue((new Version('7.1.0-m251.1'))->isSprint());
   }
 
-  public function test_isOffical()
+  public function test_isOfficial()
   {
-    Assert::assertTrue((new Version('7'))->isOffical());
-    Assert::assertTrue((new Version('7.1'))->isOffical());
-    Assert::assertTrue((new Version('7.1.0'))->isOffical());
-    Assert::assertTrue((new Version('7.1.0-alpha'))->isOffical());
+    Assert::assertTrue((new Version('7'))->isOfficial());
+    Assert::assertTrue((new Version('7.1'))->isOfficial());
+    Assert::assertTrue((new Version('7.1.0'))->isOfficial());
+    Assert::assertTrue((new Version('7.1.0-alpha'))->isOfficial());
     
-    Assert::assertFalse((new Version('7-m251'))->isOffical());
-    Assert::assertFalse((new Version('7.1-m251'))->isOffical());
-    Assert::assertFalse((new Version('7.1.0-m251'))->isOffical());
-    Assert::assertFalse((new Version('7.1.0-m251.1'))->isOffical());
-    Assert::assertFalse((new Version('7-SNAPSHOT'))->isOffical());
-    Assert::assertFalse((new Version('7.1-SNAPSHOT'))->isOffical());
-    Assert::assertFalse((new Version('7.1.0-SNAPSHOT'))->isOffical());
+    Assert::assertFalse((new Version('7-m251'))->isOfficial());
+    Assert::assertFalse((new Version('7.1-m251'))->isOfficial());
+    Assert::assertFalse((new Version('7.1.0-m251'))->isOfficial());
+    Assert::assertFalse((new Version('7.1.0-m251.1'))->isOfficial());
+    Assert::assertFalse((new Version('7-SNAPSHOT'))->isOfficial());
+    Assert::assertFalse((new Version('7.1-SNAPSHOT'))->isOfficial());
+    Assert::assertFalse((new Version('7.1.0-SNAPSHOT'))->isOfficial());
   }
 }
