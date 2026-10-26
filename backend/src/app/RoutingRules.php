@@ -12,6 +12,7 @@ class RoutingRules
   {
     $productApi = new ProductApi();
     $app->get('/openapi.json', OpenApiDocumentApi::class);
+    $app->get('/stable/openapi.json', OpenApiDocumentApi::class);
     $app->get('/api/status', StatusApi::class);
     $app->get('/api/product', [$productApi, 'getProducts']);
     $app->get('/api/product/{id}/versions', [$productApi, 'getVersions']);

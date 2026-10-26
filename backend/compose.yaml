@@ -4,6 +4,8 @@ services:
     volumes:
       - ./:/var/www/html
       - ./docker/apache/000-default.conf:/etc/apache2/sites-available/000-default.conf
+      - ../frontend/dist:/var/www/html/frontend-dist
+      - ./src/web/frontend-index.php:/var/www/html/frontend-dist/index.php:ro
       - ../frontend/.market/market-bundle/products:/market-data/products:ro
       - ../frontend/.market/products.json:/market-data/products.json:ro
       - ../frontend/public/market-cache:/market-cache:ro

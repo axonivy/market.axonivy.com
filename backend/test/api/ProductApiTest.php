@@ -249,6 +249,12 @@ class ProductApiTest extends TestCase
     self::assertArrayHasKey('/api/product/{id}/install', $contract['paths']);
     self::assertArrayHasKey('/api/product-details/{id}/{version}/bestmatch', $contract['paths']);
     self::assertArrayHasKey('/api/image/{id}', $contract['paths']);
+
+    $stableBody = AppTester::assertThatGet('/stable/openapi.json')
+      ->ok()
+      ->contentType('application/json; charset=utf-8')
+      ->getBody();
+    self::assertSame($body, $stableBody);
   }
 
   private function restoreEnvironmentVariable(string $name, string|false $value): void
