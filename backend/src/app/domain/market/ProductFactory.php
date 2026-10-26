@@ -13,7 +13,7 @@ class ProductFactory
     $json = json_decode($content);
 
     $listed = $json->listed ?? true;
-    $type = $json->type ?? [];
+    $type = $json->type ?? '';
     $tags = $json->tags ?? [];
     $version = $json->version ?? '';
     $shortDesc = $json->description ?? '';
