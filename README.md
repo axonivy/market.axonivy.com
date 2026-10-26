@@ -48,4 +48,4 @@ To build the frontend and serve it together with the PHP API through Apache, run
 ./dev.sh
 ```
 
-Open <http://localhost/>. The API is available at `/api/*` and the OpenAPI contract at `/stable/openapi.json`. Stop Apache with `docker compose -f backend/compose.yaml down`.
+Open <http://localhost/>. The API is available at `/stable/api/*` and the OpenAPI contract at `/stable/openapi.json`. Stop Apache with `docker compose -f backend/compose.yaml down`.
