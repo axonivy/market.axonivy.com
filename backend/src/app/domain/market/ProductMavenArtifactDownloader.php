@@ -26,7 +26,7 @@ class ProductMavenArtifactDownloader
     $url = $artifact->getUrl($version);
     $targetDir = Config::marketCacheDirectory() . '/' . $product->getKey() . '/' . $artifact->getArtifactId() . '/' . $version;
     if (!file_exists($targetDir)) {
-      $cmd = Config::unzipper() . ' ' . $url . ' ' . $targetDir . ' 2>&1';
+      $cmd = escapeshellarg(Config::unzipper()) . ' ' . escapeshellarg($url) . ' ' . escapeshellarg($targetDir) . ' 2>&1';
       shell_exec($cmd);
     }
     return count(glob($targetDir . '/*')) > 0;
