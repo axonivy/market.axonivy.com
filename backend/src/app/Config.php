@@ -4,8 +4,6 @@ namespace app;
 
 class Config
 {
-  public const MAVEN_ARTIFACTORY_URL = 'https://maven.axonivy.com/';
-
   public static function isProductionEnvironment()
   {
     return !file_exists(__DIR__ . '/../../Jenkinsfile');

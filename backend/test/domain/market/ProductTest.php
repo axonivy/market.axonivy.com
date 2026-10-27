@@ -48,27 +48,6 @@ class ProductTest extends TestCase
     Assert::assertEquals('https://www.frox.ch', $product->getVendorUrl());
   }
 
-  public function test_productJsonUrl()
-  {
-    $product = Market::getProductByKey('genderize-io-connector');
-    Assert::assertEquals('/market-cache/genderize-io-connector/genderize-io-connector-product/9.1.0/_product.json', $product->getProductJsonUrl('9.1.0'));
-  }
-
-  public function test_installable()
-  {
-    $product = Market::getProductByKey('visualvm-plugin');
-    Assert::assertFalse($product->isInstallable($product->getVersion()[0]));
-  }
-
-  public function test_compatibility()
-  {
-    $product = Market::getProductByKey('visualvm-plugin');
-    Assert::assertEquals('7.0+', $product->getCompatibility());
-
-    $product = Market::getProductByKey('genderize-io-connector');
-    Assert::assertEquals('9.2+', $product->getCompatibility());
-  }
-
   public function test_contactUs()
   {
     $product = Market::getProductByKey('visualvm-plugin');
@@ -125,23 +104,6 @@ class ProductTest extends TestCase
     Assert::assertEquals('Cross-Industry', $product->getIndustry());
     Assert::assertEquals('4.5', $product->getPlatformReview());
 
-    $info = $product->getMavenProductInfo();
-    $v = $info->getNewestVersion();
-    Assert::assertEquals($v, $product->getVersion());
-  }
-
-  public function test_load_version_from_maven()
-  {
-    $product = Market::getProductByKey('a-trust');
-    Assert::assertNotEquals('1.0', $product->getVersion());
-    Assert::assertNotEmpty($product->getVersion());
-  }
-
-  public function test_load_compatibilty_from_maven()
-  {
-    $product = Market::getProductByKey('a-trust');
-    Assert::assertNotEquals('1.0', $product->getCompatibility());
-    Assert::assertNotEmpty($product->getCompatibility());
   }
 
   private static function getMicrosoftTodoProduct()
