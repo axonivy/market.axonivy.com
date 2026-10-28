@@ -1,4 +1,5 @@
 import Changelog from "@/components/changelog";
+import Maven from "@/components/maven";
 import { CodeBlock } from "@/components/ui/code-block";
 import {
   NativeSelect,
@@ -6,14 +7,14 @@ import {
 } from "@/components/ui/native-select";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Base, Code, H4 } from "@/components/ui/typography";
-import type { ProductDependency } from "@/data/product-types";
+import { Code, H4 } from "@/components/ui/typography";
+import type { ProductArtifact } from "@/data/product-types";
 import type { Readme, ReadmeSections } from "@/data/readme";
 import "@/translation/ui";
 import type { Lang } from "@/translation/ui";
 import type { TFunction } from "i18next";
 import { useEffect, useState, type ReactNode } from "react";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import ReactMarkdown, {
   defaultUrlTransform,
   type Components,
@@ -32,7 +33,9 @@ const getReadmeTabs = (
   { value: "components", label: t("productDetails.tabs.components") },
 ];
 
-export type MavenDependency = ProductDependency & {
+export type MavenArtifacts = {
+  artifacts: ProductArtifact[];
+  mainArtifactId?: string;
   productName: string;
   version: string;
   lang: Lang;
@@ -45,7 +48,7 @@ export default function ProductDetails({
   lang,
 }: {
   readme?: Readme;
-  maven?: MavenDependency;
+  maven?: MavenArtifacts;
   changelog?: ChangelogRelease[];
   lang: Lang;
 }) {
@@ -110,7 +113,7 @@ export default function ProductDetails({
     <Tabs
       value={selectedTab}
       onValueChange={(value) => changeTab(value)}
-      className="-mt-9 min-w-0 space-y-4 md:mt-0 md:space-y-12"
+      className="-mt-9 w-full min-w-0 space-y-4 md:mt-0 md:space-y-12"
     >
       <TabsList variant="line" className="hidden md:flex">
         {tabs.map(({ value, label }) => (
@@ -204,37 +207,4 @@ function resolveUrl(url: string, key: string, baseUrl: string): string {
   return key === "src" && safeUrl && isRelative
     ? baseUrl + safeUrl.replace(/^\.\//, "")
     : safeUrl;
-}
-
-function Maven({
-  productName,
-  groupId,
-  artifactId,
-  version,
-  type,
-  lang,
-}: MavenDependency) {
-  const snippet = [
-    `<!-- ${productName} -->`,
-    "<dependency>",
-    `  <groupId>${groupId}</groupId>`,
-    `  <artifactId>${artifactId}</artifactId>`,
-    `  <version>${version}</version>`,
-    `  <type>${type}</type>`,
-    "</dependency>",
-  ].join("\n");
-  const { t } = useTranslation(undefined, { lng: lang });
-
-  return (
-    <div className="space-y-4">
-      <Base>
-        <Trans
-          t={t}
-          i18nKey="productDetails.tabs.dependencies.maven.description"
-          components={{ code: <Code /> }}
-        />
-      </Base>
-      <CodeBlock code={snippet} lang={lang} />
-    </div>
-  );
 }

@@ -6,6 +6,12 @@ function infoRow(page: Page, label: string) {
     .filter({ has: page.getByRole("cell", { name: label, exact: true }) });
 }
 
+function mainArtifact(page: Page) {
+  return page.getByRole("tabpanel").locator("section").filter({
+    has: page.getByRole("heading", { name: "A Trust Connector", exact: true }),
+  });
+}
+
 test.describe("a-trust", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/a-trust");
@@ -110,8 +116,8 @@ test.describe("a-trust", () => {
 
     await page.getByRole("tab", { name: "Maven" }).click();
 
-    const code = page.getByRole("tabpanel").locator("code").last();
-    await expect(code).toContainText("<!-- A-Trust -->");
+    const code = mainArtifact(page).locator("code").last();
+    await expect(code).toContainText("<!-- A-Trust - A Trust Connector -->");
     await expect(code).toContainText(
       "<groupId>com.axonivy.connector.atrust</groupId>",
     );
@@ -130,13 +136,10 @@ test.describe("a-trust", () => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await page.getByRole("tab", { name: "Maven" }).click();
 
-    await page
-      .getByRole("tabpanel")
-      .getByRole("button", { name: "copy" })
-      .click();
+    await mainArtifact(page).getByRole("button", { name: "copy" }).click();
 
     await expect(
-      page.getByRole("tabpanel").getByRole("button", { name: "copied" }),
+      mainArtifact(page).getByRole("button", { name: "copied" }),
     ).toBeVisible();
     expect(await page.evaluate(() => navigator.clipboard.readText())).toContain(
       "<artifactId>a-trust-connector</artifactId>",

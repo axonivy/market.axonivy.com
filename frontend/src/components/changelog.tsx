@@ -62,7 +62,7 @@ export default function Changelog({
       </div>
       {activeReleases.map((release) => (
         <Card key={release.url}>
-          <Collapsible defaultOpen={true} className="flex flex-col gap-2">
+          <Collapsible defaultOpen className="flex flex-col gap-2">
             <CardHeader className="gap-4">
               <div className="flex flex-row justify-between">
                 <H3 className="flex flex-row items-center gap-4">

@@ -20,6 +20,7 @@ pipeline {
               withCredentials([string(credentialsId: 'github.market.token', variable: 'GITHUB_TOKEN')]) {
                 sh 'pnpm build'
               }
+              sh 'pnpm typecheck'
             }
           }
 
