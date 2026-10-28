@@ -121,7 +121,7 @@
       "demo": "Demo",
       "dependencies": {
         "maven": {
-          "description": "Du kannst es als Maven-Artefakt in deinem <code>pom.xml</code> einbinden.",
+          "description": "Du kannst diese als Maven-Artefakte in deinem <code>pom.xml</code> einbinden.",
           "title": "Maven"
         }
       },

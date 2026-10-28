@@ -121,7 +121,7 @@
       "demo": "Demo",
       "dependencies": {
         "maven": {
-          "description": "You can consume it as maven artifact in your <code>pom.xml</code>",
+          "description": "You can consume these as Maven artifacts in your <code>pom.xml</code>.",
           "title": "Maven"
         }
       },

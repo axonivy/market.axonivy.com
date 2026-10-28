@@ -14,7 +14,7 @@ import {
 import { buttonVariants } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Base, H1, H3, H4, H5 } from "@/components/ui/typography";
-import { contactUrl } from "@/data/product-types";
+import { contactUrl, isDownloadable } from "@/data/product-types";
 import {
   getAllProducts,
   getProductById,
@@ -69,10 +69,19 @@ const changelog: ChangelogRelease[] | undefined = product.changelog
   ? JSON.parse(await readFile(product.changelog, "utf8"))
   : undefined;
 
+const mavenArtifacts = product.artifacts.filter(
+  (artifact) =>
+    isDownloadable(artifact) &&
+    artifact.type === "iar" &&
+    artifact.versions.some(
+      ({ version }) => version === product.featuredVersion,
+    ),
+);
 const maven =
-  product.dependency && product.featuredVersion
+  product.featuredVersion && mavenArtifacts.length > 0
     ? {
-        ...product.dependency,
+        artifacts: mavenArtifacts,
+        mainArtifactId: product.mainArtifactId,
         productName: name,
         version: product.featuredVersion,
         lang: lang,
