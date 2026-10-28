@@ -32,10 +32,10 @@ Run `./test.sh` to execute tests.
 
 ```
 // Show outdated dependencies
-docker compose exec web composer show --outdated
+docker compose run --rm composer show --outdated
 
 // Upgrade dependencies
-docker compose exec web composer update --prefer-dist -a --with-all-dependencies
+docker compose run --rm composer update --prefer-dist -a --with-all-dependencies
 ```
 
 ## Resources

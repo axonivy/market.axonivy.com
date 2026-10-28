@@ -1,5 +1,5 @@
 #!/bin/bash
 
-docker compose up -d
-docker compose exec web composer install
+docker compose up --build -d
+docker compose run --rm composer install
 

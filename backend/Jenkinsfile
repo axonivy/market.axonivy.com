@@ -21,6 +21,16 @@ pipeline {
       }
     }
 
+    stage('Composer Install') {
+      steps {
+        script {
+          docker.build('composer', '-f ../build/Dockerfile.composer ..').inside('--entrypoint=""') {
+            sh 'composer install --no-interaction --no-progress'
+          }
+        }
+      }
+    }
+
     stage('Backend Tests') {
       agent {
         dockerfile {
@@ -28,7 +38,6 @@ pipeline {
         }
       }
       steps {
-        sh 'composer install --no-interaction --no-progress'
         script {
           def testExitCode = sh(
             script: './vendor/bin/phpunit --log-junit phpunit-junit.xml',

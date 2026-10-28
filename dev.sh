@@ -7,6 +7,6 @@ compose=(docker compose --project-directory "$root_dir/backend" -f "$root_dir/ba
 pnpm --dir "$root_dir/frontend" install --frozen-lockfile
 pnpm --dir "$root_dir/frontend" build
 "${compose[@]}" up --build -d
-"${compose[@]}" exec web composer install
+"${compose[@]}" run --rm composer install
 
 printf 'Market website is available at http://localhost/\n'

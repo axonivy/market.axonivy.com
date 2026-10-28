@@ -66,9 +66,14 @@ pipeline {
     stage('Backend Tests') {
       steps {
         script {
-          docker.build('php', '-f backend/docker/apache/Dockerfile backend/docker/apache').inside {
+          docker.build('composer', '-f build/Dockerfile.composer .').inside('--entrypoint=""') {
             dir ('backend') {
               sh 'composer install --no-interaction --no-progress'
+            }
+          }
+
+          docker.build('php', '-f backend/docker/apache/Dockerfile backend/docker/apache').inside {
+            dir ('backend') {
               def testExitCode = sh(
                 script: './vendor/bin/phpunit --log-junit phpunit-junit.xml',
                 returnStatus: true
