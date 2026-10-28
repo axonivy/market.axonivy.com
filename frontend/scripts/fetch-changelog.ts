@@ -83,7 +83,9 @@ async function fetchReleases(sourceUrl: string): Promise<ChangelogRelease[]> {
     }
     throw error;
   }
-  const published = releases.filter((release) => !release.draft);
+  const published = releases
+    .filter((release) => !release.draft)
+    .sort((a, b) => (b.published_at ?? "").localeCompare(a.published_at ?? ""));
   const latest = published.find((release) => !release.prerelease);
   return published.map((release) => ({
     name: release.name || release.tag_name,
