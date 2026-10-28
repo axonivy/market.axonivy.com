@@ -28,3 +28,14 @@ GITHUB_TOKEN=<your-token>
 ```
 
 Then run `pnpm fetch-changelog`.
+
+### meta.json types
+
+The types for the products' `meta.json` are generated from the [market schema](https://github.com/axonivy-market/market/blob/master/schema/meta.json) into `frontend/scripts/generated/meta.ts`. Don't edit that file by hand; regenerate it after a schema change:
+
+```sh
+pnpm generate:meta
+pnpm typecheck
+```
+
+The pipeline does the same on every build, so a schema change that breaks the site fails the build.
