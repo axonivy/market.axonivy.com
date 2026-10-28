@@ -2,82 +2,89 @@
 
 namespace app\api;
 
-use OpenApi\Attributes as OA;
+use OpenApi\Attributes\AdditionalProperties;
+use OpenApi\Attributes\Components;
+use OpenApi\Attributes\Info;
+use OpenApi\Attributes\Items;
+use OpenApi\Attributes\OpenApi;
+use OpenApi\Attributes\Property;
+use OpenApi\Attributes\Schema;
+use OpenApi\Attributes\Server;
 
-#[OA\OpenApi(
+#[OpenApi(
   openapi: '3.1.0',
-  info: new OA\Info(
+  info: new Info(
     title: 'Axon Ivy Market API',
     version: '1.0.0',
     description: 'Product search, artifact versions, installation descriptors, and product images.'
   ),
-  servers: [new OA\Server(url: '/stable')],
-  components: new OA\Components(schemas: [
-    new OA\Schema(
+  servers: [new Server(url: '/stable')],
+  components: new Components(schemas: [
+    new Schema(
       schema: 'ProductModel',
       type: 'object',
       properties: [
-        new OA\Property(property: 'id', type: 'string'),
-        new OA\Property(property: 'names', type: 'object', additionalProperties: new OA\AdditionalProperties(type: 'string')),
-        new OA\Property(property: 'shortDescriptions', type: 'object', additionalProperties: new OA\AdditionalProperties(type: 'string')),
-        new OA\Property(property: 'logoUrl', type: 'string'),
-        new OA\Property(property: 'logoDarkUrl', type: 'string'),
-        new OA\Property(property: 'badgeUrl', type: 'string'),
-        new OA\Property(property: 'badgeDarkUrl', type: 'string'),
-        new OA\Property(property: 'type', type: 'string'),
-        new OA\Property(property: 'tags', type: 'array', items: new OA\Items(type: 'string')),
-        new OA\Property(property: 'marketDirectory', type: 'string'),
-        new OA\Property(property: 'deprecated', type: 'boolean'),
-        new OA\Property(property: 'internal', type: 'boolean'),
+        new Property(property: 'id', type: 'string'),
+        new Property(property: 'names', type: 'object', additionalProperties: new AdditionalProperties(type: 'string')),
+        new Property(property: 'shortDescriptions', type: 'object', additionalProperties: new AdditionalProperties(type: 'string')),
+        new Property(property: 'logoUrl', type: 'string'),
+        new Property(property: 'logoDarkUrl', type: 'string'),
+        new Property(property: 'badgeUrl', type: 'string'),
+        new Property(property: 'badgeDarkUrl', type: 'string'),
+        new Property(property: 'type', type: 'string'),
+        new Property(property: 'tags', type: 'array', items: new Items(type: 'string')),
+        new Property(property: 'marketDirectory', type: 'string'),
+        new Property(property: 'deprecated', type: 'boolean'),
+        new Property(property: 'internal', type: 'boolean'),
       ]
     ),
-    new OA\Schema(
+    new Schema(
       schema: 'MavenArtifactKey',
       type: 'object',
       properties: [
-        new OA\Property(property: 'artifactId', type: 'string'),
-        new OA\Property(property: 'productVersion', type: 'string'),
-        new OA\Property(property: 'additionalVersion', type: 'boolean'),
+        new Property(property: 'artifactId', type: 'string'),
+        new Property(property: 'productVersion', type: 'string'),
+        new Property(property: 'additionalVersion', type: 'boolean'),
       ]
     ),
-    new OA\Schema(
+    new Schema(
       schema: 'MavenArtifactVersion',
       type: 'object',
       properties: [
-        new OA\Property(property: 'id', ref: '#/components/schemas/MavenArtifactKey'),
-        new OA\Property(property: 'name', type: 'string'),
-        new OA\Property(property: 'downloadUrl', type: 'string', format: 'uri'),
-        new OA\Property(property: 'groupId', type: 'string'),
-        new OA\Property(property: 'productId', type: 'string'),
-        new OA\Property(property: 'invalidArtifact', type: 'boolean'),
+        new Property(property: 'id', ref: '#/components/schemas/MavenArtifactKey'),
+        new Property(property: 'name', type: 'string'),
+        new Property(property: 'downloadUrl', type: 'string', format: 'uri'),
+        new Property(property: 'groupId', type: 'string'),
+        new Property(property: 'productId', type: 'string'),
+        new Property(property: 'invalidArtifact', type: 'boolean'),
       ]
     ),
-    new OA\Schema(
+    new Schema(
       schema: 'MavenArtifactVersionModel',
       type: 'object',
       properties: [
-        new OA\Property(property: 'version', type: 'string'),
-        new OA\Property(
+        new Property(property: 'version', type: 'string'),
+        new Property(
           property: 'artifactsByVersion',
           type: 'array',
-          items: new OA\Items(ref: '#/components/schemas/MavenArtifactVersion')
+          items: new Items(ref: '#/components/schemas/MavenArtifactVersion')
         ),
       ]
     ),
-    new OA\Schema(
+    new Schema(
       schema: 'BestMatchVersion',
       type: 'object',
-      properties: [new OA\Property(property: 'version', type: 'string')]
+      properties: [new Property(property: 'version', type: 'string')]
     ),
-    new OA\Schema(
+    new Schema(
       schema: 'InstallContent',
       type: 'object',
       additionalProperties: true
     ),
-    new OA\Schema(
+    new Schema(
       schema: 'ErrorResponse',
       type: 'object',
-      properties: [new OA\Property(property: 'message', type: 'string')]
+      properties: [new Property(property: 'message', type: 'string')]
     ),
   ])
 )]
