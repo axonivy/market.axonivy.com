@@ -16,7 +16,7 @@ class Config
       return rtrim($configuredDirectory, '/');
     }
     if (self::isProductionEnvironment()) {
-      return '/home/axonivya/data/market';
+      return dirname(__DIR__, 2) . '/frontend/.market/market-bundle/products';
     }
     $frontendDirectory = dirname(__DIR__, 3) . '/frontend/.market/market-bundle/products';
     if (is_dir($frontendDirectory)) {
@@ -32,7 +32,7 @@ class Config
       return rtrim($configuredDirectory, '/');
     }
     if (self::isProductionEnvironment()) {
-      return '/home/axonivya/data/market-cache';
+      return dirname(__DIR__, 2) . '/src/web/market-cache';
     }
     $frontendDirectory = dirname(__DIR__, 3) . '/frontend/public/market-cache';
     if (is_dir($frontendDirectory)) {
@@ -46,6 +46,10 @@ class Config
     $configuredFile = getenv('MARKET_INDEX_FILE');
     if ($configuredFile !== false && $configuredFile !== '') {
       return $configuredFile;
+    }
+    $deployedFile = dirname(__DIR__, 2) . '/frontend/.market/products.json';
+    if (is_file($deployedFile)) {
+      return $deployedFile;
     }
     $frontendFile = dirname(__DIR__, 3) . '/frontend/.market/products.json';
     return is_file($frontendFile) ? $frontendFile : '';

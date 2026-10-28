@@ -28,10 +28,6 @@ pipeline {
           currentBuild.description = "<a href='${BUILD_URL}artifact/frontend/dist/index.html'>Market 🛍️</a>"
         }
 
-        dir ('frontend') {
-          sh 'tar -cf ivy-website-market.tar dist'
-          archiveArtifacts 'ivy-website-market.tar'
-        }
       }
     }
 
@@ -90,6 +86,21 @@ pipeline {
       }
     }
 
+    stage('Package') {
+      steps {
+        script {
+          docker.build('composer', '-f build/Dockerfile.composer .').inside('--entrypoint=""') {
+            dir ('backend') {
+              sh 'composer install --no-dev --no-interaction --no-progress'
+            }
+          }
+        }
+
+        sh 'bash build/package-market.sh'
+        archiveArtifacts 'build/ivy-website-market.tar'
+      }
+    }
+
     stage('Playwright Tests') {
       steps {
         script {
@@ -140,7 +151,7 @@ pipeline {
               def host = 'axonivya@dev.axonivy.com'
 
               // copy
-              sh "scp frontend/ivy-website-market.tar $host:$targetFile"
+              sh "scp build/ivy-website-market.tar $host:$targetFile"
 
               // untar
               sh "ssh $host mkdir $targetFolder"
@@ -148,7 +159,7 @@ pipeline {
               sh "ssh $host rm -f $targetFile"
 
               // symlink
-              sh "ssh $host ln -fns $targetFolder/dist /home/axonivya/www/axonivya.myhostpoint.ch/linktoweb"
+              sh "ssh $host ln -fns $targetFolder/src/web /home/axonivya/www/axonivya.myhostpoint.ch/linktoweb"
             }
           }
         }
