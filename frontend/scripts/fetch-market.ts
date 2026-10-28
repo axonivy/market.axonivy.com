@@ -1,13 +1,14 @@
+import { unzipSync } from "fflate";
 import { existsSync } from "node:fs";
 import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { unzipSync } from "fflate";
 import {
   compareVersions,
   isSnapshot,
   newestFirst,
 } from "../src/data/versions.ts";
+import type { MarketMeta, MavenArtifact } from "./generated/meta.ts";
 import {
   fetchWithRetry,
   INDEX_FILE,
@@ -39,19 +40,10 @@ const SLIM_FILES = new Set(["product.json"]);
 
 // Types
 
-type MetaArtifact = {
-  name: string;
-  groupId: string;
-  artifactId: string;
-  type?: string;
-  repoUrl?: string;
-  key?: string;
-  doc?: boolean;
-  archivedArtifacts?: {
-    groupId: string;
-    artifactId: string;
-    lastVersion: string;
-  }[];
+type MetaArtifact = Omit<MavenArtifact, "type"> & { type?: string };
+
+type Meta = Omit<MarketMeta, "mavenArtifacts"> & {
+  mavenArtifacts?: MetaArtifact[];
 };
 
 const MARKET_PACKAGE: MetaArtifact = {
@@ -60,14 +52,6 @@ const MARKET_PACKAGE: MetaArtifact = {
   artifactId: "market-test",
   type: "zip",
   repoUrl: MARKET_PACKAGE_REPO_URL,
-};
-
-type Meta = {
-  id: string;
-  name: string;
-  type: string;
-  sourceUrl?: string;
-  mavenArtifacts?: MetaArtifact[];
 };
 
 export type ArtifactVersion = { version: string; url: string };

@@ -28,7 +28,9 @@ const { redirect = true } = Astro.props as Props;
         if (saved && saved !== lang && saved in urls) {
           location.replace(urls[saved] + location.search + location.hash);
         }
-      } catch {}
+      } catch {
+        // Storage blocked: stay on the current language.
+      }
     </script>}
     <script is:inline define:vars={{ p: DESIGNER_PARAMS }}>
       const params = new URLSearchParams(location.search);
@@ -45,7 +47,9 @@ const { redirect = true } = Astro.props as Props;
         } else {
           version = sessionStorage.getItem(p.version);
         }
-      } catch {}
+      } catch {
+        // Storage blocked: only the URL params count.
+      }
       if (viewer === p.designerViewer) {
         document.documentElement.dataset.designer = version ?? "";
         if (params.has(p.restClient)) {

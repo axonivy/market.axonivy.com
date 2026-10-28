@@ -1,10 +1,11 @@
 import type { ImageMetadata } from "astro";
+import type { TFunction } from "i18next";
 import type {
   IndexArtifact,
   IndexDependency,
   IndexInstallable,
 } from "../../scripts/fetch-market";
-import type { TFunction } from "i18next";
+import type { DisplayName, MarketMeta } from "../../scripts/generated/meta";
 
 export const FILTER_VALUES = ["all", "connector", "utils", "demo"] as const;
 export type Filter = (typeof FILTER_VALUES)[number];
@@ -26,37 +27,9 @@ export const typeLabel = (t: TFunction, type: ProductCategory): string =>
     demo: t("common.demo"),
   })[type];
 
-export type Localized = { locale: string; value: string };
+export type Localized = DisplayName;
 
-export type ProductMeta = {
-  id: string;
-  name: string;
-  names?: Localized[];
-  description: string;
-  descriptions?: Localized[];
-  type: ProductCategory;
-  listed?: boolean;
-  deprecated?: boolean;
-  validate?: boolean;
-  platformReview?: string;
-  sourceUrl?: string;
-  statusBadgeUrl?: string;
-  language?: string;
-  industry?: string;
-  tags?: string[];
-  cost?: string;
-  contactUs?: boolean;
-  version?: string;
-  compatibility?: string;
-  versionDisplay?: string;
-  installMatcher?: string;
-  vendor?: string;
-  vendorUrl?: string;
-  vendorImage?: string;
-  vendorImageDarkMode?: string;
-  vendorLogo?: string;
-  vendorLogoDarkMode?: string;
-};
+export type ProductMeta = Omit<MarketMeta, "type"> & { type: ProductCategory };
 
 export type ProductArtifact = IndexArtifact;
 export type ProductInstallable = IndexInstallable;

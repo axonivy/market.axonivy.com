@@ -3,6 +3,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { MarketIndex } from "../../scripts/fetch-market.ts";
+import type { MavenArtifact } from "../../scripts/generated/meta.ts";
 import {
   FakeMarket,
   FakeMaven,
@@ -14,7 +15,10 @@ import {
 const PRODUCT_JSON = JSON.stringify({ installers: [] });
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
 
-function productArtifact(id: string, extra: Record<string, unknown> = {}) {
+function productArtifact(
+  id: string,
+  extra: Partial<MavenArtifact> = {},
+): MavenArtifact {
   return {
     name: id,
     groupId: GROUP_ID,
@@ -24,7 +28,10 @@ function productArtifact(id: string, extra: Record<string, unknown> = {}) {
   };
 }
 
-function libArtifact(artifactId: string, extra: Record<string, unknown> = {}) {
+function libArtifact(
+  artifactId: string,
+  extra: Partial<MavenArtifact> = {},
+): MavenArtifact {
   return { name: artifactId, groupId: GROUP_ID, artifactId, ...extra };
 }
 

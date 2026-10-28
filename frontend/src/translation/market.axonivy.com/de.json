@@ -76,6 +76,9 @@
     "contactUs": "Kontaktiere uns",
     "deprecated": {
       "description": "Diese Erweiterung ist veraltet und erhält keine Updates oder Unterstützung mehr.",
+      "finalVersion": "Letzte unterstützte Version: {{version}}",
+      "learnMore": "Mehr erfahren",
+      "successor": "Nachfolger",
       "title": "Veraltet"
     },
     "download": {
@@ -89,6 +92,7 @@
         "label": {
           "compatibility": "Kompatibilität",
           "cost": "Kosten",
+          "doc": "Dokumentation",
           "implemented": "Implementiert von",
           "language": "Sprache",
           "more": "Mehr Informationen",
