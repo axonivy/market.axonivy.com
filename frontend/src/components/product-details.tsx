@@ -1,5 +1,4 @@
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import Changelog from "@/components/changelog";
 import { CodeBlock } from "@/components/ui/code-block";
 import {
   NativeSelect,
@@ -7,12 +6,11 @@ import {
 } from "@/components/ui/native-select";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Base, Code, H3, H4, P } from "@/components/ui/typography";
+import { Base, Code, H4 } from "@/components/ui/typography";
 import type { ProductDependency } from "@/data/product-types";
 import type { Readme, ReadmeSections } from "@/data/readme";
 import "@/translation/ui";
 import type { Lang } from "@/translation/ui";
-import { IconChevronDown } from "@tabler/icons-react";
 import type { TFunction } from "i18next";
 import { useEffect, useState, type ReactNode } from "react";
 import { Trans, useTranslation } from "react-i18next";
@@ -24,12 +22,6 @@ import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import type { ChangelogRelease } from "../../scripts/fetch-changelog";
-import { Button } from "./ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "./ui/collapsible";
 
 const getReadmeTabs = (
   t: TFunction,
@@ -88,59 +80,7 @@ export default function ProductDetails({
           {
             value: "changelog",
             label: t("productDetails.tabs.changelog"),
-            content: (
-              <div className="space-y-10">
-                {changelog.map((release) => (
-                  <Card key={release.url}>
-                    <Collapsible
-                      defaultOpen={true}
-                      className="flex flex-col gap-2"
-                    >
-                      <CardHeader className="gap-4">
-                        <div className="flex flex-row justify-between">
-                          <H3 className="flex flex-row items-center gap-4">
-                            <a
-                              href={release.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {release.name}
-                            </a>
-                            {release.latest && <Badge>Latest</Badge>}
-                          </H3>
-                          <CollapsibleTrigger
-                            render={
-                              <Button
-                                variant="ghost"
-                                className="hover:bg-transparent aria-expanded:bg-transparent dark:hover:bg-transparent"
-                              >
-                                <IconChevronDown className="group-data-panel-open/button:rotate-180" />
-                              </Button>
-                            }
-                          />
-                        </div>
-
-                        <P className="text-n800">
-                          {new Date(release.publishedAt).toLocaleDateString(
-                            lang,
-                            { timeZone: "UTC" },
-                          )}
-                        </P>
-                      </CardHeader>
-                      <CollapsibleContent>
-                        <CardContent>
-                          <Markdown
-                            markdown={release.body}
-                            baseUrl=""
-                            lang={lang}
-                          />
-                        </CardContent>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  </Card>
-                ))}
-              </div>
-            ),
+            content: <Changelog changelog={changelog} lang={lang} />,
           },
         ]
       : []),
