@@ -38,8 +38,8 @@ const productSearchParams = {
 };
 
 function compareFeatured(a: ProductSummary, b: ProductSummary): number {
-  const rankA = a.featuredRank ?? Number.MAX_SAFE_INTEGER;
-  const rankB = b.featuredRank ?? Number.MAX_SAFE_INTEGER;
+  const rankA = a.listPriority ?? Number.MAX_SAFE_INTEGER;
+  const rankB = b.listPriority ?? Number.MAX_SAFE_INTEGER;
   return rankA - rankB || a.name.localeCompare(b.name);
 }
 
@@ -194,7 +194,7 @@ function ProductList({ products, lang }: ProductsProps) {
                       {t("dashboard.badges.deprecated")}
                     </Badge>
                   )}
-                  {product.featuredRank !== undefined && (
+                  {product.featured && (
                     <Badge variant="green">
                       {t("dashboard.badges.featured")}
                     </Badge>

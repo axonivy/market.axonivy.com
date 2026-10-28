@@ -1,4 +1,3 @@
-import { FEATURED_PRODUCTS_IDS } from "@/data/featured";
 import { compatibilityRange } from "@/data/versions";
 import type { Lang } from "@/translation/ui";
 import type { ImageMetadata } from "astro";
@@ -130,16 +129,7 @@ export function getProductById(id: string): Product | undefined {
 }
 
 export function getProductSummaries(lang: Lang): ProductSummary[] {
-  const products = getAllProducts();
-  const unknown = FEATURED_PRODUCTS_IDS.filter(
-    (id) => !products.some((product) => product.id === id),
-  );
-
-  if (unknown.length > 0) {
-    throw new Error(`Unknown featured product IDs: ${unknown.join(", ")}`);
-  }
-
-  return products.map(
+  return getAllProducts().map(
     ({
       id,
       name,
@@ -149,19 +139,19 @@ export function getProductSummaries(lang: Lang): ProductSummary[] {
       type,
       logo,
       logoDark,
+      featured,
+      listPriority,
       deprecated,
-    }) => {
-      const rank = FEATURED_PRODUCTS_IDS.indexOf(id);
-      return {
-        id,
-        name: localize(names, lang, name),
-        description: localize(descriptions, lang, description),
-        type,
-        logo: logo.src,
-        logoDark: logoDark?.src,
-        featuredRank: rank === -1 ? undefined : rank,
-        deprecated,
-      };
-    },
+    }) => ({
+      id,
+      name: localize(names, lang, name),
+      description: localize(descriptions, lang, description),
+      type,
+      logo: logo.src,
+      logoDark: logoDark?.src,
+      featured,
+      listPriority,
+      deprecated,
+    }),
   );
 }
