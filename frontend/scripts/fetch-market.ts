@@ -168,16 +168,20 @@ async function resolveUrl(
   }
   try {
     const xml = await fetchText(`${base}/maven-metadata.xml`, init);
-    const snapshot = [
+    // GitHub Packages lists every build, so take the newest (values are <base>-<yyyyMMdd.HHmmss>-<build>)
+    const value = [
       ...xml.matchAll(/<snapshotVersion>([\s\S]*?)<\/snapshotVersion>/g),
     ]
       .map((match) => match[1])
-      .find(
+      .filter(
         (block) =>
           xmlValues(block, "extension")[0] === type &&
           xmlValues(block, "classifier").length === 0,
-      );
-    const value = snapshot && xmlValues(snapshot, "value")[0];
+      )
+      .map((block) => xmlValues(block, "value")[0])
+      .filter(Boolean)
+      .sort()
+      .at(-1);
     if (!value) {
       warn(`No .${type} in SNAPSHOT ${artifactId}:${version}`);
       return undefined;

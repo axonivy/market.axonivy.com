@@ -226,6 +226,30 @@ describe("versions and Maven resolution", () => {
     expect(find(index, "demo").installable).toHaveLength(1);
   });
 
+  it("resolves a SNAPSHOT to its newest build when every build is listed", async () => {
+    maven.artifact("demo-product", {
+      "1.0.0-SNAPSHOT": { "product.json": PRODUCT_JSON },
+    });
+    const base = `${maven.path("demo-product")}/1.0.0-SNAPSHOT`;
+    maven.set(
+      `${base}/maven-metadata.xml`,
+      snapshotMetadata(
+        { extension: "zip", value: "1.0.0-20261001.110000-1" },
+        { extension: "zip", value: `1.0.0-${SNAPSHOT_BUILD}` },
+      ),
+    );
+    await market.product("demo");
+
+    const index = await market.fetch(maven);
+
+    expect(artifactVersions(index, "demo", "demo-product")).toEqual([
+      {
+        version: "1.0.0-SNAPSHOT",
+        url: `${maven.url}${base}/demo-product-1.0.0-${SNAPSHOT_BUILD}.zip`,
+      },
+    ]);
+  });
+
   it("skips a SNAPSHOT without a file of the artifact's type", async () => {
     maven.artifact("demo-product", {
       "1.0.0": { "product.json": PRODUCT_JSON },

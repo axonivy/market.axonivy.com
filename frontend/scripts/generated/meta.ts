@@ -42,6 +42,10 @@ export interface MarketMeta {
   industry?: string;
   installMatcher?: string;
   language?: string;
+  /**
+   * priority of the market item in product list; lower values are displayed first. Stick to positive numbers.
+   */
+  listPriority?: number;
   listed?: boolean;
   mavenArtifacts?: MavenArtifact[];
   name: string;

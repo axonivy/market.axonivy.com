@@ -63,10 +63,9 @@ export type Product = Omit<ProductMeta, "vendor" | "vendorUrl" | "cost"> & {
 
 export type ProductSummary = Pick<
   Product,
-  "id" | "name" | "description" | "type"
+  "id" | "name" | "description" | "type" | "featured" | "listPriority"
 > & {
   logo: string;
   logoDark?: string;
-  featuredRank?: number;
   deprecated?: boolean;
 };
