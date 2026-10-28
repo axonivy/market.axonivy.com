@@ -39,3 +39,13 @@ pnpm typecheck
 ```
 
 The pipeline does the same on every build, so a schema change that breaks the site fails the build.
+
+### Integrated local website
+
+To build the frontend and serve it together with the PHP API through Apache, run from the repository root:
+
+```sh
+./dev.sh
+```
+
+Open <http://localhost/>. The API is available at `/stable/api/*` and the OpenAPI contract at `/stable/openapi.json`. Stop Apache with `docker compose -f backend/compose.yaml down`.

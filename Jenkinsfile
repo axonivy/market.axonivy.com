@@ -63,6 +63,33 @@ pipeline {
       }
     }
 
+    stage('Backend Tests') {
+      steps {
+        script {
+          docker.build('composer', '-f build/Dockerfile.composer .').inside('--entrypoint=""') {
+            dir ('backend') {
+              sh 'composer install --no-interaction --no-progress'
+            }
+          }
+
+          docker.build('php', '-f backend/docker/apache/Dockerfile backend/docker/apache').inside {
+            dir ('backend') {
+              def testExitCode = sh(
+                script: './vendor/bin/phpunit --log-junit phpunit-junit.xml',
+                returnStatus: true
+              )
+              withChecks('Backend Tests') {
+                junit testDataPublishers: [[$class: 'StabilityTestDataPublisher']], testResults: 'phpunit-junit.xml'
+              }
+              if (testExitCode != 0) {
+                error("Backend tests failed with exit code ${testExitCode}")
+              }
+            }
+          }
+        }
+      }
+    }
+
     stage('Playwright Tests') {
       steps {
         script {
