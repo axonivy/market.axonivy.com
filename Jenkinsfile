@@ -34,6 +34,19 @@ pipeline {
       }
     }
 
+    stage('Protocol') {
+      steps {
+        script {
+          docker.build('node', '-f build/Dockerfile.node .').inside {
+            dir ('frontend') {
+              sh 'pnpm run generate:meta'
+              sh 'pnpm run typecheck'
+            }
+          }
+        }
+      }
+    }
+
     stage('Test') {
       steps {
         script {
