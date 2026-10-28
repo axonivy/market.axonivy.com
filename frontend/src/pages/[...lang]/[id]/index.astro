@@ -52,6 +52,15 @@ const lang = (Astro.currentLocale ?? "en") as Lang;
 const t = i18next.getFixedT(lang);
 const name = localize(product.names, lang, product.name);
 
+const sunset = product.sunset;
+const successor = sunset?.successor;
+const successorProduct = successor?.id
+  ? getProductById(successor.id)
+  : undefined;
+const successorHref = successorProduct
+  ? localePath(lang, `/${successorProduct.id}`)
+  : successor?.url;
+
 const readme = product.readme
   ? await loadReadme(product.readme, lang)
   : undefined;
@@ -84,6 +93,13 @@ const information: InformationRow[] = [
   {
     label: t("productDetails.information.table.label.compatibility"),
     value: product.compatibility,
+  },
+  {
+    label: t("productDetails.information.table.label.doc"),
+    value:
+      product.documentationUrl &&
+      t("productDetails.information.table.label.doc"),
+    href: product.documentationUrl,
   },
   {
     label: t("productDetails.information.table.label.cost"),
@@ -208,6 +224,34 @@ const information: InformationRow[] = [
           <H3 className="uppercase">{t("productDetails.deprecated.title")}</H3>
         </div>
         <Base>{t("productDetails.deprecated.description")}</Base>
+        {sunset?.finalVersion && (
+          <Base>
+            {t("productDetails.deprecated.finalVersion", {
+              version: sunset.finalVersion,
+            })}
+          </Base>
+        )}
+        {successor && (
+          <div class="flex flex-col gap-1">
+            <H5>{t("productDetails.deprecated.successor")}</H5>
+            {successor.description && <Base>{successor.description}</Base>}
+            {successorHref && (
+              <a
+                href={successorHref}
+                target={successorProduct ? undefined : "_blank"}
+                class="underline w-fit"
+              >
+                {successorProduct
+                  ? localize(
+                      successorProduct.names,
+                      lang,
+                      successorProduct.name,
+                    )
+                  : t("productDetails.deprecated.learnMore")}
+              </a>
+            )}
+          </div>
+        )}
       </div>
     )}
     <div class="grid grid-cols-2 gap-2 items-center md:hidden w-full designer:mb-4">

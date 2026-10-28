@@ -13,6 +13,7 @@ export default tseslint.config(
       "node_modules/",
       ".market/",
       "public/market-cache/",
+      "scripts/generated/",
     ],
   },
   eslint.configs.recommended,

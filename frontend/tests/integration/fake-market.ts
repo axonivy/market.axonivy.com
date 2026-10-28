@@ -8,6 +8,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import type { MarketIndex } from "../../scripts/fetch-market.ts";
+import type { MavenArtifact } from "../../scripts/generated/meta.ts";
 
 const SCRIPT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -153,7 +154,7 @@ export class FakeGitHub extends FakeMaven {
   }
 }
 
-type MetaArtifact = Record<string, unknown>;
+type MetaArtifact = Partial<MavenArtifact>;
 
 const LOGO_PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
 

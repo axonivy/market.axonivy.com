@@ -76,6 +76,9 @@
     "contactUs": "Contact us",
     "deprecated": {
       "description": "This extension is deprecated and will no longer receive updates or support.",
+      "finalVersion": "Last supported version: {{version}}",
+      "learnMore": "Learn more",
+      "successor": "Successor",
       "title": "Deprecated"
     },
     "download": {
@@ -89,6 +92,7 @@
         "label": {
           "compatibility": "Compatibility",
           "cost": "Cost",
+          "doc": "Documentation",
           "implemented": "Implemented by",
           "language": "Language",
           "more": "More information",

@@ -22,6 +22,9 @@ test.describe("a-trust", () => {
       page.getByRole("button", { name: "Install Now" }),
     ).toBeVisible();
     await expect(page.getByRole("button", { name: "Download" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Deprecated" })).toHaveCount(
+      0,
+    );
 
     await page.getByRole("link", { name: "Home" }).click();
     await expect(page).toHaveURL("/");
@@ -188,4 +191,54 @@ test("shows deprecated products without Download for dropins", async ({
   await expect(page.getByText("This extension is deprecated")).toBeVisible();
   await expect(infoRow(page, "Compatibility")).not.toContainText("+");
   await expect(page.getByRole("button", { name: "Download" })).toHaveCount(0);
+});
+
+test.describe("sunset", () => {
+  test("links the successor's website", async ({ page }) => {
+    await page.goto("/excel-importer");
+
+    await expect(page.getByText("Last supported version: 13.1")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Successor", level: 5 }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(
+        "Native Database to Entity-Class import in Axon Ivy 14 and newer",
+      ),
+    ).toBeVisible();
+    const link = page.getByRole("link", { name: "Learn more" });
+    await expect(link).toHaveAttribute(
+      "href",
+      /databases\.html#generator-wizard$/,
+    );
+    await expect(link).toHaveAttribute("target", "_blank");
+  });
+
+  test("links the successor product", async ({ page }) => {
+    await page.goto("/ai-assistant");
+
+    await expect(page.getByText("Last supported version: 12.0")).toBeVisible();
+    const link = page.getByRole("link", {
+      name: "Axon Ivy Smart Workflow",
+      exact: true,
+    });
+    await expect(link).not.toHaveAttribute("target");
+
+    await link.click();
+    await expect(page).toHaveURL("/smart-workflow");
+    await expect(
+      page.getByRole("heading", { name: "Axon Ivy Smart Workflow", level: 1 }),
+    ).toBeVisible();
+  });
+
+  test("keeps the language for the successor product", async ({ page }) => {
+    await page.goto("/de/ai-assistant");
+
+    await expect(
+      page.getByText("Letzte unterstützte Version: 12.0"),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Axon Ivy Smart Workflow", exact: true }),
+    ).toHaveAttribute("href", "/de/smart-workflow");
+  });
 });

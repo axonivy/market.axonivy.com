@@ -1,3 +1,6 @@
+import { FEATURED_PRODUCTS_IDS } from "@/data/featured";
+import { compatibilityRange } from "@/data/versions";
+import type { Lang } from "@/translation/ui";
 import type { ImageMetadata } from "astro";
 import type { IndexProduct, MarketIndex } from "../../scripts/fetch-market";
 import {
@@ -7,10 +10,6 @@ import {
   type ProductMeta,
   type ProductSummary,
 } from "./product-types";
-import { FEATURED_PRODUCTS_IDS } from "@/data/featured";
-import { DEPRECATED_PRODUCTS_IDS } from "@/data/deprecated";
-import { compatibilityRange } from "@/data/versions";
-import type { Lang } from "@/translation/ui";
 
 export * from "./product-types";
 
@@ -63,7 +62,7 @@ function loadProducts(): Product[] {
       if (!logo) return undefined;
       const data = index.get(meta.id);
       const deprecated =
-        meta.deprecated === true || DEPRECATED_PRODUCTS_IDS.includes(meta.id);
+        meta.sunset?.deprecated === true || meta.deprecated === true;
       return {
         ...meta,
         deprecated,
