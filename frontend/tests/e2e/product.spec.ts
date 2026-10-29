@@ -175,7 +175,7 @@ test("loads README images from the market cache", async ({ page }) => {
 
   const images = page
     .getByRole("tabpanel")
-    .locator("img[src^='/market-cache/']");
+    .locator("img[src^='/maven-products/']");
   await expect(images.first()).toBeVisible();
   for (const image of await images.all()) {
     await image.scrollIntoViewIfNeeded();

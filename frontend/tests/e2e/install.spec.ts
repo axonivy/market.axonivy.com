@@ -20,7 +20,7 @@ const installed = (page: Page) => page.evaluate(() => window.installed);
 
 const productJson = (baseURL: string | undefined, version: string) =>
   new RegExp(
-    `^${baseURL}/market-cache/.+/${version.replaceAll(".", "\\.")}/_product\\.json$`,
+    `^${baseURL}/maven-products/.+/${version.replaceAll(".", "\\.")}/_product\\.json$`,
   );
 
 function designer(page: Page) {

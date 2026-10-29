@@ -14,7 +14,8 @@ export default defineConfig({
   },
 
   webServer: {
-    command: "pnpm build && pnpm preview",
+    command:
+      "pnpm build && mkdir -p dist/maven-products && cp -R .market/maven-products/. dist/maven-products/ && pnpm preview",
     url: "http://localhost:4321",
     reuseExistingServer: !process.env.CI,
     timeout: 15 * 60 * 1000,
