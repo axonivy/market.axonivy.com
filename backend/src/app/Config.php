@@ -36,11 +36,11 @@ class Config
     if ($configuredFile !== false && $configuredFile !== '') {
       return $configuredFile;
     }
-    $frontendFile = dirname(__DIR__, 3) . '/frontend/.market/products.json';
+    $frontendFile = dirname(__DIR__, 3) . '/frontend/.market/product-index.json';
     if (is_file($frontendFile)) {
       return $frontendFile;
     }
-    $webFile = dirname(__DIR__) . '/web/_market/products.json';
+    $webFile = dirname(__DIR__) . '/web/_market/product-index.json';
     return is_file($webFile) ? $webFile : '';
   }
 

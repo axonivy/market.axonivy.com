@@ -52,7 +52,7 @@ class ProductApiTest extends TestCase
     $cacheDirectory = $this->fixtureDirectory . '/cache';
     $installDirectory = $cacheDirectory . '/a-trust/a-trust-product/2.0.0';
     mkdir($installDirectory, 0777, true);
-    file_put_contents($this->fixtureDirectory . '/products.json', json_encode([
+    file_put_contents($this->fixtureDirectory . '/product-index.json', json_encode([
       'products' => [[
         'id' => 'a-trust',
         'versions' => ['2.9.0', '2.0.0', '1.0.0', '1.0.0-SNAPSHOT', '3.0.0-SNAPSHOT'],
@@ -93,7 +93,7 @@ class ProductApiTest extends TestCase
     ], JSON_THROW_ON_ERROR));
     file_put_contents($installDirectory . '/_product.json', '{"version":"2.0.0","installers":[]}');
     putenv('MARKET_PRODUCTS_DIR=' . $productsDirectory);
-    putenv('MARKET_INDEX_FILE=' . $this->fixtureDirectory . '/products.json');
+    putenv('MARKET_INDEX_FILE=' . $this->fixtureDirectory . '/product-index.json');
     putenv('MARKET_CACHE_DIR=' . $cacheDirectory);
   }
 

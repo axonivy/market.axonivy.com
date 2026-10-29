@@ -14,11 +14,11 @@ services:
       - ../frontend/dist:/var/www/html/frontend-dist
       - ./src/web/frontend-index.php:/var/www/html/frontend-dist/index.php:ro
       - ../frontend/.market/meta-catalog/products:/market-data/products:ro
-      - ../frontend/.market/products.json:/market-data/products.json:ro
+      - ../frontend/.market/product-index.json:/market-data/product-index.json:ro
       - ../frontend/public/maven-products:/market-cache:ro
     environment:
       MARKET_PRODUCTS_DIR: /market-data/products
-      MARKET_INDEX_FILE: /market-data/products.json
+      MARKET_INDEX_FILE: /market-data/product-index.json
       MARKET_CACHE_DIR: /market-cache
     ports:
       - 80:80

@@ -6,7 +6,7 @@ export const ROOT = path.resolve(
   process.env.MARKET_ROOT ??
     path.join(path.dirname(fileURLToPath(import.meta.url)), ".."),
 );
-export const INDEX_FILE = path.join(ROOT, ".market", "products.json");
+export const INDEX_FILE = path.join(ROOT, ".market", "product-index.json");
 
 export const warnings: string[] = [];
 

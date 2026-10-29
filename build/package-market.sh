@@ -15,7 +15,7 @@ cp "$root_dir/backend/src/web/index.php" \
 cp -R "$root_dir/backend/vendor" "$package_dir/"
 cp -R "$root_dir/frontend/.market/meta-catalog/products/." \
   "$package_dir/src/web/_market/"
-cp "$root_dir/frontend/.market/products.json" "$package_dir/src/web/_market/"
+cp "$root_dir/frontend/.market/product-index.json" "$package_dir/src/web/_market/"
 
 tar -cf "$root_dir/build/ivy-website-market.tar" \
   -C "$package_dir" src vendor

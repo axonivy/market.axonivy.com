@@ -55,7 +55,7 @@ function installer(id: string, artifactIds: string[]) {
 
 function find(index: MarketIndex, id: string) {
   const product = index.products.find((product) => product.id === id);
-  if (!product) throw new Error(`Product ${id} not in products.json`);
+  if (!product) throw new Error(`Product ${id} not in product-index.json`);
   return product;
 }
 
