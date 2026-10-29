@@ -107,13 +107,14 @@ class ProductApiTest extends TestCase
   public function testSearchesProductsByTypeKeywordAndLanguage(): void
   {
     AppTester::assertThatGet(
-      '/stable/api/product?type=connectors&keyword=trust&language=en'
+      'https://market.example/stable/api/product?type=connectors&keyword=trust&language=en'
     )
       ->ok()
       ->contentType('application/json; charset=utf-8')
       ->bodyContains('"id":"a-trust"')
       ->bodyContains('"names":{"en":"A-Trust"}')
-      ->bodyContains('"logoUrl":"/stable/api/image/a-trust"')
+      ->bodyContains('"logoUrl":"https://market.example/stable/api/image/a-trust"')
+      ->bodyContains('"logoDarkUrl":"https://market.example/stable/api/image/a-trust-dark"')
       ->bodyDoesNotContain('"id":"aspose-email-demo"');
   }
 

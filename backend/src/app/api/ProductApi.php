@@ -6,6 +6,7 @@ use app\Config;
 use app\domain\market\Market;
 use app\domain\market\Product;
 use OpenApi\Attributes as OA;
+use Psr\Http\Message\UriInterface;
 
 class ProductApi
 {
@@ -71,7 +72,7 @@ class ProductApi
         continue;
       }
 
-      $model = $this->productModel($product, $meta, $language);
+      $model = $this->productModel($product, $meta, $language, $request->getUri());
       if ($keyword !== '' && !$this->matchesKeyword($model, $keyword)) {
         continue;
       }
@@ -330,7 +331,7 @@ class ProductApi
     return is_array($metadata) ? $metadata : [];
   }
 
-  private function productModel(Product $product, array $meta, string $language): array
+  private function productModel(Product $product, array $meta, string $language, UriInterface $requestUri): array
   {
     $key = $product->getKey();
     $directory = Config::metaCatalog() . '/' . $key;
@@ -356,10 +357,16 @@ class ProductApi
     ];
 
     if (is_file($directory . '/logo.png')) {
-      $model['logoUrl'] = '/stable/api/image/' . rawurlencode($key);
+      $model['logoUrl'] = (string) $requestUri
+        ->withPath('/stable/api/image/' . rawurlencode($key))
+        ->withQuery('')
+        ->withFragment('');
     }
     if (is_file($directory . '/logo-dark.png')) {
-      $model['logoDarkUrl'] = '/stable/api/image/' . rawurlencode($key . '-dark');
+      $model['logoDarkUrl'] = (string) $requestUri
+        ->withPath('/stable/api/image/' . rawurlencode($key . '-dark'))
+        ->withQuery('')
+        ->withFragment('');
     }
     if (!empty($meta['statusBadgeUrl'])) {
       $model['badgeUrl'] = $meta['statusBadgeUrl'];
