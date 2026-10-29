@@ -10,7 +10,7 @@ class Config
     if ($configuredDirectory !== false && $configuredDirectory !== '') {
       return rtrim($configuredDirectory, '/');
     }
-    $frontendDirectory = dirname(__DIR__, 3) . '/frontend/.market/market-bundle/products';
+    $frontendDirectory = dirname(__DIR__, 3) . '/frontend/.market/meta-catalog/products';
     if (is_dir($frontendDirectory)) {
       return $frontendDirectory;
     }

@@ -22,12 +22,12 @@ const indexFiles = import.meta.glob<MarketIndex>("/.market/products.json", {
 });
 
 const metaFiles = import.meta.glob<ProductMeta>(
-  "/.market/market-bundle/products/*/meta.json",
+  "/.market/meta-catalog/products/*/meta.json",
   { eager: true, import: "default" },
 );
 
 const imageFiles = import.meta.glob<ImageMetadata>(
-  "/.market/market-bundle/products/*/*.png",
+  "/.market/meta-catalog/products/*/*.png",
   { eager: true, import: "default" },
 );
 

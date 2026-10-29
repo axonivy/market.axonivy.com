@@ -13,7 +13,7 @@ cp "$root_dir/backend/src/web/index.php" \
   "$root_dir/backend/src/web/robots.txt" \
   "$package_dir/src/web/"
 cp -R "$root_dir/backend/vendor" "$package_dir/"
-cp -R "$root_dir/frontend/.market/market-bundle/products/." \
+cp -R "$root_dir/frontend/.market/meta-catalog/products/." \
   "$package_dir/src/web/_market/"
 cp "$root_dir/frontend/.market/products.json" "$package_dir/src/web/_market/"
 

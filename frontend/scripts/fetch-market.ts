@@ -25,8 +25,8 @@ const GITHUB_API_URL = process.env.GITHUB_API_URL ?? "https://api.github.com";
 const MARKET_PACKAGE_REPO_URL =
   process.env.MARKET_PACKAGE_REPO_URL ??
   "https://maven.pkg.github.com/axonivy-market/market";
-const MARKET_BUNDLE_DIR = path.join(ROOT, ".market", "market-bundle");
-const PRODUCTS_DIR = path.join(MARKET_BUNDLE_DIR, "products");
+const META_CATALOG_DIR = path.join(ROOT, ".market", "meta-catalog");
+const PRODUCTS_DIR = path.join(META_CATALOG_DIR, "products");
 const CACHE_DIR = path.join(ROOT, ".market", "cache");
 const PUBLIC_DIR = path.join(ROOT, "public", "market-cache");
 const PUBLIC_URL = "/market-cache";
@@ -577,9 +577,9 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
 async function main() {
   const start = Date.now();
   const bundle = await fetchMarketBundle();
-  await rm(MARKET_BUNDLE_DIR, { recursive: true, force: true });
-  await mkdir(MARKET_BUNDLE_DIR, { recursive: true });
-  await extractZip(bundle, MARKET_BUNDLE_DIR);
+  await rm(META_CATALOG_DIR, { recursive: true, force: true });
+  await mkdir(META_CATALOG_DIR, { recursive: true });
+  await extractZip(bundle, META_CATALOG_DIR);
 
   await rm(PUBLIC_DIR, { recursive: true, force: true });
   await mkdir(PUBLIC_DIR, { recursive: true });
