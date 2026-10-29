@@ -22,6 +22,7 @@ export async function fetchWithRetry(
   retries = 3,
   init?: RequestInit,
 ): Promise<Response> {
+  console.log(`🔽️ GET >${url}`);
   for (let attempt = 1; ; attempt++) {
     try {
       const response = await fetch(url, init);
