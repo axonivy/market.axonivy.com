@@ -44,10 +44,9 @@ class ProductApiTest extends TestCase
         'listed' => true,
       ], JSON_THROW_ON_ERROR));
     }
-    copy(
-      '/market/meta-catalog/products/a-trust/logo.png',
-      $productsDirectory . '/a-trust/logo.png'
-    );
+    $logoFixture = dirname(__DIR__, 2) . '/src/web/favicon.png';
+    copy($logoFixture, $productsDirectory . '/a-trust/logo.png');
+    copy($logoFixture, $productsDirectory . '/a-trust/logo-dark.png');
     file_put_contents($marketRoot . '/product-index.json', json_encode([
       'products' => [[
         'id' => 'a-trust',

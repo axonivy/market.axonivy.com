@@ -13,8 +13,9 @@ services:
       - ./docker/apache/000-default.conf:/etc/apache2/sites-available/000-default.conf
       - ../frontend/dist:/var/www/html/frontend-dist
       - ./src/web/frontend-index.php:/var/www/html/frontend-dist/index.php:ro
-      - ../frontend/.market:/market:ro
+      - ./src/web/.htaccess:/var/www/html/frontend-dist/.htaccess:ro
+      - ../frontend/.market:/var/www/html/frontend-dist/_market:ro
     environment:
-      MARKET_DIR: /market
+      MARKET_DIR: /var/www/html/frontend-dist/_market
     ports:
       - 80:80
