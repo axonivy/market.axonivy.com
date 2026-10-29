@@ -27,9 +27,9 @@ const MARKET_PACKAGE_REPO_URL =
   "https://maven.pkg.github.com/axonivy-market/market";
 const META_CATALOG_DIR = path.join(ROOT, ".market", "meta-catalog");
 const PRODUCTS_DIR = path.join(META_CATALOG_DIR, "products");
-const CACHE_DIR = path.join(ROOT, ".market", "cache");
-const PUBLIC_DIR = path.join(ROOT, "public", "market-cache");
-const PUBLIC_URL = "/market-cache";
+const MAVEN_PRODUCTS_DIR = path.join(ROOT, ".market", "maven-products");
+const PUBLIC_MAVEN_PRODUCTS_DIR = path.join(ROOT, "public", "maven-products");
+const PUBLIC_MAVEN_PRODUCTS_URL = "/maven-products";
 
 const DEFAULT_REPO_URL =
   process.env.MARKET_MAVEN_URL ?? "https://maven.axonivy.com";
@@ -305,7 +305,7 @@ async function ensureCached(
   { version, url }: ArtifactVersion,
   full: boolean,
 ): Promise<string | undefined> {
-  const dir = path.join(CACHE_DIR, artifactId, version);
+  const dir = path.join(MAVEN_PRODUCTS_DIR, artifactId, version);
   const markerFile = path.join(dir, ".cache.json");
   const marker = await readJson<CacheMarker>(markerFile);
 
@@ -524,7 +524,7 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
         if (!cacheDir) return undefined;
 
         const relativeDir = `${meta.id}/${productArtifact.artifactId}/${artifactVersion.version}`;
-        const publicDir = path.join(PUBLIC_DIR, relativeDir);
+        const publicDir = path.join(PUBLIC_MAVEN_PRODUCTS_DIR, relativeDir);
 
         if (featured && existsSync(path.join(cacheDir, "README.md"))) {
           await cp(cacheDir, publicDir, {
@@ -536,7 +536,7 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
             file: toPosix(
               path.relative(ROOT, path.join(cacheDir, "README.md")),
             ),
-            baseUrl: `${PUBLIC_URL}/${relativeDir}/`,
+            baseUrl: `${PUBLIC_MAVEN_PRODUCTS_URL}/${relativeDir}/`,
           };
         }
 
@@ -555,7 +555,7 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
           productJson,
           installable: {
             version: artifactVersion.version,
-            url: `${PUBLIC_URL}/${relativeDir}/_product.json`,
+            url: `${PUBLIC_MAVEN_PRODUCTS_URL}/${relativeDir}/_product.json`,
             minimumIvyVersion: productJson.minimumIvyVersion,
           } satisfies IndexInstallable,
         };
@@ -581,8 +581,8 @@ async function main() {
   await mkdir(META_CATALOG_DIR, { recursive: true });
   await extractZip(bundle, META_CATALOG_DIR);
 
-  await rm(PUBLIC_DIR, { recursive: true, force: true });
-  await mkdir(PUBLIC_DIR, { recursive: true });
+  await rm(PUBLIC_MAVEN_PRODUCTS_DIR, { recursive: true, force: true });
+  await mkdir(PUBLIC_MAVEN_PRODUCTS_DIR, { recursive: true });
   const previous = await readJson<MarketIndex>(INDEX_FILE);
   const metaFiles = await findMetaFiles();
   if (metaFiles.length === 0) {

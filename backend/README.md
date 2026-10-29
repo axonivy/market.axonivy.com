@@ -2,9 +2,9 @@
 
 ## Setup
   
-For local development, export `GITHUB_TOKEN` with a classic GitHub PAT that has `read:packages`, then run `pnpm --dir ../frontend fetch-data` to create the market bundle, index, and artifact cache. Run `./dev.sh` to build the frontend and start the REST backend in Docker.
+For local development, export `GITHUB_TOKEN` with a classic GitHub PAT that has `read:packages`, then run `pnpm --dir ../frontend fetch-data` to create the meta catalog, market index, and downloaded Maven products. Run `./dev.sh` to build the frontend and start the REST backend in Docker.
 
-The Jenkins deployment tar includes the PHP backend, Composer dependencies, frontend build, product bundle, index, and market cache. The deployed app does not depend on external product or cache directories.
+The Jenkins deployment tar includes the PHP backend, Composer dependencies, frontend build, product bundle, index, and maven products. The deployed app does not depend on external product or maven products directories.
   
 ... and later `docker-compose down` to stop the containers.
 

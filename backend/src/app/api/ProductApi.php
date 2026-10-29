@@ -212,7 +212,7 @@ class ProductApi
     }
 
     $url = $installable['url'] ?? '';
-    $prefix = '/market-cache/';
+    $prefix = '/maven-products/';
     if (!is_string($url) || !str_starts_with($url, $prefix)) {
       return $this->json($response, ['message' => 'Install artifact not found'], 404);
     }

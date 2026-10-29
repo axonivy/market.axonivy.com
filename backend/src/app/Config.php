@@ -23,11 +23,11 @@ class Config
     if ($configuredDirectory !== false && $configuredDirectory !== '') {
       return rtrim($configuredDirectory, '/');
     }
-    $frontendDirectory = dirname(__DIR__, 3) . '/frontend/public/market-cache';
+    $frontendDirectory = dirname(__DIR__, 3) . '/frontend/public/maven-products';
     if (is_dir($frontendDirectory)) {
       return $frontendDirectory;
     }
-    return dirname(__DIR__) . '/web/market-cache';
+    return dirname(__DIR__) . '/web/maven-products';
   }
 
   public static function marketIndexFile(): string

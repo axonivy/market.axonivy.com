@@ -72,7 +72,7 @@ class ProductApiTest extends TestCase
         ]],
         'installable' => [[
           'version' => '2.0.0',
-          'url' => '/market-cache/a-trust/a-trust-product/2.0.0/_product.json',
+          'url' => '/maven-products/a-trust/a-trust-product/2.0.0/_product.json',
         ]],
       ], [
         'id' => 'snapshot-only',

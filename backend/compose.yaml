@@ -15,7 +15,7 @@ services:
       - ./src/web/frontend-index.php:/var/www/html/frontend-dist/index.php:ro
       - ../frontend/.market/meta-catalog/products:/market-data/products:ro
       - ../frontend/.market/products.json:/market-data/products.json:ro
-      - ../frontend/public/market-cache:/market-cache:ro
+      - ../frontend/public/maven-products:/market-cache:ro
     environment:
       MARKET_PRODUCTS_DIR: /market-data/products
       MARKET_INDEX_FILE: /market-data/products.json

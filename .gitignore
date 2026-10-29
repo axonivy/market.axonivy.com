@@ -1,14 +1,31 @@
+# Build outputs
 /frontend/dist/
+/backend/frontend-dist/
+/build/ivy-website-market.tar
+
+# Generated & cached data
 /frontend/.astro/
 /frontend/.market/
+/frontend/public/maven-products/
 /frontend/node_modules/
-/frontend/.DS_Store
-/frontend/public/market-cache/
+backend/vendor/
+
+# Test & report artifacts
 /frontend/test-results/
 /frontend/playwright-report/
 /frontend/blob-report/
+/frontend/report*.xml
+/backend/phpunit-junit.xml
+
+# IDE & tool caches
 /frontend/playwright/.cache/
 /frontend/playwright/.auth/
+.phpunit.result.cache
+
+# Environment & local config
 /frontend/.env.local
-/frontend/report*.xml
 bom.json
+
+# OS artifacts
+.DS_Store
+Thumbs.db

@@ -13,7 +13,7 @@ export default defineConfig(
       "dist/",
       "node_modules/",
       ".market/",
-      "public/market-cache/",
+      "public/maven-products/",
       "scripts/generated/",
     ],
   },
