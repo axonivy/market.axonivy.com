@@ -13,12 +13,11 @@ services:
       - ./docker/apache/000-default.conf:/etc/apache2/sites-available/000-default.conf
       - ../frontend/dist:/var/www/html/frontend-dist
       - ./src/web/frontend-index.php:/var/www/html/frontend-dist/index.php:ro
-      - ../frontend/.market/meta-catalog/products:/market-data/products:ro
-      - ../frontend/.market/product-index.json:/market-data/product-index.json:ro
-      - ../frontend/public/maven-products:/maven-products:ro
+      - ../frontend/.market:/market:ro
+      - ../frontend/public/maven-products:/market/maven-products:ro
     environment:
-      MARKET_PRODUCTS_DIR: /market-data/products
-      MARKET_INDEX_FILE: /market-data/product-index.json
-      MARKET_CACHE_DIR: /maven-products
+      MARKET_PRODUCTS_DIR: /market/meta-catalog/products
+      MARKET_INDEX_FILE: /market/product-index.json
+      MARKET_CACHE_DIR: /market/maven-products
     ports:
       - 80:80
