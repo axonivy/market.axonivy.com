@@ -3,7 +3,9 @@
 namespace app;
 
 use Middlewares\TrailingSlash;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Slim\App;
 use Slim\Exception\HttpException;
 use Slim\Exception\HttpNotFoundException;
@@ -21,6 +23,7 @@ class Website
     $this->installTrailingSlashRedirect();
     $this->installRoutes();
     $this->installErrorHandling();
+    $this->installCors();
   }
 
   public function getApp(): App
@@ -59,5 +62,34 @@ class Website
     };
     $errorMiddleware->setErrorHandler(HttpNotFoundException::class, $jsonErrorHandler);
     $errorMiddleware->setDefaultErrorHandler($jsonErrorHandler);
+  }
+
+  private function installCors(): void
+  {
+    $this->app->add(function (ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface {
+      if (!str_starts_with($request->getUri()->getPath(), '/stable/')) {
+        return $handler->handle($request);
+      }
+
+      if ($request->getMethod() === 'OPTIONS') {
+        $requestedMethod = strtoupper($request->getHeaderLine('Access-Control-Request-Method'));
+        if ($requestedMethod === 'GET') {
+          $response = new Response(204);
+          $requestedHeaders = $request->getHeaderLine('Access-Control-Request-Headers');
+          if ($requestedHeaders !== '') {
+            $response = $response->withHeader('Access-Control-Allow-Headers', $requestedHeaders);
+          }
+          $response = $response->withHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        } else {
+          $response = $handler->handle($request);
+        }
+      } else {
+        $response = $handler->handle($request);
+      }
+
+      return $response
+        ->withHeader('Access-Control-Allow-Origin', '*')
+        ->withHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    });
   }
 }
