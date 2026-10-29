@@ -131,7 +131,7 @@ describe("README source", () => {
 
     expect(product.featuredVersion).toBe("2.0.0-SNAPSHOT");
     expect(product.readme?.baseUrl).toBe(
-      "/market-cache/demo/demo-product/2.0.0-SNAPSHOT/",
+      "/maven-products/demo/demo-product/2.0.0-SNAPSHOT/",
     );
     const readmeFile = market.resolve(product.readme!.file);
     expect(await readFile(readmeFile, "utf8")).toContain(
@@ -454,12 +454,12 @@ describe("product.json and installers", () => {
     expect(product.installable).toEqual([
       {
         version: "2.0.0-SNAPSHOT",
-        url: "/market-cache/demo/demo-product/2.0.0-SNAPSHOT/_product.json",
+        url: "/maven-products/demo/demo-product/2.0.0-SNAPSHOT/_product.json",
         minimumIvyVersion: "12.0.0",
       },
       {
         version: "1.0.0",
-        url: "/market-cache/demo/demo-product/1.0.0/_product.json",
+        url: "/maven-products/demo/demo-product/1.0.0/_product.json",
         minimumIvyVersion: "12.0.0",
       },
     ]);

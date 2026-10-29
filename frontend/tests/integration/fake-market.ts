@@ -280,10 +280,10 @@ export class FakeMarket {
   }
 
   cacheDir(...parts: string[]) {
-    return path.join(this.root, ".market/cache", ...parts);
+    return path.join(this.root, ".market/maven-products", ...parts);
   }
 
   publicDir(...parts: string[]) {
-    return path.join(this.root, "public/market-cache", ...parts);
+    return path.join(this.root, ".market/maven-products", ...parts);
   }
 }

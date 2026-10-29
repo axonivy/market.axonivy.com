@@ -579,7 +579,8 @@ async function main() {
   await rm(META_CATALOG_DIR, { recursive: true, force: true });
   await mkdir(META_CATALOG_DIR, { recursive: true });
   await extractZip(bundle, META_CATALOG_DIR);
-  await rm(MAVEN_PRODUCTS_DIR, { recursive: true, force: true });
+  // Don't clear MAVEN_PRODUCTS_DIR - preserve cache markers
+  // Individual cache entries are managed by ensureCached()
   await mkdir(MAVEN_PRODUCTS_DIR, { recursive: true });
   const previous = await readJson<MarketIndex>(INDEX_FILE);
   const metaFiles = await findMetaFiles();
