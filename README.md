@@ -70,5 +70,5 @@ flowchart LR
 	cache -->|runtime mount| backend["🖥️ Backend PHP<br/>(Docker)<br/>→ REST APIs"]
 	
 	frontend -->|https://market.axonivy.com/| user["📱 User"]
-	backend -->|/stable/api/| designer["📐️ Desginer"]
+	designer["📐️ Designer"]
 ```
