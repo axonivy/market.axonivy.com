@@ -2,7 +2,7 @@
 .market/
 dist/
 node_modules/
-public/maven-products/
+.market/maven-products/
 scripts/generated/
 pnpm-lock.yaml
 src/translation/**/*.json

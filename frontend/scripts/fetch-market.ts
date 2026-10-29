@@ -28,7 +28,6 @@ const MARKET_PACKAGE_REPO_URL =
 const META_CATALOG_DIR = path.join(ROOT, ".market", "meta-catalog");
 const PRODUCTS_DIR = path.join(META_CATALOG_DIR, "products");
 const MAVEN_PRODUCTS_DIR = path.join(ROOT, ".market", "maven-products");
-const PUBLIC_MAVEN_PRODUCTS_DIR = path.join(ROOT, "public", "maven-products");
 const PUBLIC_MAVEN_PRODUCTS_URL = "/maven-products";
 
 const DEFAULT_REPO_URL =
@@ -524,7 +523,7 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
         if (!cacheDir) return undefined;
 
         const relativeDir = `${meta.id}/${productArtifact.artifactId}/${artifactVersion.version}`;
-        const publicDir = path.join(PUBLIC_MAVEN_PRODUCTS_DIR, relativeDir);
+        const publicDir = path.join(MAVEN_PRODUCTS_DIR, relativeDir);
 
         if (featured && existsSync(path.join(cacheDir, "README.md"))) {
           await cp(cacheDir, publicDir, {
@@ -580,9 +579,8 @@ async function main() {
   await rm(META_CATALOG_DIR, { recursive: true, force: true });
   await mkdir(META_CATALOG_DIR, { recursive: true });
   await extractZip(bundle, META_CATALOG_DIR);
-
-  await rm(PUBLIC_MAVEN_PRODUCTS_DIR, { recursive: true, force: true });
-  await mkdir(PUBLIC_MAVEN_PRODUCTS_DIR, { recursive: true });
+  await rm(MAVEN_PRODUCTS_DIR, { recursive: true, force: true });
+  await mkdir(MAVEN_PRODUCTS_DIR, { recursive: true });
   const previous = await readJson<MarketIndex>(INDEX_FILE);
   const metaFiles = await findMetaFiles();
   if (metaFiles.length === 0) {

@@ -23,7 +23,7 @@ class Config
     if ($configuredDirectory !== false && $configuredDirectory !== '') {
       return rtrim($configuredDirectory, '/');
     }
-    $frontendDirectory = dirname(__DIR__, 3) . '/frontend/public/maven-products';
+    $frontendDirectory = dirname(__DIR__, 3) . '/frontend/.market/maven-products';
     if (is_dir($frontendDirectory)) {
       return $frontendDirectory;
     }

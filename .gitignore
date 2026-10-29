@@ -6,7 +6,6 @@
 # Generated & cached data
 /frontend/.astro/
 /frontend/.market/
-/frontend/public/maven-products/
 /frontend/node_modules/
 backend/vendor/
 
