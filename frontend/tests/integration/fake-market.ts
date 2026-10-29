@@ -279,11 +279,9 @@ export class FakeMarket {
     return path.join(this.root, file);
   }
 
-  cacheDir(...parts: string[]) {
-    return path.join(this.root, ".market/maven-products", ...parts);
-  }
-
-  publicDir(...parts: string[]) {
+  // Maven products directory with filtered content for public serving
+  // (README and metadata removed for featured versions).
+  mavenProducts(...parts: string[]) {
     return path.join(this.root, ".market/maven-products", ...parts);
   }
 }
