@@ -4,44 +4,32 @@ namespace app;
 
 class Config
 {
-  public static function marketDirectory(): string
+  private static function marketRootDirectory(): string
   {
-    $configuredDirectory = getenv('MARKET_PRODUCTS_DIR');
-    if ($configuredDirectory !== false && $configuredDirectory !== '') {
-      return rtrim($configuredDirectory, '/');
+    $marketDir = getenv('MARKET_DIR');
+    if ($marketDir !== false && $marketDir !== '') {
+      return rtrim($marketDir, '/');
     }
-    $frontendDirectory = dirname(__DIR__, 3) . '/frontend/.market/meta-catalog/products';
-    if (is_dir($frontendDirectory)) {
-      return $frontendDirectory;
+    $frontendDir = dirname(__DIR__, 3) . '/frontend/.market';
+    if (is_dir($frontendDir)) {
+      return $frontendDir;
     }
     return dirname(__DIR__) . '/web/_market';
   }
 
+  public static function marketDirectory(): string
+  {
+    return self::marketRootDirectory() . '/meta-catalog/products';
+  }
+
   public static function marketCacheDirectory(): string
   {
-    $configuredDirectory = getenv('MARKET_CACHE_DIR');
-    if ($configuredDirectory !== false && $configuredDirectory !== '') {
-      return rtrim($configuredDirectory, '/');
-    }
-    $frontendDirectory = dirname(__DIR__, 3) . '/frontend/.market/maven-products';
-    if (is_dir($frontendDirectory)) {
-      return $frontendDirectory;
-    }
-    return dirname(__DIR__) . '/web/maven-products';
+    return self::marketRootDirectory() . '/maven-products';
   }
 
   public static function marketIndexFile(): string
   {
-    $configuredFile = getenv('MARKET_INDEX_FILE');
-    if ($configuredFile !== false && $configuredFile !== '') {
-      return $configuredFile;
-    }
-    $frontendFile = dirname(__DIR__, 3) . '/frontend/.market/product-index.json';
-    if (is_file($frontendFile)) {
-      return $frontendFile;
-    }
-    $webFile = dirname(__DIR__) . '/web/_market/product-index.json';
-    return is_file($webFile) ? $webFile : '';
+    return self::marketRootDirectory() . '/product-index.json';
   }
 
 }

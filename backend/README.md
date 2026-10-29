@@ -19,7 +19,7 @@ The PHP app exposes JSON endpoints only; legacy Twig pages are not routed.
 - `GET /stable/api/image/{id}` and `/stable/api/image/{id}-dark`
 - `GET /stable/openapi.json` for the generated OpenAPI 3.1 contract
 
-The backend reads the same generated files as the frontend. Local Docker mounts them from `frontend`; deployment defaults resolve them from the self-contained tar. The `MARKET_PRODUCTS_DIR`, `MARKET_INDEX_FILE`, and `MARKET_CACHE_DIR` environment variables remain available for local overrides.
+The backend reads the same generated files as the frontend. Local Docker mounts them from `frontend`; deployment defaults resolve them from the self-contained tar. The `MARKET_DIR` environment variable can override the market root directory location.
 
 ## Execute tests
 

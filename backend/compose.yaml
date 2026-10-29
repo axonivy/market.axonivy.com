@@ -15,8 +15,6 @@ services:
       - ./src/web/frontend-index.php:/var/www/html/frontend-dist/index.php:ro
       - ../frontend/.market:/market:ro
     environment:
-      MARKET_PRODUCTS_DIR: /market/meta-catalog/products
-      MARKET_INDEX_FILE: /market/product-index.json
-      MARKET_CACHE_DIR: /market/maven-products
+      MARKET_DIR: /market
     ports:
       - 80:80
