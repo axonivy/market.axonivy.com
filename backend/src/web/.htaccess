@@ -7,4 +7,5 @@ ErrorDocument 404 /404.html
 
 RewriteEngine On
 
+RewriteRule ^maven-products/(.*)$ _market/maven-products/$1 [END]
 RewriteRule ^stable(?:/.*)?$ index.php [QSA,L]
