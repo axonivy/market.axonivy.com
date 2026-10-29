@@ -472,18 +472,6 @@ function isMavenDropinsOnly(productJson: ProductJson): boolean {
 
 // Products
 
-async function findMetaFiles(): Promise<string[]> {
-  const files: string[] = [];
-  for (const product of await readdir(PRODUCTS_DIR, { withFileTypes: true })) {
-    if (!product.isDirectory()) continue;
-    const file = path.join(PRODUCTS_DIR, product.name, "meta.json");
-    if (existsSync(file)) {
-      files.push(file);
-    }
-  }
-  return files.sort();
-}
-
 async function processProduct(metaFile: string): Promise<IndexProduct> {
   const meta = (await readJson<Meta>(metaFile))!;
   const metaDir = path.dirname(metaFile);
@@ -571,18 +559,25 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
   return product;
 }
 
-// Main
 
-async function main() {
-  const start = Date.now();
+async function findMetaFiles(): Promise<string[]> {
+  const files: string[] = [];
+  for (const product of await readdir(PRODUCTS_DIR, { withFileTypes: true })) {
+    if (!product.isDirectory()) continue;
+    const file = path.join(PRODUCTS_DIR, product.name, "meta.json");
+    if (existsSync(file)) {
+      files.push(file);
+    }
+  }
+  return files.sort();
+}
+
+async function fetchMetaCatalog(): Promise<string[]> {
   const bundle = await fetchMarketBundle();
   await rm(META_CATALOG_DIR, { recursive: true, force: true });
   await mkdir(META_CATALOG_DIR, { recursive: true });
   await extractZip(bundle, META_CATALOG_DIR);
-  // Don't clear MAVEN_PRODUCTS_DIR - preserve cache markers
-  // Individual cache entries are managed by ensureCached()
-  await mkdir(MAVEN_PRODUCTS_DIR, { recursive: true });
-  const previous = await readJson<MarketIndex>(INDEX_FILE);
+  
   const metaFiles = await findMetaFiles();
   if (metaFiles.length === 0) {
     throw new Error(
@@ -590,8 +585,21 @@ async function main() {
     );
   }
   console.log(`Processing ${metaFiles.length} products…`);
-  const products = await mapLimit(metaFiles, 4, processProduct);
+  return metaFiles;
+}
 
+async function fetchMavenProducts(metaFiles: string[]): Promise<IndexProduct[]> {
+  // Don't clear MAVEN_PRODUCTS_DIR - preserve cache markers
+  // Individual cache entries are managed by ensureCached()
+  await mkdir(MAVEN_PRODUCTS_DIR, { recursive: true });
+  return await mapLimit(metaFiles, 4, processProduct);
+}
+
+async function generateProductIndex(
+  products: IndexProduct[],
+): Promise<void> {
+  const previous = await readJson<MarketIndex>(INDEX_FILE);
+  
   // Keep changelogs from the last fetch-changelog run
   for (const product of products) {
     const changelog = previous?.products.find(
@@ -607,6 +615,14 @@ async function main() {
     products,
   };
   await writeFile(INDEX_FILE, JSON.stringify(index, null, 2));
+}
+
+async function main() {
+  const start = Date.now();
+
+  const metaFiles = await fetchMetaCatalog();
+  const products = await fetchMavenProducts(metaFiles);
+  await generateProductIndex(products);
 
   const seconds = ((Date.now() - start) / 1000).toFixed(1);
   console.log(
