@@ -68,7 +68,7 @@ pipeline {
             }
           }
 
-          docker.build('php', '-f backend/docker/apache/Dockerfile backend/docker/apache').inside {
+          docker.build('php', '-f backend/docker/apache/Dockerfile backend/docker/apache').inside('-v ${WORKSPACE}/frontend/.market:/market:ro') {
             dir ('backend') {
               def testExitCode = sh(
                 script: './vendor/bin/phpunit --log-junit phpunit-junit.xml',
