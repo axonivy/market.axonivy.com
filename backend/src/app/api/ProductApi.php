@@ -216,7 +216,7 @@ class ProductApi
     if (!is_string($url) || !str_starts_with($url, $prefix)) {
       return $this->json($response, ['message' => 'Install artifact not found'], 404);
     }
-    $cacheDirectory = realpath(Config::marketCacheDirectory());
+    $cacheDirectory = realpath(Config::mavenProductInstallers());
     $installFile = $cacheDirectory === false
       ? false
       : realpath($cacheDirectory . '/' . substr($url, strlen($prefix)));
@@ -313,7 +313,7 @@ class ProductApi
       return $this->json($response, ['message' => 'Image not found'], 404);
     }
 
-    $imagePath = Config::marketDirectory() . '/' . $key . ($dark ? '/logo-dark.png' : '/logo.png');
+    $imagePath = Config::metaCatalog() . '/' . $key . ($dark ? '/logo-dark.png' : '/logo.png');
     if (!is_file($imagePath)) {
       return $this->json($response, ['message' => 'Image not found'], 404);
     }
@@ -325,7 +325,7 @@ class ProductApi
 
   private function metadata(Product $product): array
   {
-    $path = Config::marketDirectory() . '/' . $product->getKey() . '/meta.json';
+    $path = Config::metaCatalog() . '/' . $product->getKey() . '/meta.json';
     $metadata = json_decode((string) file_get_contents($path), true);
     return is_array($metadata) ? $metadata : [];
   }
@@ -333,7 +333,7 @@ class ProductApi
   private function productModel(Product $product, array $meta, string $language): array
   {
     $key = $product->getKey();
-    $directory = Config::marketDirectory() . '/' . $key;
+    $directory = Config::metaCatalog() . '/' . $key;
     $names = $this->localizedValues($meta['names'] ?? [], $meta['name'] ?? $key);
     $descriptions = $this->localizedValues(
       $meta['descriptions'] ?? [],

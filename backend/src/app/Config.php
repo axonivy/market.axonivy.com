@@ -17,12 +17,12 @@ class Config
     return dirname(__DIR__) . '/web/_market';
   }
 
-  public static function marketDirectory(): string
+  public static function metaCatalog(): string
   {
     return self::marketRootDirectory() . '/meta-catalog/products';
   }
 
-  public static function marketCacheDirectory(): string
+  public static function mavenProductInstallers(): string
   {
     return self::marketRootDirectory() . '/maven-products';
   }

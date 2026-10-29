@@ -9,7 +9,7 @@ class Market
 {
   public static function all(): array
   {
-    $dirs = array_filter(glob(Config::marketDirectory() . '/*'), 'is_dir');
+    $dirs = array_filter(glob(Config::metaCatalog() . '/*'), 'is_dir');
     $products = [];
     foreach ($dirs as $dir) {
       $metaFile = $dir . '/meta.json';

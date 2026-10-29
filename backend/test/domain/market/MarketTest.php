@@ -42,7 +42,7 @@ class MarketTest extends TestCase
   {
     $products = Market::search(Market::all(), '');
 
-    $total_items = count(glob(Config::marketDirectory() . '/*/meta.json'));
+    $total_items = count(glob(Config::metaCatalog() . '/*/meta.json'));
     Assert::assertEquals($total_items, count($products));
   }
 
