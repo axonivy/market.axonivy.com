@@ -7,8 +7,9 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "pnpm build:cache && astro build",
-    "build:cache": "pnpm fetch-data && pnpm fetch-changelog",
+    "build": "pnpm cache:build && astro build",
+    "cache:clean": "node scripts/fetch-market.ts --clean-cache",
+    "cache:build": "pnpm fetch-data && pnpm fetch-changelog",
     "fetch-data": "node --env-file-if-exists=.env.local scripts/fetch-market.ts",
     "fetch-changelog": "node --env-file-if-exists=.env.local scripts/fetch-changelog.ts",
     "generate:meta": "node --env-file-if-exists=.env.local scripts/generate-meta.ts",

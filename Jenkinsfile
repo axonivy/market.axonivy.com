@@ -17,6 +17,7 @@ pipeline {
           docker.build('node', '-f build/Dockerfile.node .').inside {
             dir ('frontend') {
               sh 'pnpm install'
+              sh 'pnpm cache:clean'
               withCredentials([string(credentialsId: 'github.market.token', variable: 'GITHUB_TOKEN')]) {
                 sh 'pnpm build'
               }

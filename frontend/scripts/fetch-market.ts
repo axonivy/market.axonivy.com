@@ -633,11 +633,18 @@ async function main() {
   console.log(`Index written to ${path.relative(ROOT, INDEX_FILE)}`);
 }
 
+async function cleanCache() {
+  const cacheDirectory = path.join(ROOT, ".market");
+  await rm(cacheDirectory, { recursive: true, force: true });
+  console.log(`Removed ${cacheDirectory}`);
+}
+
 if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
-  main().catch((error) => {
+  const command = process.argv[2] === "--clean-cache" ? cleanCache : main;
+  command().catch((error) => {
     console.error(error);
     process.exit(1);
   });
