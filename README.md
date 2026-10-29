@@ -58,17 +58,17 @@ The cache contains product metadata, maven product installers, and changelogs.
 
 ```mermaid
 flowchart LR
-	github["GitHub: axonivy-market/market<br/>(meta.json, logos)"]
-	maven["Maven repositories<br/>(product.json, README.md, .iar/.zip)"]
+	github["GitHub: axonivy-market/market<br/>(meta.json, logo)"]
+	maven["Maven repositories<br/>(product.json|README.md)"]
 	changelogs["GitHub API<br/>(package releases)"]
 	
 	github -->|fetch-catalog| cache["📂 .market cache"]
 	maven -->|fetch-maven| cache
 	changelogs -->|fetch-changelog| cache
 	
-	cache -->|build time| frontend["🔨 Frontend<br/>(astro build)<br/>→ Static HTML, CSS, JS"]
-	cache -->|runtime mount| backend["🖥️ Backend PHP<br/>(Docker)<br/>→ REST APIs"]
+	cache -->|build time| frontend["🛍️ Frontend<br/>→ Static HTML, CSS, JS"]
+	cache -->|runtime mount| backend["🖥️ Backend PHP</br>→ REST APIs"]
 	
 	frontend -->|https://market.axonivy.com/| user["📱 User"]
-	designer["📐️ Designer"]
+	backend -->|/stable/openapi.json| designer["📐️ Designer"]
 ```
