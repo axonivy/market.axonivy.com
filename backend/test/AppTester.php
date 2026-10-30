@@ -23,6 +23,16 @@ class AppTester
     return new AppTester(self::get($url, []));
   }
 
+  public static function assertThatRequest(string $method, string $url, array $headers = []): AppTester
+  {
+    $app = (new Website())->getApp();
+    $request = (new RequestFactory())->createRequest($method, $url);
+    foreach ($headers as $name => $value) {
+      $request = $request->withHeader($name, $value);
+    }
+    return new AppTester($app->handle($request));
+  }
+
   public static function assertThatGetWithCookie(string $url, array $cookies): AppTester
   {
     return new AppTester(self::get($url, $cookies));
@@ -75,6 +85,12 @@ class AppTester
   {
     $actual = $this->response->getHeader($name)[0];
     Assert::assertEquals($value, $actual);
+    return $this;
+  }
+
+  public function headerNotSet(string $name): AppTester
+  {
+    Assert::assertFalse($this->response->hasHeader($name));
     return $this;
   }
 
