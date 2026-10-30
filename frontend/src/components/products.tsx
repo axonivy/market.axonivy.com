@@ -211,7 +211,7 @@ function ProductList({ products, lang }: ProductsProps) {
         ))}
       </div>
       {visibleProducts.length === 0 && (
-        <div className="text-n800 flex flex-col items-center gap-2 pt-12">
+        <div className="text-n900 flex flex-col items-center gap-2 pt-12">
           <IconBan className="size-12 shrink-0 stroke-1" />
           <Base className="text-center text-xs whitespace-pre-line">
             {t("dashboard.viewOptions.search.notFound")}
