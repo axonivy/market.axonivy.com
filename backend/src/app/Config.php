@@ -4,51 +4,32 @@ namespace app;
 
 class Config
 {
-  public static function isProductionEnvironment()
+  private static function marketRootDirectory(): string
   {
-    return !file_exists(__DIR__ . '/../../Jenkinsfile');
+    $marketDir = getenv('MARKET_DIR');
+    if ($marketDir !== false && $marketDir !== '') {
+      return rtrim($marketDir, '/');
+    }
+    $frontendDir = dirname(__DIR__, 3) . '/frontend/.market';
+    if (is_dir($frontendDir)) {
+      return $frontendDir;
+    }
+    return dirname(__DIR__) . '/web/_market';
   }
 
-  public static function marketDirectory(): string
+  public static function metaCatalog(): string
   {
-    $configuredDirectory = getenv('MARKET_PRODUCTS_DIR');
-    if ($configuredDirectory !== false && $configuredDirectory !== '') {
-      return rtrim($configuredDirectory, '/');
-    }
-    if (self::isProductionEnvironment()) {
-      return '/home/axonivya/data/market';
-    }
-    $frontendDirectory = dirname(__DIR__, 3) . '/frontend/.market/market-bundle/products';
-    if (is_dir($frontendDirectory)) {
-      return $frontendDirectory;
-    }
-    return __DIR__ . '/../../src/web/_market';
+    return self::marketRootDirectory() . '/meta-catalog/products';
   }
 
-  public static function marketCacheDirectory(): string
+  public static function mavenProductInstallers(): string
   {
-    $configuredDirectory = getenv('MARKET_CACHE_DIR');
-    if ($configuredDirectory !== false && $configuredDirectory !== '') {
-      return rtrim($configuredDirectory, '/');
-    }
-    if (self::isProductionEnvironment()) {
-      return '/home/axonivya/data/market-cache';
-    }
-    $frontendDirectory = dirname(__DIR__, 3) . '/frontend/public/market-cache';
-    if (is_dir($frontendDirectory)) {
-      return $frontendDirectory;
-    }
-    return __DIR__ . '/../../src/web/market-cache';
+    return self::marketRootDirectory() . '/maven-products';
   }
 
   public static function marketIndexFile(): string
   {
-    $configuredFile = getenv('MARKET_INDEX_FILE');
-    if ($configuredFile !== false && $configuredFile !== '') {
-      return $configuredFile;
-    }
-    $frontendFile = dirname(__DIR__, 3) . '/frontend/.market/products.json';
-    return is_file($frontendFile) ? $frontendFile : '';
+    return self::marketRootDirectory() . '/product-index.json';
   }
 
 }

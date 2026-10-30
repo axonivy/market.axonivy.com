@@ -254,7 +254,7 @@ export class FakeMarket {
       });
     }
     return JSON.parse(
-      await readFile(path.join(this.root, ".market/products.json"), "utf8"),
+      await readFile(path.join(this.root, ".market/product-index.json"), "utf8"),
     );
   }
 
@@ -274,16 +274,14 @@ export class FakeMarket {
     }
   }
 
-  // Resolves a path from products.json (relative to MARKET_ROOT).
+  // Resolves a path from product-index.json (relative to MARKET_ROOT).
   resolve(file: string) {
     return path.join(this.root, file);
   }
 
-  cacheDir(...parts: string[]) {
-    return path.join(this.root, ".market/cache", ...parts);
-  }
-
-  publicDir(...parts: string[]) {
-    return path.join(this.root, "public/market-cache", ...parts);
+  // Maven products directory with filtered content for public serving
+  // (README and metadata removed for featured versions).
+  mavenProducts(...parts: string[]) {
+    return path.join(this.root, ".market/maven-products", ...parts);
   }
 }

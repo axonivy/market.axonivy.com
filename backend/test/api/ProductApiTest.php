@@ -9,21 +9,20 @@ use test\AppTester;
 class ProductApiTest extends TestCase
 {
   private string $fixtureDirectory;
-  private string|false $previousProductsDirectory;
-  private string|false $previousIndexFile;
-  private string|false $previousCacheDirectory;
+  private string|false $previousMarketDir;
 
   protected function setUp(): void
   {
-    $this->previousProductsDirectory = getenv('MARKET_PRODUCTS_DIR');
-    $this->previousIndexFile = getenv('MARKET_INDEX_FILE');
-    $this->previousCacheDirectory = getenv('MARKET_CACHE_DIR');
+    $this->previousMarketDir = getenv('MARKET_DIR');
     $this->fixtureDirectory = sys_get_temp_dir() . '/market-api-' . bin2hex(random_bytes(8));
-    $productsDirectory = $this->fixtureDirectory . '/products';
+    $marketRoot = $this->fixtureDirectory . '/market';
+    $productsDirectory = $marketRoot . '/meta-catalog/products';
+    $cacheDirectory = $marketRoot . '/maven-products';
     mkdir($productsDirectory . '/a-trust', 0777, true);
     mkdir($productsDirectory . '/sample-solution', 0777, true);
     mkdir($productsDirectory . '/sample-utility', 0777, true);
     mkdir($productsDirectory . '/sample-utils', 0777, true);
+    mkdir($cacheDirectory . '/a-trust/a-trust-product/2.0.0', 0777, true);
     file_put_contents($productsDirectory . '/a-trust/meta.json', json_encode([
       'name' => 'A-Trust',
       'names' => [['locale' => 'en', 'value' => 'A-Trust']],
@@ -45,14 +44,10 @@ class ProductApiTest extends TestCase
         'listed' => true,
       ], JSON_THROW_ON_ERROR));
     }
-    copy(
-      Config::marketDirectory() . '/a-trust/logo.png',
-      $productsDirectory . '/a-trust/logo.png'
-    );
-    $cacheDirectory = $this->fixtureDirectory . '/cache';
-    $installDirectory = $cacheDirectory . '/a-trust/a-trust-product/2.0.0';
-    mkdir($installDirectory, 0777, true);
-    file_put_contents($this->fixtureDirectory . '/products.json', json_encode([
+    $logoFixture = dirname(__DIR__, 2) . '/src/web/favicon.png';
+    copy($logoFixture, $productsDirectory . '/a-trust/logo.png');
+    copy($logoFixture, $productsDirectory . '/a-trust/logo-dark.png');
+    file_put_contents($marketRoot . '/product-index.json', json_encode([
       'products' => [[
         'id' => 'a-trust',
         'versions' => ['2.9.0', '2.0.0', '1.0.0', '1.0.0-SNAPSHOT', '3.0.0-SNAPSHOT'],
@@ -72,7 +67,7 @@ class ProductApiTest extends TestCase
         ]],
         'installable' => [[
           'version' => '2.0.0',
-          'url' => '/market-cache/a-trust/a-trust-product/2.0.0/_product.json',
+          'url' => '/maven-products/a-trust/a-trust-product/2.0.0/_product.json',
         ]],
       ], [
         'id' => 'snapshot-only',
@@ -91,10 +86,8 @@ class ProductApiTest extends TestCase
         'installable' => [],
       ]],
     ], JSON_THROW_ON_ERROR));
-    file_put_contents($installDirectory . '/_product.json', '{"version":"2.0.0","installers":[]}');
-    putenv('MARKET_PRODUCTS_DIR=' . $productsDirectory);
-    putenv('MARKET_INDEX_FILE=' . $this->fixtureDirectory . '/products.json');
-    putenv('MARKET_CACHE_DIR=' . $cacheDirectory);
+    file_put_contents($cacheDirectory . '/a-trust/a-trust-product/2.0.0/_product.json', '{"version":"2.0.0","installers":[]}');
+    putenv('MARKET_DIR=' . $marketRoot);
   }
 
   protected function tearDown(): void
@@ -107,9 +100,7 @@ class ProductApiTest extends TestCase
       $entry->isDir() ? rmdir($entry->getPathname()) : unlink($entry->getPathname());
     }
     rmdir($this->fixtureDirectory);
-    $this->restoreEnvironmentVariable('MARKET_PRODUCTS_DIR', $this->previousProductsDirectory);
-    $this->restoreEnvironmentVariable('MARKET_INDEX_FILE', $this->previousIndexFile);
-    $this->restoreEnvironmentVariable('MARKET_CACHE_DIR', $this->previousCacheDirectory);
+    $this->restoreEnvironmentVariable('MARKET_DIR', $this->previousMarketDir);
     parent::tearDown();
   }
 

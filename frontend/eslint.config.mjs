@@ -13,7 +13,6 @@ export default defineConfig(
       "dist/",
       "node_modules/",
       ".market/",
-      "public/market-cache/",
       "scripts/generated/",
     ],
   },

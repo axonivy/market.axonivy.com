@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { Markdown } from "../../src/components/product-details";
 
-function render(markdown: string, baseUrl = "/market-cache/demo/") {
+function render(markdown: string, baseUrl = "/maven-products/demo/demo-product/1.0.0/") {
   return renderToStaticMarkup(
     <Markdown markdown={markdown} baseUrl={baseUrl} lang="en" />,
   );
@@ -99,7 +99,7 @@ describe("Markdown sanitizing", () => {
     expect(output).toContain("<strong>bold</strong>");
     expect(output).toContain("<table>");
     expect(output).toContain("<details>");
-    expect(output).toContain('src="/market-cache/demo/screen1.png"');
+    expect(output).toContain('src="/maven-products/demo/demo-product/1.0.0/screen1.png"');
     expect(output).toContain('width="400"');
   });
 });

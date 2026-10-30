@@ -17,6 +17,7 @@ pipeline {
           docker.build('node', '-f build/Dockerfile.node .').inside {
             dir ('frontend') {
               sh 'pnpm install'
+              sh 'pnpm cache:clean'
               withCredentials([string(credentialsId: 'github.market.token', variable: 'GITHUB_TOKEN')]) {
                 sh 'pnpm build'
               }
@@ -28,10 +29,6 @@ pipeline {
           currentBuild.description = "<a href='${BUILD_URL}artifact/frontend/dist/index.html'>Market 🛍️</a>"
         }
 
-        dir ('frontend') {
-          sh 'tar -cf ivy-website-market.tar dist'
-          archiveArtifacts 'ivy-website-market.tar'
-        }
       }
     }
 
@@ -72,7 +69,7 @@ pipeline {
             }
           }
 
-          docker.build('php', '-f backend/docker/apache/Dockerfile backend/docker/apache').inside {
+          docker.build('php', '-f backend/docker/apache/Dockerfile backend/docker/apache').inside("-v ${env.WORKSPACE}/frontend/.market:/market:ro") {
             dir ('backend') {
               def testExitCode = sh(
                 script: './vendor/bin/phpunit --log-junit phpunit-junit.xml',
@@ -87,6 +84,21 @@ pipeline {
             }
           }
         }
+      }
+    }
+
+    stage('Package') {
+      steps {
+        script {
+          docker.build('composer', '-f build/Dockerfile.composer .').inside('--entrypoint=""') {
+            dir ('backend') {
+              sh 'composer install --no-dev --no-interaction --no-progress'
+            }
+          }
+        }
+
+        sh 'bash build/package-market.sh'
+        archiveArtifacts 'build/ivy-website-market.tar'
       }
     }
 
@@ -140,7 +152,7 @@ pipeline {
               def host = 'axonivya@dev.axonivy.com'
 
               // copy
-              sh "scp frontend/ivy-website-market.tar $host:$targetFile"
+              sh "scp build/ivy-website-market.tar $host:$targetFile"
 
               // untar
               sh "ssh $host mkdir $targetFolder"
@@ -148,7 +160,7 @@ pipeline {
               sh "ssh $host rm -f $targetFile"
 
               // symlink
-              sh "ssh $host ln -fns $targetFolder/dist /home/axonivya/www/axonivya.myhostpoint.ch/linktoweb"
+              sh "ssh $host ln -fns $targetFolder/src/web /home/axonivya/www/axonivya.myhostpoint.ch/linktoweb"
             }
           }
         }

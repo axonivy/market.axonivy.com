@@ -16,18 +16,18 @@ const DEFAULT_VENDOR = "Axon Ivy AG";
 const DEFAULT_VENDOR_URL = "https://www.axonivy.com";
 const DEFAULT_COST = "Free";
 
-const indexFiles = import.meta.glob<MarketIndex>("/.market/products.json", {
+const indexFiles = import.meta.glob<MarketIndex>("/.market/product-index.json", {
   eager: true,
   import: "default",
 });
 
 const metaFiles = import.meta.glob<ProductMeta>(
-  "/.market/market-bundle/products/*/meta.json",
+  "/.market/meta-catalog/products/*/meta.json",
   { eager: true, import: "default" },
 );
 
 const imageFiles = import.meta.glob<ImageMetadata>(
-  "/.market/market-bundle/products/*/*.png",
+  "/.market/meta-catalog/products/*/*.png",
   { eager: true, import: "default" },
 );
 
@@ -40,10 +40,10 @@ export function localize(
 }
 
 function loadIndex(): Map<string, IndexProduct> {
-  const index = indexFiles["/.market/products.json"];
+  const index = indexFiles["/.market/product-index.json"];
   if (!index) {
     throw new Error(
-      "Market data not found (.market/products.json). Run `pnpm fetch-data` first.",
+      "Market data not found (.market/product-index.json). Run `pnpm fetch-data` first.",
     );
   }
   return new Map(index.products.map((product) => [product.id, product]));

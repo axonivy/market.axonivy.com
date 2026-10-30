@@ -1,12 +1,12 @@
 Options -Indexes +FollowSymLinks
 
-DirectoryIndex index.php index.html 
+DirectoryIndex index.html index.php
 
-Order allow,deny
-Allow from all
+Require all granted
+ErrorDocument 404 /404.html
 
 RewriteEngine On
 
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^ index.php [QSA,L]
+RewriteRule ^maven-products/(.*)$ /_market/maven-products/$1 [END]
+RewriteRule ^_market(?:/|$) - [F,END]
+RewriteRule ^stable(?:/.*)?$ /index.php [END,QSA]

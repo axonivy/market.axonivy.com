@@ -2,7 +2,9 @@
 
 ## Setup
   
-For the Maven package source, export `GITHUB_TOKEN` with a classic GitHub PAT that has `read:packages`, then run `pnpm --dir ../frontend fetch-data` to create the market bundle, index, and artifact cache. With a GitHub Actions artifact, extract those files to the configured data directories instead. Then run `./dev.sh` to start the REST backend in docker.
+For local development, export `GITHUB_TOKEN` with a classic GitHub PAT that has `read:packages`, then run `pnpm --dir ../frontend fetch-data` to create the meta catalog, market index, and downloaded Maven products. Run `./dev.sh` to build the frontend and start the REST backend in Docker.
+
+The Jenkins deployment tar includes the PHP backend, Composer dependencies, frontend build, product bundle, index, and maven products. The deployed app does not depend on external product or maven products directories.
   
 ... and later `docker-compose down` to stop the containers.
 
@@ -17,7 +19,7 @@ The PHP app exposes JSON endpoints only; legacy Twig pages are not routed.
 - `GET /stable/api/image/{id}` and `/stable/api/image/{id}-dark`
 - `GET /stable/openapi.json` for the generated OpenAPI 3.1 contract
 
-The backend reads the same generated files as the frontend. Set `MARKET_PRODUCTS_DIR` to the extracted `market-bundle/products` directory, `MARKET_INDEX_FILE` to the generated `products.json`, and `MARKET_CACHE_DIR` to the generated `public/market-cache` directory. Local Docker mounts these from `frontend`; deployments can provide them from the market Maven package or a GitHub Actions artifact.
+The backend reads the same generated files as the frontend. Local Docker mounts them from `frontend`; deployment defaults resolve them from the self-contained tar. The `MARKET_DIR` environment variable can override the market root directory location.
 
 ## Execute tests
 

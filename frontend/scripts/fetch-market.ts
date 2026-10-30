@@ -25,11 +25,10 @@ const GITHUB_API_URL = process.env.GITHUB_API_URL ?? "https://api.github.com";
 const MARKET_PACKAGE_REPO_URL =
   process.env.MARKET_PACKAGE_REPO_URL ??
   "https://maven.pkg.github.com/axonivy-market/market";
-const MARKET_BUNDLE_DIR = path.join(ROOT, ".market", "market-bundle");
-const PRODUCTS_DIR = path.join(MARKET_BUNDLE_DIR, "products");
-const CACHE_DIR = path.join(ROOT, ".market", "cache");
-const PUBLIC_DIR = path.join(ROOT, "public", "market-cache");
-const PUBLIC_URL = "/market-cache";
+const META_CATALOG_DIR = path.join(ROOT, ".market", "meta-catalog");
+const PRODUCTS_DIR = path.join(META_CATALOG_DIR, "products");
+const MAVEN_PRODUCTS_DIR = path.join(ROOT, ".market", "maven-products");
+const PUBLIC_MAVEN_PRODUCTS_URL = "/maven-products";
 
 const DEFAULT_REPO_URL =
   process.env.MARKET_MAVEN_URL ?? "https://maven.axonivy.com";
@@ -305,7 +304,7 @@ async function ensureCached(
   { version, url }: ArtifactVersion,
   full: boolean,
 ): Promise<string | undefined> {
-  const dir = path.join(CACHE_DIR, artifactId, version);
+  const dir = path.join(MAVEN_PRODUCTS_DIR, artifactId, version);
   const markerFile = path.join(dir, ".cache.json");
   const marker = await readJson<CacheMarker>(markerFile);
 
@@ -473,18 +472,6 @@ function isMavenDropinsOnly(productJson: ProductJson): boolean {
 
 // Products
 
-async function findMetaFiles(): Promise<string[]> {
-  const files: string[] = [];
-  for (const product of await readdir(PRODUCTS_DIR, { withFileTypes: true })) {
-    if (!product.isDirectory()) continue;
-    const file = path.join(PRODUCTS_DIR, product.name, "meta.json");
-    if (existsSync(file)) {
-      files.push(file);
-    }
-  }
-  return files.sort();
-}
-
 async function processProduct(metaFile: string): Promise<IndexProduct> {
   const meta = (await readJson<Meta>(metaFile))!;
   const metaDir = path.dirname(metaFile);
@@ -524,7 +511,7 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
         if (!cacheDir) return undefined;
 
         const relativeDir = `${meta.id}/${productArtifact.artifactId}/${artifactVersion.version}`;
-        const publicDir = path.join(PUBLIC_DIR, relativeDir);
+        const publicDir = path.join(MAVEN_PRODUCTS_DIR, relativeDir);
 
         if (featured && existsSync(path.join(cacheDir, "README.md"))) {
           await cp(cacheDir, publicDir, {
@@ -536,7 +523,7 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
             file: toPosix(
               path.relative(ROOT, path.join(cacheDir, "README.md")),
             ),
-            baseUrl: `${PUBLIC_URL}/${relativeDir}/`,
+            baseUrl: `${PUBLIC_MAVEN_PRODUCTS_URL}/${relativeDir}/`,
           };
         }
 
@@ -555,7 +542,7 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
           productJson,
           installable: {
             version: artifactVersion.version,
-            url: `${PUBLIC_URL}/${relativeDir}/_product.json`,
+            url: `${PUBLIC_MAVEN_PRODUCTS_URL}/${relativeDir}/_product.json`,
             minimumIvyVersion: productJson.minimumIvyVersion,
           } satisfies IndexInstallable,
         };
@@ -572,18 +559,25 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
   return product;
 }
 
-// Main
 
-async function main() {
-  const start = Date.now();
+async function findMetaFiles(): Promise<string[]> {
+  const files: string[] = [];
+  for (const product of await readdir(PRODUCTS_DIR, { withFileTypes: true })) {
+    if (!product.isDirectory()) continue;
+    const file = path.join(PRODUCTS_DIR, product.name, "meta.json");
+    if (existsSync(file)) {
+      files.push(file);
+    }
+  }
+  return files.sort();
+}
+
+async function fetchMetaCatalog(): Promise<string[]> {
   const bundle = await fetchMarketBundle();
-  await rm(MARKET_BUNDLE_DIR, { recursive: true, force: true });
-  await mkdir(MARKET_BUNDLE_DIR, { recursive: true });
-  await extractZip(bundle, MARKET_BUNDLE_DIR);
-
-  await rm(PUBLIC_DIR, { recursive: true, force: true });
-  await mkdir(PUBLIC_DIR, { recursive: true });
-  const previous = await readJson<MarketIndex>(INDEX_FILE);
+  await rm(META_CATALOG_DIR, { recursive: true, force: true });
+  await mkdir(META_CATALOG_DIR, { recursive: true });
+  await extractZip(bundle, META_CATALOG_DIR);
+  
   const metaFiles = await findMetaFiles();
   if (metaFiles.length === 0) {
     throw new Error(
@@ -591,8 +585,21 @@ async function main() {
     );
   }
   console.log(`Processing ${metaFiles.length} products…`);
-  const products = await mapLimit(metaFiles, 4, processProduct);
+  return metaFiles;
+}
 
+async function fetchMavenProducts(metaFiles: string[]): Promise<IndexProduct[]> {
+  // Don't clear MAVEN_PRODUCTS_DIR - preserve cache markers
+  // Individual cache entries are managed by ensureCached()
+  await mkdir(MAVEN_PRODUCTS_DIR, { recursive: true });
+  return await mapLimit(metaFiles, 4, processProduct);
+}
+
+async function generateProductIndex(
+  products: IndexProduct[],
+): Promise<void> {
+  const previous = await readJson<MarketIndex>(INDEX_FILE);
+  
   // Keep changelogs from the last fetch-changelog run
   for (const product of products) {
     const changelog = previous?.products.find(
@@ -608,6 +615,14 @@ async function main() {
     products,
   };
   await writeFile(INDEX_FILE, JSON.stringify(index, null, 2));
+}
+
+async function main() {
+  const start = Date.now();
+
+  const metaFiles = await fetchMetaCatalog();
+  const products = await fetchMavenProducts(metaFiles);
+  await generateProductIndex(products);
 
   const seconds = ((Date.now() - start) / 1000).toFixed(1);
   console.log(
@@ -618,11 +633,18 @@ async function main() {
   console.log(`Index written to ${path.relative(ROOT, INDEX_FILE)}`);
 }
 
+async function cleanCache() {
+  const cacheDirectory = path.join(ROOT, ".market");
+  await rm(cacheDirectory, { recursive: true, force: true });
+  console.log(`Removed ${cacheDirectory}`);
+}
+
 if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
-  main().catch((error) => {
+  const command = process.argv[2] === "--clean-cache" ? cleanCache : main;
+  command().catch((error) => {
     console.error(error);
     process.exit(1);
   });

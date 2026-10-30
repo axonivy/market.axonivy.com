@@ -104,7 +104,7 @@ async function main() {
   }
   const index = await readJson<MarketIndex>(INDEX_FILE);
   if (!index) {
-    throw new Error("products.json not found. Run `pnpm fetch-data` first.");
+    throw new Error("product-index.json not found. Run `pnpm fetch-data` first.");
   }
 
   await rm(CHANGELOG_DIR, { recursive: true, force: true });
