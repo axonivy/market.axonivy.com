@@ -134,7 +134,18 @@ pipeline {
               sh 'pnpm run sbom'
             }
           }
-          uploadBOM(projectName: 'market.axonivy.com', projectVersion: 'master', bomFile: 'frontend/bom.json')
+
+          docker.build('composer', '-f build/Dockerfile.composer .').inside('--entrypoint=""') {
+            dir ('backend') {
+              sh 'composer install --no-interaction --no-progress'
+              sh 'composer config allow-plugins.cyclonedx/cyclonedx-php-composer true'
+              sh 'composer require --dev cyclonedx/cyclonedx-php-composer --no-interaction --no-progress'
+              sh 'composer CycloneDX:make-sbom --output-format=JSON --output-file=bom.json'
+            }
+          }
+
+          sh 'docker run --rm -v "$WORKSPACE:/sbom" cyclonedx/cyclonedx-cli merge --input-files /sbom/backend/bom.json /sbom/frontend/bom.json --output-file /sbom/full-sbom.json'
+          uploadBOM(projectName: 'market.axonivy.com', projectVersion: 'master', bomFile: 'full-sbom.json')
         }
       }
     }
