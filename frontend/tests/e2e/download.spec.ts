@@ -25,7 +25,7 @@ const snapshots = (page: Page) =>
     .filter({ hasText: /-SNAPSHOT$/ });
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/a-trust");
+  await page.goto("/product/a-trust");
   await openDownload(page);
 });
 
