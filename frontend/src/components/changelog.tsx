@@ -87,7 +87,7 @@ export default function Changelog({
                 />
               </div>
 
-              <P className="text-n800">
+              <P className="text-n900">
                 {new Date(release.publishedAt).toLocaleDateString(lang, {
                   timeZone: "UTC",
                 })}

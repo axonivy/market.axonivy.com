@@ -4,9 +4,15 @@ import { defineConfig, fontProviders } from "astro/config";
 
 import react from "@astrojs/react";
 
+import sitemap from "@astrojs/sitemap";
+
 export default defineConfig({
+  site: "https://market.axonivy.com",
   vite: { plugins: [tailwindcss()] },
-  integrations: [react()],
+  integrations: [
+    react(),
+    sitemap({ i18n: { defaultLocale: "en", locales: { en: "en", de: "de" } } }),
+  ],
 
   i18n: {
     locales: ["en", "de"],
