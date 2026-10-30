@@ -33,7 +33,7 @@ import {
   IconTools,
 } from "@tabler/icons-astro";
 import { readFile } from "node:fs/promises";
-import type { ChangelogRelease } from "../../../../scripts/fetch-changelog";
+import type { ChangelogRelease } from "../../../../../scripts/fetch-changelog";
 
 export function getStaticPaths() {
   return getAllProducts().flatMap((product) =>
@@ -58,7 +58,7 @@ const successorProduct = successor?.id
   ? getProductById(successor.id)
   : undefined;
 const successorHref = successorProduct
-  ? localePath(lang, `/${successorProduct.id}`)
+  ? localePath(lang, `/product/${successorProduct.id}`)
   : successor?.url;
 
 const readme = product.readme

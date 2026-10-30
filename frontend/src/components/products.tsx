@@ -160,7 +160,7 @@ function ProductList({ products, lang }: ProductsProps) {
       <div className="designer:grid-cols-2 designer:sm:grid-cols-3 designer:md:grid-cols-4 designer:lg:grid-cols-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {visibleProducts.map((product) => (
           <a
-            href={localePath(lang, `/${product.id}`)}
+            href={localePath(lang, `/product/${product.id}`)}
             key={product.id}
             data-type={product.type}
             data-search={`${product.name}\n${product.description}`}
