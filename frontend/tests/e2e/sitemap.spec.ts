@@ -17,5 +17,5 @@ test("publishes a sitemap index with product routes", async ({ page }) => {
 
   const sitemap = await sitemapResponse.text();
   expect(sitemap).toContain("<urlset");
-  expect(sitemap).toContain("/portal");
+  expect(sitemap).toContain("/product/portal");
 });

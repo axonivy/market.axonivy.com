@@ -7,14 +7,20 @@ function infoRow(page: Page, label: string) {
 }
 
 function mainArtifact(page: Page) {
-  return page.getByRole("tabpanel").locator("section").filter({
-    has: page.getByRole("heading", { name: "A Trust Connector", exact: true }),
-  });
+  return page
+    .getByRole("tabpanel")
+    .locator("section")
+    .filter({
+      has: page.getByRole("heading", {
+        name: "A Trust Connector",
+        exact: true,
+      }),
+    });
 }
 
 test.describe("a-trust", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/a-trust");
+    await page.goto("/product/a-trust");
   });
 
   test("shows the header and breadcrumb", async ({ page }) => {
@@ -84,7 +90,7 @@ test.describe("a-trust", () => {
     );
 
     await page.getByRole("tab", { name: "Demo" }).click();
-    await expect(page).toHaveURL("/a-trust#demo");
+    await expect(page).toHaveURL("/product/a-trust#demo");
     await expect(page.getByRole("tab", { name: "Demo" })).toHaveAttribute(
       "aria-selected",
       "true",
@@ -95,12 +101,12 @@ test.describe("a-trust", () => {
   });
 
   test("opens the tab from the URL hash", async ({ page }) => {
-    await page.goto("/a-trust#setup");
+    await page.goto("/product/a-trust#setup");
     await expect(
       page.getByRole("tab", { name: "Installation Guide" }),
     ).toHaveAttribute("aria-selected", "true");
 
-    await page.goto("/a-trust#unknown");
+    await page.goto("/product/a-trust#unknown");
     await expect(
       page.getByRole("tab", { name: "Description" }),
     ).toHaveAttribute("aria-selected", "true");
@@ -171,7 +177,7 @@ test.describe("a-trust", () => {
 });
 
 test("loads README images from the market cache", async ({ page }) => {
-  await page.goto("/portal");
+  await page.goto("/product/portal");
 
   const images = page
     .getByRole("tabpanel")
@@ -188,7 +194,7 @@ test("loads README images from the market cache", async ({ page }) => {
 test("shows deprecated products without Download for dropins", async ({
   page,
 }) => {
-  await page.goto("/excel-importer");
+  await page.goto("/product/excel-importer");
 
   await expect(page.getByRole("heading", { name: "Deprecated" })).toBeVisible();
   await expect(page.getByText("This extension is deprecated")).toBeVisible();
@@ -198,7 +204,7 @@ test("shows deprecated products without Download for dropins", async ({
 
 test.describe("sunset", () => {
   test("links the successor's website", async ({ page }) => {
-    await page.goto("/excel-importer");
+    await page.goto("/product/excel-importer");
 
     await expect(page.getByText("Last supported version: 13.1")).toBeVisible();
     await expect(
@@ -218,7 +224,7 @@ test.describe("sunset", () => {
   });
 
   test("links the successor product", async ({ page }) => {
-    await page.goto("/ai-assistant");
+    await page.goto("/product/ai-assistant");
 
     await expect(page.getByText("Last supported version: 12.0")).toBeVisible();
     const link = page.getByRole("link", {
@@ -228,20 +234,20 @@ test.describe("sunset", () => {
     await expect(link).not.toHaveAttribute("target");
 
     await link.click();
-    await expect(page).toHaveURL("/smart-workflow");
+    await expect(page).toHaveURL("/product/smart-workflow");
     await expect(
       page.getByRole("heading", { name: "Axon Ivy Smart Workflow", level: 1 }),
     ).toBeVisible();
   });
 
   test("keeps the language for the successor product", async ({ page }) => {
-    await page.goto("/de/ai-assistant");
+    await page.goto("/de/product/ai-assistant");
 
     await expect(
       page.getByText("Letzte unterstützte Version: 12.0"),
     ).toBeVisible();
     await expect(
       page.getByRole("link", { name: "Axon Ivy Smart Workflow", exact: true }),
-    ).toHaveAttribute("href", "/de/smart-workflow");
+    ).toHaveAttribute("href", "/de/product/smart-workflow");
   });
 });

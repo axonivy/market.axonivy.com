@@ -5,8 +5,16 @@ DirectoryIndex index.html index.php
 Require all granted
 ErrorDocument 404 /404.html
 
+<FilesMatch "^sitemap(?:-index|-[0-9]+)?\.xml$">
+  ForceType application/xml
+</FilesMatch>
+
 RewriteEngine On
 
 RewriteRule ^maven-products/(.*)$ /_market/maven-products/$1 [END]
 RewriteRule ^_market(?:/|$) - [F,END]
 RewriteRule ^stable(?:/.*)?$ /index.php [END,QSA]
+
+# legacy product links: /<id>, /de/<id> -> /product/<id>/
+RewriteCond %{DOCUMENT_ROOT}/$1product/$2 -d
+RewriteRule ^(de/)?([^/]+)(?:/.*)?$ /$1product/$2/ [R=301,L]

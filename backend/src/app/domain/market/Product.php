@@ -179,6 +179,6 @@ class Product
 
   public function getUrl(): string
   {
-    return '/' . $this->key;
+    return '/product/' . $this->key;
   }
 }

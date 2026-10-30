@@ -3,7 +3,7 @@ import { expect, test, type Page } from "./fixtures.ts";
 
 const cards = (page: Page) => page.locator("section a[href]");
 const card = (page: Page, id: string) =>
-  page.locator(`section a[href="/${id}"]`);
+  page.locator(`section a[href="/product/${id}"]`);
 const search = (page: Page) => page.getByPlaceholder("Search a keyword");
 
 test.beforeEach(async ({ page }) => {
@@ -17,7 +17,7 @@ test("lists the products with the featured ones first", async ({ page }) => {
   await expect(cards(page).nth(50)).toBeVisible();
 
   const first = cards(page).first();
-  await expect(first).toHaveAttribute("href", "/portal");
+  await expect(first).toHaveAttribute("href", "/product/portal");
   await expect(first.getByText("Featured")).toBeVisible();
 });
 
@@ -99,7 +99,7 @@ test("restores filter, search and sort from the URL", async ({ page }) => {
 test("opens a product", async ({ page }) => {
   await card(page, "a-trust").click();
 
-  await expect(page).toHaveURL("/a-trust");
+  await expect(page).toHaveURL("/product/a-trust");
   await expect(
     page.getByRole("heading", { name: "A-Trust", level: 1 }),
   ).toBeVisible();
@@ -116,7 +116,10 @@ test.describe("in the New REST Client wizard of the Designer", () => {
     await expect(search(page)).toBeHidden();
     await expect(page.getByRole("combobox")).toBeHidden();
     await expect(cards(page)).toHaveCount(1);
-    await expect(card(page, "a-trust")).toHaveAttribute("href", "/a-trust");
+    await expect(card(page, "a-trust")).toHaveAttribute(
+      "href",
+      "/product/a-trust",
+    );
   });
 
   test("lists connectors only", async ({ page }) => {

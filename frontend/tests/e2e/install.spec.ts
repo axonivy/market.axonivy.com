@@ -33,7 +33,7 @@ function designer(page: Page) {
 
 test.describe("in the browser", () => {
   test("asks to open the market in the Designer", async ({ page }) => {
-    await page.goto("/a-trust");
+    await page.goto("/product/a-trust");
 
     await page.getByRole("button", { name: "Install Now" }).click();
 
@@ -49,7 +49,7 @@ test.describe("in the browser", () => {
   });
 
   test("warns about deprecated products", async ({ page }) => {
-    await page.goto("/excel-importer");
+    await page.goto("/product/excel-importer");
 
     const install = page.getByRole("button", { name: "Install Now" });
     await expect(install).toHaveCSS("background-color", "rgb(255, 115, 0)");
@@ -60,7 +60,7 @@ test.describe("in the browser", () => {
   });
 
   test("shows Contact us for custom solutions", async ({ page }) => {
-    await page.goto("/employee-onboarding");
+    await page.goto("/product/employee-onboarding");
 
     const contact = page.getByRole("link", { name: "Contact us" }).first();
     await expect(contact).toHaveAttribute(
@@ -73,7 +73,7 @@ test.describe("in the browser", () => {
   });
 
   test("disables the button without installer", async ({ page }) => {
-    await page.goto("/visualvm-plugin");
+    await page.goto("/product/visualvm-plugin");
 
     await expect(
       page.getByRole("button", { name: "No installer available" }),
@@ -85,7 +85,7 @@ test.describe("in the Designer", () => {
   test.beforeEach(async ({ page }) => {
     await fakeDesignerInstall(page);
     await page.goto(`/?${DESIGNER}`);
-    await page.goto("/a-trust");
+    await page.goto("/product/a-trust");
   });
 
   test("installs the newest release of the Designer version", async ({
@@ -139,14 +139,14 @@ test.describe("in the Designer", () => {
   test("stays in Designer mode after switching language", async ({ page }) => {
     await page.getByRole("button", { name: "DE", exact: true }).click();
 
-    await expect(page).toHaveURL(/\/de\/a-trust\/?(#.*)?$/);
+    await expect(page).toHaveURL(/\/de\/product\/a-trust\/?(#.*)?$/);
     await expect(
       page.getByRole("button", { name: "Installieren", exact: true }),
     ).toBeVisible();
   });
 
   test("still offers Contact us", async ({ page }) => {
-    await page.goto("/employee-onboarding");
+    await page.goto("/product/employee-onboarding");
 
     await expect(
       page.getByRole("link", { name: "Contact us" }).first(),
@@ -156,7 +156,9 @@ test.describe("in the Designer", () => {
 });
 
 test("accepts the ivy.version param of newer Designers", async ({ page }) => {
-  await page.goto("/a-trust?ivy-viewer=designer-market&ivy.version=13.1.0");
+  await page.goto(
+    "/product/a-trust?ivy-viewer=designer-market&ivy.version=13.1.0",
+  );
 
   await expect(page.locator("html")).toHaveAttribute("data-designer", "13.1.0");
   await expect(designer(page).install).toBeVisible();
@@ -165,13 +167,17 @@ test("accepts the ivy.version param of newer Designers", async ({ page }) => {
 
 test.describe("without a version of the Designer release", () => {
   test("selects the newest older version", async ({ page }) => {
-    await page.goto("/a-trust?ivy-viewer=designer-market&ivy-version=12.5.0");
+    await page.goto(
+      "/product/a-trust?ivy-viewer=designer-market&ivy-version=12.5.0",
+    );
 
     await expect(designer(page).version).toHaveValue("12.0.2");
   });
 
   test("selects the newest version", async ({ page }) => {
-    await page.goto("/a-trust?ivy-viewer=designer-market&ivy-version=9.0.0");
+    await page.goto(
+      "/product/a-trust?ivy-viewer=designer-market&ivy-version=9.0.0",
+    );
 
     const { version } = designer(page);
     await expect(version).toHaveValue("13.2.0");
@@ -183,7 +189,7 @@ test.describe("without a version of the Designer release", () => {
 });
 
 test("ignores other viewers", async ({ page }) => {
-  await page.goto("/a-trust?ivy-viewer=browser");
+  await page.goto("/product/a-trust?ivy-viewer=browser");
 
   await expect(page.getByRole("button", { name: "Install Now" })).toBeVisible();
 });
@@ -194,7 +200,7 @@ unhydrated.describe("before hydration", () => {
   });
 
   unhydrated("shows the browser buttons", async ({ page }) => {
-    await page.goto("/a-trust");
+    await page.goto("/product/a-trust");
 
     await expect(
       page.getByRole("button", { name: "Install Now" }),
@@ -202,7 +208,7 @@ unhydrated.describe("before hydration", () => {
   });
 
   unhydrated("hides them in the Designer", async ({ page }) => {
-    await page.goto(`/a-trust?${DESIGNER}`);
+    await page.goto(`/product/a-trust?${DESIGNER}`);
 
     for (const name of ["Install Now", "Download"]) {
       await expect(
@@ -217,7 +223,7 @@ test.describe("on mobile", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
   test("shows Install Now and Download", async ({ page }) => {
-    await page.goto("/a-trust");
+    await page.goto("/product/a-trust");
 
     await expect(
       page.getByRole("button", { name: "Install Now" }),
@@ -226,7 +232,7 @@ test.describe("on mobile", () => {
   });
 
   test("shows the version selection in the Designer", async ({ page }) => {
-    await page.goto(`/a-trust?${DESIGNER}`);
+    await page.goto(`/product/a-trust?${DESIGNER}`);
 
     await expect(designer(page).version).toBeVisible();
     await expect(designer(page).install).toBeVisible();
