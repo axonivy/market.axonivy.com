@@ -144,7 +144,7 @@ pipeline {
             }
           }
 
-          sh 'docker run --rm -v "$WORKSPACE:/sbom" cyclonedx/cyclonedx-cli merge --input-files /sbom/backend/bom.json /sbom/frontend/bom.json --output-file /sbom/full-sbom.json'
+          sh 'docker run --rm -v "$WORKSPACE:/sbom" cyclonedx/cyclonedx-cli merge --hierarchical --name market.axonivy.com --version master --input-files /sbom/backend/bom.json /sbom/frontend/bom.json --output-file /sbom/full-sbom.json'
           uploadBOM(projectName: 'market.axonivy.com', projectVersion: 'master', bomFile: 'full-sbom.json')
         }
       }
