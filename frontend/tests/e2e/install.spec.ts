@@ -60,6 +60,8 @@ test.describe("in the browser", () => {
   });
 
   test("shows Contact us for custom solutions", async ({ page }) => {
+    test.skip(true, "Unlisted: waiting for a decision from PM whether we want to promote things that can't be installed.");
+
     await page.goto("/product/employee-onboarding");
 
     const contact = page.getByRole("link", { name: "Contact us" }).first();
@@ -146,6 +148,8 @@ test.describe("in the Designer", () => {
   });
 
   test("still offers Contact us", async ({ page }) => {
+    test.skip(true, "Unlisted: waiting for a decision from PM whether we want to promote things that can't be installed.");
+
     await page.goto("/product/employee-onboarding");
 
     await expect(
