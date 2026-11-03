@@ -58,6 +58,7 @@ type ArtifactOptions = {
 export class FakeMaven {
   private files = new Map<string, string | Uint8Array>();
   private statuses = new Map<string, number[]>();
+  private delays = new Map<string, number>();
   private server?: Server;
   url = "";
   // Every requested path, in order.
@@ -65,10 +66,12 @@ export class FakeMaven {
   headers: IncomingHttpHeaders[] = [];
 
   async start() {
-    this.server = createServer((request, response) => {
+    this.server = createServer(async (request, response) => {
       const url = request.url ?? "";
       this.requests.push(url);
       this.headers.push(request.headers);
+      const delay = this.delays.get(url);
+      if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
       const status = this.statuses.get(url)?.shift();
       const file = this.files.get(url);
       if (status !== undefined) {
@@ -100,6 +103,10 @@ export class FakeMaven {
   // Answers the next requests to `path` with these statuses, then serves it normally.
   respond(path: string, ...statuses: number[]) {
     this.statuses.set(path, statuses);
+  }
+
+  delay(path: string, milliseconds: number) {
+    this.delays.set(path, milliseconds);
   }
 
   requestCount(path: string) {
@@ -254,7 +261,10 @@ export class FakeMarket {
       });
     }
     return JSON.parse(
-      await readFile(path.join(this.root, ".market/product-index.json"), "utf8"),
+      await readFile(
+        path.join(this.root, ".market/product-index.json"),
+        "utf8",
+      ),
     );
   }
 
@@ -279,9 +289,12 @@ export class FakeMarket {
     return path.join(this.root, file);
   }
 
-  // Maven products directory with filtered content for public serving
-  // (README and metadata removed for featured versions).
-  mavenProducts(...parts: string[]) {
-    return path.join(this.root, ".market/maven-products", ...parts);
+  // Generated install descriptors served to the website and Designer.
+  installers(...parts: string[]) {
+    return path.join(this.root, ".market/installers", ...parts);
+  }
+
+  productCache(...parts: string[]) {
+    return path.join(this.root, ".market/product-cache", ...parts);
   }
 }

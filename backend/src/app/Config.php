@@ -22,14 +22,13 @@ class Config
     return self::marketRootDirectory() . '/meta-catalog/products';
   }
 
-  public static function mavenProductInstallers(): string
+  public static function installersDirectory(): string
   {
-    return self::marketRootDirectory() . '/maven-products';
+    return self::marketRootDirectory() . '/installers';
   }
 
   public static function marketIndexFile(): string
   {
     return self::marketRootDirectory() . '/product-index.json';
   }
-
 }

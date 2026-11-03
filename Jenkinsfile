@@ -1,6 +1,10 @@
 pipeline {
   agent any
 
+  parameters {
+    booleanParam(name: 'FORCE_CACHE_REFRESH', defaultValue: false, description: 'Ignore the cached product descriptors and rebuild them from Maven')
+  }
+
   triggers {
     cron 'H 22 * * *'
   }
@@ -11,13 +15,33 @@ pipeline {
   }
 
   stages {
+    stage('cache:clean') {
+      steps {
+        sh 'rm -rf frontend/.market cache-seed'
+      }
+    }
+
+    stage('cache:warmup') {
+      when {
+        expression {
+          def sundayUtc = Calendar.getInstance(TimeZone.getTimeZone('UTC'))
+            .get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY
+          !params.FORCE_CACHE_REFRESH && !sundayUtc
+        }
+      }
+      steps {
+        script {
+          restoreProductCache()
+        }
+      }
+    }
+
     stage('build') {
       steps {
         script {
           docker.build('node', '-f build/Dockerfile.node .').inside {
             dir ('frontend') {
               sh 'pnpm install'
-              sh 'pnpm cache:clean'
               withCredentials([string(credentialsId: 'github.market.token', variable: 'GITHUB_TOKEN')]) {
                 sh 'pnpm build'
               }
@@ -99,6 +123,7 @@ pipeline {
 
         sh 'bash build/package-market.sh'
         archiveArtifacts 'build/ivy-website-market.tar'
+        archiveArtifacts 'build/market-cache.tar'
       }
     }
 
@@ -177,5 +202,39 @@ pipeline {
         }
       }
     }
+  }
+}
+
+def restoreProductCache() {
+  def cacheProjectName = env.JOB_NAME
+  if (!cacheProjectName) {
+    echo 'Cannot identify current Jenkins job; building product cache from scratch'
+    return
+  }
+
+  try {
+    echo "Restoring product cache from previous build of ${cacheProjectName}"
+    copyArtifacts(
+      projectName: cacheProjectName,
+      selector: lastCompleted(),
+      filter: 'build/market-cache.tar',
+      target: 'cache-seed'
+    )
+    if (fileExists('cache-seed/build/market-cache.tar')) {
+      sh '''
+        cache_tar=cache-seed/build/market-cache.tar
+        if tar -tf "$cache_tar" | grep -q '^market-cache/'; then
+          mkdir -p frontend/.market/product-cache
+          tar -xf "$cache_tar" -C frontend/.market/product-cache \
+            --strip-components=1 market-cache
+        else
+          echo 'Cache-provider tar has no entries under market-cache/; skipping cache restore'
+        fi
+      '''
+    } else {
+      echo 'Previous build has no market-cache.tar; building product cache from scratch'
+    }
+  } catch (Exception error) {
+    echo "No previous-build market-cache.tar available for cache warm-up: ${error.message}"
   }
 }

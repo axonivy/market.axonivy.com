@@ -1,6 +1,15 @@
 import { unzipSync } from "fflate";
 import { existsSync } from "node:fs";
-import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  cp,
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import {
@@ -27,8 +36,12 @@ const MARKET_PACKAGE_REPO_URL =
   "https://maven.pkg.github.com/axonivy-market/market";
 const META_CATALOG_DIR = path.join(ROOT, ".market", "meta-catalog");
 const PRODUCTS_DIR = path.join(META_CATALOG_DIR, "products");
-const MAVEN_PRODUCTS_DIR = path.join(ROOT, ".market", "maven-products");
-const PUBLIC_MAVEN_PRODUCTS_URL = "/maven-products";
+const PRODUCT_CACHE_DIR = path.join(ROOT, ".market", "product-cache");
+const INSTALLERS_DIR = path.join(ROOT, ".market", "installers");
+const LEGACY_MAVEN_PRODUCTS_DIR = path.join(ROOT, ".market", "maven-products");
+const README_DIR = path.join(ROOT, "public", "readme-assets");
+const PUBLIC_INSTALLERS_URL = "/installers";
+const PUBLIC_README_ASSETS_URL = "/readme-assets";
 
 const DEFAULT_REPO_URL =
   process.env.MARKET_MAVEN_URL ?? "https://maven.axonivy.com";
@@ -95,7 +108,8 @@ export type IndexProduct = {
 
 export type MarketIndex = { generatedAt: string; products: IndexProduct[] };
 
-type CacheMarker = { zipUrl: string; full: boolean; missing?: boolean };
+type CacheMarker = { zipUrl: string; missing?: boolean };
+type CachedProduct = { cacheDir: string; downloadDir?: string };
 
 // Helpers
 
@@ -296,44 +310,52 @@ async function extractZip(
   }
 }
 
-// Ensures the zip of a version is extracted in the cache and returns its folder.
-// `full` extracts everything (README, images), otherwise only product.json.
-// Returns undefined if the zip doesn't exist on Maven.
+// Reuses historical product.json files, but always refreshes the newest version
+// so its README and images cannot be stale, including for SNAPSHOTs.
 async function ensureCached(
-  artifactId: string,
+  artifact: MetaArtifact,
   { version, url }: ArtifactVersion,
-  full: boolean,
-): Promise<string | undefined> {
-  const dir = path.join(MAVEN_PRODUCTS_DIR, artifactId, version);
+  latest: boolean,
+): Promise<CachedProduct | undefined> {
+  const dir = path.join(PRODUCT_CACHE_DIR, artifact.artifactId, version);
   const markerFile = path.join(dir, ".cache.json");
   const marker = await readJson<CacheMarker>(markerFile);
 
-  if (marker?.zipUrl === url && (marker.full || !full || marker.missing)) {
+  if (!latest && marker?.zipUrl === url) {
     stats.cached++;
-    return marker.missing ? undefined : dir;
+    return marker.missing ? undefined : { cacheDir: dir };
   }
 
   await rm(dir, { recursive: true, force: true });
   await mkdir(dir, { recursive: true });
+  let downloadDir: string | undefined;
   try {
     const bytes = await fetchBytes(url);
-    await extractZip(bytes, dir, full ? undefined : SLIM_FILES);
+    let extractionDir = dir;
+    if (latest) {
+      downloadDir = await mkdtemp(path.join(tmpdir(), "market-product-"));
+      extractionDir = downloadDir;
+    }
+    await extractZip(bytes, extractionDir, latest ? undefined : SLIM_FILES);
+    if (latest && existsSync(path.join(extractionDir, "product.json"))) {
+      await cp(
+        path.join(extractionDir, "product.json"),
+        path.join(dir, "product.json"),
+      );
+    }
     await writeFile(
       markerFile,
-      JSON.stringify({ zipUrl: url, full } satisfies CacheMarker),
+      JSON.stringify({ zipUrl: url } satisfies CacheMarker),
     );
     stats.downloaded++;
-    return dir;
+    return { cacheDir: dir, ...(downloadDir && { downloadDir }) };
   } catch (error) {
+    if (downloadDir) await rm(downloadDir, { recursive: true, force: true });
     if (error instanceof NotFoundError) {
       warn(`Zip not found: ${url}`);
       await writeFile(
         markerFile,
-        JSON.stringify({
-          zipUrl: url,
-          full,
-          missing: true,
-        } satisfies CacheMarker),
+        JSON.stringify({ zipUrl: url, missing: true } satisfies CacheMarker),
       );
       stats.missing++;
       return undefined;
@@ -470,6 +492,26 @@ function isMavenDropinsOnly(productJson: ProductJson): boolean {
   );
 }
 
+async function copyLatestReadmeAssets(
+  downloadDir: string | undefined,
+  productId: string,
+): Promise<IndexProduct["readme"]> {
+  if (!downloadDir || !existsSync(path.join(downloadDir, "README.md"))) {
+    return undefined;
+  }
+
+  const readmeDir = path.join(README_DIR, productId);
+  await cp(downloadDir, readmeDir, {
+    recursive: true,
+    filter: (source) => !/(^|[/\\])product\.json$/.test(source),
+  });
+
+  return {
+    file: toPosix(path.relative(ROOT, path.join(readmeDir, "README.md"))),
+    baseUrl: `${PUBLIC_README_ASSETS_URL}/${productId}/`,
+  };
+}
+
 // Products
 
 async function processProduct(metaFile: string): Promise<IndexProduct> {
@@ -502,50 +544,48 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
       productArtifact.versions,
       CONCURRENCY,
       async (artifactVersion) => {
-        const featured = artifactVersion.version === product.featuredVersion;
-        const cacheDir = await ensureCached(
-          productArtifact.artifactId,
+        const isLatest = artifactVersion.version === product.featuredVersion;
+        const cached = await ensureCached(
+          productArtifact,
           artifactVersion,
-          featured,
+          isLatest,
         );
-        if (!cacheDir) return undefined;
+        if (!cached) return undefined;
+        const { cacheDir, downloadDir } = cached;
 
         const relativeDir = `${meta.id}/${productArtifact.artifactId}/${artifactVersion.version}`;
-        const publicDir = path.join(MAVEN_PRODUCTS_DIR, relativeDir);
+        const publicDir = path.join(INSTALLERS_DIR, relativeDir);
 
-        if (featured && existsSync(path.join(cacheDir, "README.md"))) {
-          await cp(cacheDir, publicDir, {
-            recursive: true,
-            filter: (source) =>
-              !/(README.*\.md|\.cache\.json|[/\\]product\.json)$/.test(source),
-          });
-          product.readme = {
-            file: toPosix(
-              path.relative(ROOT, path.join(cacheDir, "README.md")),
-            ),
-            baseUrl: `${PUBLIC_MAVEN_PRODUCTS_URL}/${relativeDir}/`,
+        try {
+          const readme = await copyLatestReadmeAssets(downloadDir, meta.id);
+          if (readme) product.readme = readme;
+
+          if (!existsSync(path.join(cacheDir, "product.json"))) {
+            return undefined;
+          }
+          const productJson = await writeProductJson(
+            cacheDir,
+            publicDir,
+            artifactVersion.version,
+            meta.name,
+          );
+          if (isLatest) {
+            product.dependency = findMavenDependency(productJson);
+            product.mavenDropins = isMavenDropinsOnly(productJson);
+          }
+          return {
+            productJson,
+            installable: {
+              version: artifactVersion.version,
+              url: `${PUBLIC_INSTALLERS_URL}/${relativeDir}/_product.json`,
+              minimumIvyVersion: productJson.minimumIvyVersion,
+            } satisfies IndexInstallable,
           };
+        } finally {
+          if (downloadDir) {
+            await rm(downloadDir, { recursive: true, force: true });
+          }
         }
-
-        if (!existsSync(path.join(cacheDir, "product.json"))) return undefined;
-        const productJson = await writeProductJson(
-          cacheDir,
-          publicDir,
-          artifactVersion.version,
-          meta.name,
-        );
-        if (featured) {
-          product.dependency = findMavenDependency(productJson);
-          product.mavenDropins = isMavenDropinsOnly(productJson);
-        }
-        return {
-          productJson,
-          installable: {
-            version: artifactVersion.version,
-            url: `${PUBLIC_MAVEN_PRODUCTS_URL}/${relativeDir}/_product.json`,
-            minimumIvyVersion: productJson.minimumIvyVersion,
-          } satisfies IndexInstallable,
-        };
       },
     );
     for (const result of results) {
@@ -558,7 +598,6 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
 
   return product;
 }
-
 
 async function findMetaFiles(): Promise<string[]> {
   const files: string[] = [];
@@ -577,7 +616,7 @@ async function fetchMetaCatalog(): Promise<string[]> {
   await rm(META_CATALOG_DIR, { recursive: true, force: true });
   await mkdir(META_CATALOG_DIR, { recursive: true });
   await extractZip(bundle, META_CATALOG_DIR);
-  
+
   const metaFiles = await findMetaFiles();
   if (metaFiles.length === 0) {
     throw new Error(
@@ -588,18 +627,18 @@ async function fetchMetaCatalog(): Promise<string[]> {
   return metaFiles;
 }
 
-async function fetchMavenProducts(metaFiles: string[]): Promise<IndexProduct[]> {
-  // Don't clear MAVEN_PRODUCTS_DIR - preserve cache markers
-  // Individual cache entries are managed by ensureCached()
-  await mkdir(MAVEN_PRODUCTS_DIR, { recursive: true });
+async function processProducts(metaFiles: string[]): Promise<IndexProduct[]> {
+  await rm(INSTALLERS_DIR, { recursive: true, force: true });
+  await rm(LEGACY_MAVEN_PRODUCTS_DIR, { recursive: true, force: true });
+  await rm(README_DIR, { recursive: true, force: true });
+  await mkdir(INSTALLERS_DIR, { recursive: true });
+  await mkdir(README_DIR, { recursive: true });
   return await mapLimit(metaFiles, 4, processProduct);
 }
 
-async function generateProductIndex(
-  products: IndexProduct[],
-): Promise<void> {
+async function generateProductIndex(products: IndexProduct[]): Promise<void> {
   const previous = await readJson<MarketIndex>(INDEX_FILE);
-  
+
   // Keep changelogs from the last fetch-changelog run
   for (const product of products) {
     const changelog = previous?.products.find(
@@ -621,7 +660,7 @@ async function main() {
   const start = Date.now();
 
   const metaFiles = await fetchMetaCatalog();
-  const products = await fetchMavenProducts(metaFiles);
+  const products = await processProducts(metaFiles);
   await generateProductIndex(products);
 
   const seconds = ((Date.now() - start) / 1000).toFixed(1);
