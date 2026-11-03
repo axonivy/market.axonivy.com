@@ -171,7 +171,7 @@ pipeline {
               sh "ssh $host rm -f $targetFile"
 
               // symlink
-              sh "ssh $host ln -fns $targetFolder/src/web /home/axonivya/www/axonivya.myhostpoint.ch/linktoweb"
+              sh "ssh $host ln -fns $targetFolder/src/web /home/axonivya/www/market.axonivy.com/linktoweb"
             }
           }
         }
