@@ -11,6 +11,10 @@ ErrorDocument 404 /404.html
 
 RewriteEngine On
 
+# legacy doc artifacts; no longer host by market
+RewriteRule ^market-cache/portal/portal-guide/([^/]+)/doc/(.*)$ https://axonivy-market.github.io/portal/release/$1/$2 [R=301,L]
+RewriteRule ^market-cache/doc-factory(?:/.*)?$ https://axonivy-market.github.io/doc-factory/ [R=301,L]
+
 RewriteRule ^installers/(.*)$ /_market/installers/$1 [END]
 RewriteRule ^_market(?:/|$) - [F,END]
 RewriteRule ^stable(?:/.*)?$ /index.php [END,QSA]
