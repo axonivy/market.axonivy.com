@@ -219,11 +219,11 @@ class ProductApi
     }
 
     $url = $installable['url'] ?? '';
-    $prefix = '/maven-products/';
+    $prefix = '/installers/';
     if (!is_string($url) || !str_starts_with($url, $prefix)) {
       return $this->json($response, ['message' => 'Install artifact not found'], 404);
     }
-    $cacheDirectory = realpath(Config::mavenProductInstallers());
+    $cacheDirectory = realpath(Config::installersDirectory());
     $installFile = $cacheDirectory === false
       ? false
       : realpath($cacheDirectory . '/' . substr($url, strlen($prefix)));
@@ -419,8 +419,7 @@ class ProductApi
     array $versions,
     bool $showDevVersions,
     bool $fallbackToDevVersions = false
-  ): array
-  {
+  ): array {
     $releasedBugfixes = [];
     foreach ($versions as $version) {
       if ($this->isReleasedVersion($version)) {

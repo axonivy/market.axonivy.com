@@ -17,7 +17,7 @@ class ProductApiTest extends TestCase
     $this->fixtureDirectory = sys_get_temp_dir() . '/market-api-' . bin2hex(random_bytes(8));
     $marketRoot = $this->fixtureDirectory . '/market';
     $productsDirectory = $marketRoot . '/meta-catalog/products';
-    $cacheDirectory = $marketRoot . '/maven-products';
+    $cacheDirectory = $marketRoot . '/installers';
     mkdir($productsDirectory . '/a-trust', 0777, true);
     mkdir($productsDirectory . '/sample-solution', 0777, true);
     mkdir($productsDirectory . '/sample-utility', 0777, true);
@@ -67,7 +67,7 @@ class ProductApiTest extends TestCase
         ]],
         'installable' => [[
           'version' => '2.0.0',
-          'url' => '/maven-products/a-trust/a-trust-product/2.0.0/_product.json',
+          'url' => '/installers/a-trust/a-trust-product/2.0.0/_product.json',
         ]],
       ], [
         'id' => 'snapshot-only',
@@ -242,7 +242,6 @@ class ProductApiTest extends TestCase
     self::assertArrayHasKey('/api/product/{id}/install', $contract['paths']);
     self::assertArrayHasKey('/api/product-details/{id}/{version}/bestmatch', $contract['paths']);
     self::assertArrayHasKey('/api/image/{id}', $contract['paths']);
-
   }
 
   private function restoreEnvironmentVariable(string $name, string|false $value): void

@@ -1,7 +1,8 @@
 # Build outputs
 /frontend/dist/
+/frontend/public/readme-assets/
 /backend/frontend-dist/
-/build/ivy-website-market.tar
+/build/*.tar
 
 # Generated & cached data
 /frontend/.astro/
