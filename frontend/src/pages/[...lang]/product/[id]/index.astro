@@ -214,13 +214,13 @@ const information: InformationRow[] = [
       <div class="flex flex-col gap-4">
         <H5 className="designer:hidden">{t("productDetails.type")}</H5>
         {product.type === "connector" && (
-          <IconPlug class="size-16 shrink-0 designer:size-8" />
+          <IconPlug class="size-8 shrink-0 designer:size-8 md:size-16" />
         )}
         {product.type === "utils" && (
-          <IconTools class="size-16 shrink-0 designer:size-8" />
+          <IconTools class="size-8 shrink-0 designer:size-8 md:size-16" />
         )}
         {product.type === "demo" && (
-          <IconClipboardCheck class="size-16 shrink-0 designer:size-8" />
+          <IconClipboardCheck class="size-8 shrink-0 designer:size-8 md:size-16" />
         )}
         <Base>{typeLabel(t, product.type)}</Base>
       </div>

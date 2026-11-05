@@ -106,10 +106,19 @@ export default function InstallProduct({
     installable.map(({ version }) => version).sort(newestFirst),
     showDevVersions,
   );
+  const designerMajorVersion = designerVersion?.split(".")[0];
+  const compatibleVersions =
+    designerMajorVersion === "10" || designerMajorVersion === "12"
+      ? versions.filter(
+          (version) =>
+            Number.parseInt(version.split(".")[0], 10) <=
+            Number.parseInt(designerMajorVersion, 10),
+        )
+      : versions;
   const version =
-    selectedVersion && versions.includes(selectedVersion)
+    selectedVersion && compatibleVersions.includes(selectedVersion)
       ? selectedVersion
-      : bestMatchVersion(versions, designerVersion);
+      : bestMatchVersion(compatibleVersions, designerVersion);
   const url = installable.find(
     (installable) => installable.version === version,
   )?.url;
@@ -128,24 +137,34 @@ export default function InstallProduct({
   }
 
   return (
-    <div className="col-span-2 flex flex-col gap-1">
-      <div className="flex flex-row gap-2">
-        <NativeSelect
-          className="flex-1 [&_select]:h-12 [&_select]:text-base"
-          value={version}
-          aria-label={t("productDetails.download.version")}
-          onChange={(event) => setSelectedVersion(event.currentTarget.value)}
-        >
-          {versions.map((version) => (
-            <NativeSelectOption key={version} value={version}>
-              {t("productDetails.download.version")} {version}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
-        <Button className={installClass} onClick={installInDesigner}>
-          {t("productDetails.install.designerTitle")}
-        </Button>
-      </div>
+    <div className="col-span-2 flex flex-col gap-2">
+      {compatibleVersions.length > 0 ? (
+        <div className="flex flex-row gap-2">
+          <NativeSelect
+            className="flex-1 [&_select]:h-12 [&_select]:text-base"
+            value={version}
+            aria-label={t("productDetails.download.version")}
+            onChange={(event) => setSelectedVersion(event.currentTarget.value)}
+          >
+            {compatibleVersions.map((version) => (
+              <NativeSelectOption key={version} value={version}>
+                {t("productDetails.download.version")} {version}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+          {url && (
+            <Button className={installClass} onClick={installInDesigner}>
+              {t("productDetails.install.designerTitle")}
+            </Button>
+          )}
+        </div>
+      ) : (
+        <P role="status" className="text-sm">
+          {t("productDetails.install.noCompatibleVersion", {
+            version: designerMajorVersion,
+          })}
+        </P>
+      )}
       <label className="flex items-center gap-1">
         <Checkbox
           checked={showDevVersions}

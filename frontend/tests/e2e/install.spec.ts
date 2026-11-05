@@ -103,7 +103,7 @@ test.describe("in the Designer", () => {
     );
     await expect(page.getByRole("button", { name: "Download" })).toHaveCount(0);
     await expect(version).toHaveValue("12.0.2");
-    await expect(version.locator("option").first()).not.toHaveText(/12\.0\.2/);
+    await expect(version.locator("option").first()).toHaveText(/12\.0\.2/);
     await expect(
       version.locator("option").filter({ hasText: /-SNAPSHOT$/ }),
     ).toHaveCount(0);
@@ -113,6 +113,30 @@ test.describe("in the Designer", () => {
     expect(await installed(page)).toEqual([
       expect.stringMatching(productJson(baseURL, "12.0.2")),
     ]);
+  });
+
+  test("limits Designer 10 to artifact versions 10 and older", async ({
+    page,
+  }) => {
+    await page.goto(
+      "/product/a-trust?ivy-viewer=designer-market&ivy-version=10.0.0",
+    );
+
+    const { version } = designer(page);
+    const versions = await version
+      .locator("option")
+      .evaluateAll((options) =>
+        options.map((option) =>
+          Number.parseInt(
+            (option as HTMLOptionElement).value.split(".")[0],
+            10,
+          ),
+        ),
+      );
+
+    expect(versions.length).toBeGreaterThan(0);
+    expect(versions.every((majorVersion) => majorVersion <= 10)).toBe(true);
+    await expect(page.getByRole("status")).toHaveCount(0);
   });
 
   test("installs the selected version", async ({ page, baseURL }) => {
@@ -125,6 +149,38 @@ test.describe("in the Designer", () => {
     expect(await installed(page)).toEqual([
       expect.stringMatching(productJson(baseURL, older)),
     ]);
+  });
+
+  test("limits Designer 12 to artifact versions 12 and older", async ({
+    page,
+  }) => {
+    const { version } = designer(page);
+    const versions = await version
+      .locator("option")
+      .evaluateAll((options) =>
+        options.map((option) =>
+          Number.parseInt(
+            (option as HTMLOptionElement).value.split(".")[0],
+            10,
+          ),
+        ),
+      );
+
+    expect(versions.length).toBeGreaterThan(0);
+    expect(versions.every((majorVersion) => majorVersion <= 12)).toBe(true);
+  });
+
+  test("shows a hint and hides controls when no compatible version exists", async ({
+    page,
+  }) => {
+    await page.goto("/product/ivy-load-test");
+
+    await expect(page.getByRole("status")).toHaveText(
+      "No version is available for Designer 12 or older.",
+    );
+    await expect(designer(page).install).toHaveCount(0);
+    await expect(designer(page).version).toHaveCount(0);
+    await expect(designer(page).devVersions).toBeVisible();
   });
 
   test("shows dev versions", async ({ page }) => {
@@ -173,6 +229,22 @@ test("accepts the ivy.version param of newer Designers", async ({ page }) => {
   await expect(page.locator("html")).toHaveAttribute("data-designer", "13.1.0");
   await expect(designer(page).install).toBeVisible();
   await expect(designer(page).version).toHaveValue("13.1.2");
+});
+
+test("shows all versions for Designer 13", async ({ page }) => {
+  await page.goto(
+    "/product/a-trust?ivy-viewer=designer-market&ivy-version=13.1.0",
+  );
+
+  const versions = await designer(page)
+    .version.locator("option")
+    .evaluateAll((options) =>
+      options.map((option) =>
+        Number.parseInt((option as HTMLOptionElement).value.split(".")[0], 10),
+      ),
+    );
+
+  expect(versions).toContain(13);
 });
 
 test.describe("without a version of the Designer release", () => {

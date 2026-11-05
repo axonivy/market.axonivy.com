@@ -53,8 +53,8 @@ export function Base({ children, className }: TypographyProps) {
   return <div className={cn("text-base", className)}>{children}</div>;
 }
 
-export function P({ children, className }: TypographyProps) {
-  return <p className={cn("text-sm", className)}>{children}</p>;
+export function P({ className, ...props }: React.ComponentProps<"p">) {
+  return <p className={cn("text-sm", className)} {...props} />;
 }
 
 export function Code({
