@@ -111,6 +111,7 @@
     "install": {
       "deprecatedWarning": "Die Installation veralteter Erweiterungen wird nicht empfohlen. Verwendung auf eigene Verantwortung.",
       "designerTitle": "Installieren",
+      "noCompatibleVersion": "Keine Version für Designer {{version}} oder älter verfügbar.",
       "noInstaller": "Kein Installer verfügbar",
       "openInDesigner": "Bitte öffne den <market>Axon Ivy Market</market> in deinem <designer>Axon Ivy Designer</designer> (mindestens Version 9.2.0).",
       "title": "Jetzt installieren"
