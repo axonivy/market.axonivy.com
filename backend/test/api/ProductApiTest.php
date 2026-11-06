@@ -118,6 +118,14 @@ class ProductApiTest extends TestCase
       ->bodyDoesNotContain('"id":"aspose-email-demo"');
   }
 
+  public function testOmitsPort80FromHttpsLogoUrls(): void
+  {
+    AppTester::assertThatGet('https://market.example:80/stable/api/product?type=connectors')
+      ->ok()
+      ->bodyContains('"logoUrl":"https://market.example/stable/api/image/a-trust"')
+      ->bodyContains('"logoDarkUrl":"https://market.example/stable/api/image/a-trust-dark"');
+  }
+
   public function testFiltersSolutionProducts(): void
   {
     AppTester::assertThatGet('/stable/api/product?type=solutions')

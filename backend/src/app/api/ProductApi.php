@@ -339,6 +339,9 @@ class ProductApi
 
   private function productModel(Product $product, array $meta, string $language, UriInterface $requestUri): array
   {
+    if ($requestUri->getScheme() === 'https' && $requestUri->getPort() === 80) {
+      $requestUri = $requestUri->withPort(null);
+    }
     $key = $product->getKey();
     $directory = Config::metaCatalog() . '/' . $key;
     $names = $this->localizedValues($meta['names'] ?? [], $meta['name'] ?? $key);
