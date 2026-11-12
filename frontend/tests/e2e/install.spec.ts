@@ -197,10 +197,16 @@ test.describe("in the Designer", () => {
     await expect(version).toHaveValue("12.0.3-SNAPSHOT");
   });
 
-  test("stays in Designer mode after switching language", async ({ page }) => {
-    await page.getByRole("button", { name: "DE", exact: true }).click();
+  test("preserves Designer mode on the German product page", async ({
+    page,
+  }) => {
+    await page.goto(`/de/product/a-trust?${DESIGNER}`);
 
-    await expect(page).toHaveURL(/\/de\/product\/a-trust\/?(#.*)?$/);
+    await expect(page.locator("html")).toHaveAttribute("lang", "de");
+    await expect(page.locator("html")).toHaveAttribute(
+      "data-designer",
+      "12.0.0",
+    );
     await expect(
       page.getByRole("button", { name: "Installieren", exact: true }),
     ).toBeVisible();

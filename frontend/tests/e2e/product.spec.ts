@@ -234,7 +234,7 @@ test.describe("sunset", () => {
     await expect(link).not.toHaveAttribute("target");
 
     await link.click();
-    await expect(page).toHaveURL("/product/smart-workflow");
+    await expect(page).toHaveURL(/\/product\/smart-workflow\/#description$/);
     await expect(
       page.getByRole("heading", { name: "Axon Ivy Smart Workflow", level: 1 }),
     ).toBeVisible();
@@ -248,6 +248,6 @@ test.describe("sunset", () => {
     ).toBeVisible();
     await expect(
       page.getByRole("link", { name: "Axon Ivy Smart Workflow", exact: true }),
-    ).toHaveAttribute("href", "/de/product/smart-workflow");
+    ).toHaveAttribute("href", "/de/product/smart-workflow/");
   });
 });
