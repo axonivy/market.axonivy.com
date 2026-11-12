@@ -17,6 +17,7 @@ import {
 } from "@/data/dev-versions";
 import { isDownloadable, type ProductArtifact } from "@/data/product-types";
 import { newestFirst, versionsToDisplay } from "@/data/versions";
+import { cn } from "@/lib/utils";
 import "@/translation/ui";
 import type { Lang } from "@/translation/ui";
 import { useState } from "react";
@@ -26,10 +27,12 @@ export default function DownloadProduct({
   artifacts,
   mainArtifactId,
   lang,
+  className,
 }: {
   artifacts: ProductArtifact[];
   mainArtifactId?: string;
   lang: Lang;
+  className?: string;
 }) {
   const { t } = useTranslation(undefined, { lng: lang });
   const downloadable = artifacts.filter(isDownloadable);
@@ -74,7 +77,7 @@ export default function DownloadProduct({
         render={
           <Button
             variant="outline"
-            className="designer:invisible h-12 px-6 text-base"
+            className={cn("designer:invisible h-12 px-6 text-base", className)}
           >
             {t("common.download")}
           </Button>

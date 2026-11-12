@@ -26,7 +26,7 @@ import Layout from "@/layouts/main.astro";
 import { cn } from "@/lib/utils";
 import { localePath } from "@/translation/language";
 import i18next, { type Lang } from "@/translation/ui";
-import { IconAlertTriangle } from "@tabler/icons-astro";
+import { IconAlertTriangle, IconBook } from "@tabler/icons-astro";
 import { readFile } from "node:fs/promises";
 import type { ChangelogRelease } from "../../../../../scripts/fetch-changelog";
 import { Badge } from "@/components/ui/badge";
@@ -54,7 +54,7 @@ const successorProduct = successor?.id
   ? getProductById(successor.id)
   : undefined;
 const successorHref = successorProduct
-  ? localePath(lang, `/product/${successorProduct.id}`)
+  ? localePath(lang, `/product/${successorProduct.id}/`)
   : successor?.url;
 
 const readme = product.readme
@@ -98,13 +98,6 @@ const information: InformationRow[] = [
   {
     label: t("productDetails.information.table.label.compatibility"),
     value: product.compatibility,
-  },
-  {
-    label: t("productDetails.information.table.label.doc"),
-    value:
-      product.documentationUrl &&
-      t("productDetails.information.table.label.doc"),
-    href: product.documentationUrl,
   },
   {
     label: t("productDetails.information.table.label.cost"),
@@ -182,7 +175,7 @@ const information: InformationRow[] = [
             )}
             <H1>{name}</H1>
           </div>
-          <div class="flex-row gap-4 items-center hidden md:flex">
+          <div class="flex-row gap-4 items-center hidden md:flex designer:gap-2">
             {contactUs ? (
               <a
                 href={contactUrl(product.id)}
@@ -206,6 +199,19 @@ const information: InformationRow[] = [
                 lang={lang}
                 client:load
               />
+            )}
+            {product.documentationUrl && (
+              <a
+                href={product.documentationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class={cn(
+                  buttonVariants({ variant: "outline" }),
+                  "h-12 self-start px-4 text-base",
+                )}
+              >
+                <IconBook class="size-6" />
+              </a>
             )}
           </div>
         </div>
@@ -249,7 +255,7 @@ const information: InformationRow[] = [
         )}
       </div>
     )}
-    <div class="grid grid-cols-2 gap-2 items-center md:hidden w-full designer:mb-4">
+    <div class="flex flex-row gap-2 items-center md:hidden w-full designer:mb-4">
       {contactUs ? (
         <a
           href={contactUrl(product.id)}
@@ -263,6 +269,7 @@ const information: InformationRow[] = [
           installable={product.installable}
           deprecated={product.deprecated}
           lang={lang}
+          className="flex-1"
           client:load
         />
       )}
@@ -271,8 +278,22 @@ const information: InformationRow[] = [
           artifacts={product.artifacts}
           mainArtifactId={product.mainArtifactId}
           lang={lang}
+          className="flex-1"
           client:load
         />
+      )}
+      {product.documentationUrl && (
+        <a
+          href={product.documentationUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class={cn(
+            buttonVariants({ variant: "outline" }),
+            "h-12 px-4 text-base",
+          )}
+        >
+          <IconBook class="size-6" />
+        </a>
       )}
     </div>
     <div class="flex flex-col gap-12 lg:grid lg:grid-cols-3">
