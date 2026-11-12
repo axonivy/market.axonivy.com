@@ -648,6 +648,7 @@ describe("robustness and cache", () => {
     await market.product("demo");
 
     await market.fetch(maven);
+    expect(market.log).not.toContain("[market-cache]");
     expect(market.log).toContain("2 zips downloaded, 0 cached");
 
     maven.artifact("demo-product", {
@@ -657,10 +658,25 @@ describe("robustness and cache", () => {
         "README.md": "# Updated Demo",
       },
     });
-    const product = find(await market.fetch(maven), "demo");
+    const product = find(
+      await market.fetch(maven, { cacheDebug: true }),
+      "demo",
+    );
     const snapshotZip = `${maven.path("demo-product")}/2.0.0-SNAPSHOT/demo-product-2.0.0-${SNAPSHOT_BUILD}.zip`;
 
     expect(market.log).toContain("1 zips downloaded, 1 cached");
+    expect(market.log).toContain(
+      "[market-cache] HIT artifact=demo-product version=1.0.0 state=present",
+    );
+    expect(market.log).toContain(
+      "[market-cache] REFETCH artifact=demo-product version=2.0.0-SNAPSHOT reason=latest",
+    );
+    expect(market.log).toMatch(
+      /\[market-cache\] ZIP downloaded artifact=demo-product version=2\.0\.0-SNAPSHOT elapsed_ms=\d+ bytes=\d+/,
+    );
+    expect(market.log).toMatch(
+      /\[market-cache\] HTTP text .*maven-metadata\.xml status=200 elapsed_ms=\d+ bytes=\d+/,
+    );
     expect(maven.requestCount(snapshotZip)).toBe(2);
     expect(product.readme).toBeDefined();
     expect(await readFile(market.resolve(product.readme!.file), "utf8")).toBe(

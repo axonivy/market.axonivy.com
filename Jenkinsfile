@@ -43,7 +43,7 @@ pipeline {
             dir ('frontend') {
               sh 'pnpm install'
               withCredentials([string(credentialsId: 'github.market.token', variable: 'GITHUB_TOKEN')]) {
-                sh 'pnpm build'
+                sh 'MARKET_CACHE_DEBUG=1 pnpm build'
               }
               sh 'pnpm typecheck'
             }
@@ -206,7 +206,7 @@ pipeline {
 }
 
 def restoreProductCache() {
-  def cacheProjectName = env.JOB_NAME
+  def cacheProjectName = 'market.axonivy.com/master'
   if (!cacheProjectName) {
     echo 'Cannot identify current Jenkins job; building product cache from scratch'
     return

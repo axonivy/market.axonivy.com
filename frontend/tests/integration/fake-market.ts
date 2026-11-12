@@ -220,7 +220,11 @@ export class FakeMarket {
   // Rejects if the script exits with an error.
   async fetch(
     maven: FakeMaven,
-    { github, token }: { github?: FakeGitHub; token?: string } = {},
+    {
+      github,
+      token,
+      cacheDebug: enableCacheDebug = false,
+    }: { github?: FakeGitHub; token?: string; cacheDebug?: boolean } = {},
   ): Promise<MarketIndex> {
     this.log = "";
     const marketApi = new FakeGitHub();
@@ -248,6 +252,7 @@ export class FakeMarket {
         MARKET_PACKAGE_REPO_URL: maven.url,
         GITHUB_API_URL: marketApi.url,
         GITHUB_TOKEN: "market-test-token",
+        MARKET_CACHE_DEBUG: enableCacheDebug ? "1" : "0",
       });
     } finally {
       this.marketApiRequests = [...marketApi.requests];

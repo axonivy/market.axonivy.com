@@ -114,9 +114,36 @@ type CachedProduct = { cacheDir: string; downloadDir?: string };
 // Helpers
 
 const stats = { downloaded: 0, cached: 0, missing: 0 };
+const CACHE_DEBUG = process.env.MARKET_CACHE_DEBUG === "1";
+
+function cacheDebug(message: string) {
+  if (CACHE_DEBUG) console.log(`[market-cache] ${message}`);
+}
+
+function requestTarget(url: string) {
+  const parsed = new URL(url);
+  return `${parsed.host}${parsed.pathname}`;
+}
 
 async function fetchText(url: string, init?: RequestInit) {
-  return (await fetchWithRetry(url, 3, init)).text();
+  const startedAt = Date.now();
+  try {
+    const response = await fetchWithRetry(url, 3, init);
+    const text = await response.text();
+    cacheDebug(
+      `HTTP text ${requestTarget(url)} status=${response.status} elapsed_ms=${Date.now() - startedAt} bytes=${Buffer.byteLength(text)}`,
+    );
+    return text;
+  } catch (error) {
+    const detail =
+      error instanceof Error
+        ? error.message.replace(url, requestTarget(url))
+        : String(error);
+    cacheDebug(
+      `HTTP text ${requestTarget(url)} failed elapsed_ms=${Date.now() - startedAt} error=${detail}`,
+    );
+    throw error;
+  }
 }
 
 async function fetchBytes(url: string, init?: RequestInit) {
@@ -323,14 +350,37 @@ async function ensureCached(
 
   if (!latest && marker?.zipUrl === url) {
     stats.cached++;
+    cacheDebug(
+      `HIT artifact=${artifact.artifactId} version=${version} state=${marker.missing ? "missing" : "present"}`,
+    );
     return marker.missing ? undefined : { cacheDir: dir };
   }
 
+  const reason = latest ? "latest" : marker?.zipUrl ? "url-changed" : "no-marker";
+  cacheDebug(
+    `REFETCH artifact=${artifact.artifactId} version=${version} reason=${reason}`,
+  );
   await rm(dir, { recursive: true, force: true });
   await mkdir(dir, { recursive: true });
   let downloadDir: string | undefined;
   try {
-    const bytes = await fetchBytes(url);
+    const downloadStartedAt = Date.now();
+    let bytes: Uint8Array;
+    try {
+      bytes = await fetchBytes(url);
+      cacheDebug(
+        `ZIP downloaded artifact=${artifact.artifactId} version=${version} elapsed_ms=${Date.now() - downloadStartedAt} bytes=${bytes.byteLength}`,
+      );
+    } catch (error) {
+      const detail =
+        error instanceof Error
+          ? error.message.replace(url, requestTarget(url))
+          : String(error);
+      cacheDebug(
+        `ZIP failed artifact=${artifact.artifactId} version=${version} elapsed_ms=${Date.now() - downloadStartedAt} error=${detail}`,
+      );
+      throw error;
+    }
     let extractionDir = dir;
     if (latest) {
       downloadDir = await mkdtemp(path.join(tmpdir(), "market-product-"));
