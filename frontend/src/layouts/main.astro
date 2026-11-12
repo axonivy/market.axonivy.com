@@ -71,14 +71,14 @@ const { redirect = true } = Astro.props as Props;
   </head>
   <body>
     <div class="flex min-h-screen flex-col">
-      <header class="shrink-0 rest-client:hidden">
+      <header class="shrink-0 rest-client:hidden designer:hidden">
         <Header />
       </header>
 
       <div class="relative isolate flex-1 overflow-hidden">
         <div
           class:list={[
-            "mx-auto flex min-h-[calc(100vh-4.5rem)] w-full flex-col px-4 pt-32 pb-20 md:max-w-6xl",
+            "mx-auto flex min-h-[calc(100vh-4.5rem)] w-full flex-col px-4 pt-32 designer:pt-16 pb-20 md:max-w-6xl",
             "rest-client:min-h-0 rest-client:py-4",
           ]}
         >
@@ -87,7 +87,7 @@ const { redirect = true } = Astro.props as Props;
       </div>
     </div>
 
-    <footer class="rest-client:hidden">
+    <footer class="rest-client:hidden designer:hidden">
       <Footer />
     </footer>
   </body>
