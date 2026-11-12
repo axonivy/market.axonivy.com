@@ -38,10 +38,12 @@ export default function InstallProduct({
   installable,
   deprecated,
   lang,
+  className,
 }: {
   installable: ProductInstallable[];
   deprecated?: boolean;
   lang: Lang;
+  className?: string;
 }) {
   const { t } = useTranslation(undefined, { lng: lang });
   const isDesigner = useIsDesigner();
@@ -53,11 +55,12 @@ export default function InstallProduct({
   const installClass = cn(
     "h-12 px-6 text-base",
     deprecated && "bg-warning hover:bg-warning/80 text-white",
+    className,
   );
 
   if (installable.length === 0) {
     return (
-      <Button disabled className="h-12 px-6 text-base">
+      <Button disabled className={cn("h-12 px-6 text-base", className)}>
         {t("productDetails.install.noInstaller")}
       </Button>
     );
@@ -137,7 +140,7 @@ export default function InstallProduct({
   }
 
   return (
-    <div className="col-span-2 flex flex-col gap-2">
+    <div className={cn("col-span-2 flex flex-col gap-2", className)}>
       {compatibleVersions.length > 0 ? (
         <div className="flex flex-row gap-2">
           <NativeSelect
