@@ -8,14 +8,14 @@ use test\AppTester;
 
 class ProductApiSizeTest extends TestCase
 {
-  public function testProductListJsonResponseFitsClientLimit(): void
+  public function testCatalogResponseSize(): void
   {
     $catalog = glob(Config::metaCatalog() . '/*/meta.json');
     if ($catalog === false || $catalog === []) {
       self::markTestSkipped('The local product catalog is required for this integration test.');
     }
 
-    $body = AppTester::assertThatGet('/stable/api/product')
+    $body = AppTester::assertThatGet('/stable/api/product?llm&designerVersion=14.0.1')
       ->ok()
       ->contentType('application/json; charset=utf-8')
       ->getBody();
@@ -26,7 +26,7 @@ class ProductApiSizeTest extends TestCase
       self::fail('Could not measure the product list JSON response length.');
     }
 
-    $maxClientFetchSize = 60_000;
+    $maxClientFetchSize = 30_000;
     fwrite(STDOUT, sprintf(
       "Product API response: %d characters across %d products (limit: %d)\n",
       $jsonLength,
@@ -37,7 +37,7 @@ class ProductApiSizeTest extends TestCase
     self::assertLessThanOrEqual(
       $maxClientFetchSize,
       $jsonLength,
-      "Product list JSON response size ({$jsonLength} characters) exceeds the client fetch limit of {$maxClientFetchSize}."
+      "Product list JSON response size must be short, to support 20K limited LLM web_fetch tools"
     );
   }
 }
