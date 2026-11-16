@@ -33,7 +33,7 @@ class ProductApi
         name: 'language',
         in: 'query',
         required: false,
-        schema: new Schema(type: 'string', enum: ['en', 'de'])
+        schema: new Schema(type: 'string', enum: ['en', 'de'], default: 'en')
       ),
       new Parameter(
         name: 'designerVersion',
@@ -71,9 +71,9 @@ class ProductApi
 
     $keywordValue = $query['keyword'] ?? '';
     $keyword = is_string($keywordValue) ? trim($keywordValue) : '';
-    $languageValue = $query['language'] ?? '';
+    $languageValue = $query['language'] ?? 'en';
     $language = is_string($languageValue) ? strtolower($languageValue) : '';
-    if ($language !== '' && !in_array($language, ['en', 'de'], true)) {
+    if (!in_array($language, ['en', 'de'], true)) {
       return $this->json($response, ['message' => 'Invalid language'], 400);
     }
     $designerVersionValue = $query['designerVersion'] ?? '';

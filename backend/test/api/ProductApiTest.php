@@ -27,8 +27,14 @@ class ProductApiTest extends TestCase
     mkdir($cacheDirectory . '/a-trust/a-trust-product/2.0.0', 0777, true);
     file_put_contents($productsDirectory . '/a-trust/meta.json', json_encode([
       'name' => 'A-Trust',
-      'names' => [['locale' => 'en', 'value' => 'A-Trust']],
-      'descriptions' => [['locale' => 'en', 'value' => 'Test connector']],
+      'names' => [
+        ['locale' => 'en', 'value' => 'A-Trust'],
+        ['locale' => 'de', 'value' => 'A-Trust Deutsch'],
+      ],
+      'descriptions' => [
+        ['locale' => 'en', 'value' => 'Test connector'],
+        ['locale' => 'de', 'value' => 'Test-Konnektor'],
+      ],
       'type' => 'connector',
       'listed' => true,
     ], JSON_THROW_ON_ERROR));
@@ -126,6 +132,24 @@ class ProductApiTest extends TestCase
       ->bodyContains('"logoUrl":"https://market.example/stable/api/image/a-trust"')
       ->bodyContains('"logoDarkUrl":"https://market.example/stable/api/image/a-trust-dark"')
       ->bodyDoesNotContain('"id":"aspose-email-demo"');
+  }
+
+  public function testDefaultsProductListLanguageToEnglish(): void
+  {
+    AppTester::assertThatGet('/stable/api/product?type=connectors')
+      ->ok()
+      ->bodyContains('"names":{"en":"A-Trust"}')
+      ->bodyContains('"shortDescriptions":{"en":"Test connector"}')
+      ->bodyDoesNotContain('"de":');
+  }
+
+  public function testReturnsGermanProductTranslationsWhenRequested(): void
+  {
+    AppTester::assertThatGet('/stable/api/product?type=connectors&language=de')
+      ->ok()
+      ->bodyContains('"names":{"de":"A-Trust Deutsch"}')
+      ->bodyContains('"shortDescriptions":{"de":"Test-Konnektor"}')
+      ->bodyDoesNotContain('"en":');
   }
 
   public function testOmitsPort80FromHttpsLogoUrls(): void
