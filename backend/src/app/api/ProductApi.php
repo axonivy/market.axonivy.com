@@ -36,6 +36,13 @@ class ProductApi
         schema: new Schema(type: 'string', enum: ['en', 'de'], default: 'en')
       ),
       new Parameter(
+        name: 'llm',
+        in: 'query',
+        required: false,
+        description: 'When present, response omits meta targeting a visual client (logo, urls, ...)',
+        schema: new Schema(type: 'string')
+      ),
+      new Parameter(
         name: 'designerVersion',
         in: 'query',
         required: false,
@@ -82,6 +89,7 @@ class ProductApi
     if ($designerVersionValue !== '' && $designerMajorMinor === null) {
       return $this->json($response, ['message' => 'Invalid designer version'], 400);
     }
+    $includeMediaUrls = !array_key_exists('llm', $query);
     $products = [];
 
     foreach (Market::listed() as $product) {
@@ -98,7 +106,13 @@ class ProductApi
         continue;
       }
 
-      $model = $this->productModel($product, $meta, $language, $request->getUri());
+      $model = $this->productModel(
+        $product,
+        $meta,
+        $language,
+        $request->getUri(),
+        $includeMediaUrls
+      );
       if ($keyword !== '' && !$this->matchesKeyword($model, $keyword)) {
         continue;
       }
@@ -357,8 +371,13 @@ class ProductApi
     return is_array($metadata) ? $metadata : [];
   }
 
-  private function productModel(Product $product, array $meta, string $language, UriInterface $requestUri): array
-  {
+  private function productModel(
+    Product $product,
+    array $meta,
+    string $language,
+    UriInterface $requestUri,
+    bool $includeMediaUrls
+  ): array {
     if ($requestUri->getScheme() === 'https' && $requestUri->getPort() === 80) {
       $requestUri = $requestUri->withPort(null);
     }
@@ -387,22 +406,22 @@ class ProductApi
       $model['deprecated'] = true;
     }
 
-    if (is_file($directory . '/logo.png')) {
+    if ($includeMediaUrls && is_file($directory . '/logo.png')) {
       $model['logoUrl'] = (string) $requestUri
         ->withPath('/stable/api/image/' . rawurlencode($key))
         ->withQuery('')
         ->withFragment('');
     }
-    if (is_file($directory . '/logo-dark.png')) {
+    if ($includeMediaUrls && is_file($directory . '/logo-dark.png')) {
       $model['logoDarkUrl'] = (string) $requestUri
         ->withPath('/stable/api/image/' . rawurlencode($key . '-dark'))
         ->withQuery('')
         ->withFragment('');
     }
-    if (!empty($meta['statusBadgeUrl'])) {
+    if ($includeMediaUrls && !empty($meta['statusBadgeUrl'])) {
       $model['badgeUrl'] = $meta['statusBadgeUrl'];
     }
-    if (!empty($meta['statusBadgeDarkUrl'])) {
+    if ($includeMediaUrls && !empty($meta['statusBadgeDarkUrl'])) {
       $model['badgeDarkUrl'] = $meta['statusBadgeDarkUrl'];
     }
 

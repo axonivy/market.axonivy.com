@@ -37,6 +37,8 @@ class ProductApiTest extends TestCase
       ],
       'type' => 'connector',
       'listed' => true,
+      'statusBadgeUrl' => 'https://market.example/a-trust-badge.svg',
+      'statusBadgeDarkUrl' => 'https://market.example/a-trust-badge-dark.svg',
     ], JSON_THROW_ON_ERROR));
     file_put_contents($productsDirectory . '/sample-solution/meta.json', json_encode([
       'name' => 'Sample Solution',
@@ -131,7 +133,19 @@ class ProductApiTest extends TestCase
       ->bodyContains('"names":{"en":"A-Trust"}')
       ->bodyContains('"logoUrl":"https://market.example/stable/api/image/a-trust"')
       ->bodyContains('"logoDarkUrl":"https://market.example/stable/api/image/a-trust-dark"')
+      ->bodyContains('"badgeUrl":"https://market.example/a-trust-badge.svg"')
+      ->bodyContains('"badgeDarkUrl":"https://market.example/a-trust-badge-dark.svg"')
       ->bodyDoesNotContain('"id":"aspose-email-demo"');
+  }
+
+  public function testOmitsMediaUrlsWhenLlmParameterIsPresent(): void
+  {
+    AppTester::assertThatGet('/stable/api/product?type=connectors&llm=false')
+      ->ok()
+      ->bodyDoesNotContain('"logoUrl"')
+      ->bodyDoesNotContain('"logoDarkUrl"')
+      ->bodyDoesNotContain('"badgeUrl"')
+      ->bodyDoesNotContain('"badgeDarkUrl"');
   }
 
   public function testDefaultsProductListLanguageToEnglish(): void
@@ -318,10 +332,12 @@ class ProductApiTest extends TestCase
     self::assertSame('/stable', $contract['servers'][0]['url']);
     self::assertArrayHasKey('/api/product', $contract['paths']);
     self::assertArrayNotHasKey('internal', $contract['components']['schemas']['ProductModel']['properties']);
+    $productListParameters = array_column($contract['paths']['/api/product']['get']['parameters'], 'name');
     self::assertContains(
       'designerVersion',
-      array_column($contract['paths']['/api/product']['get']['parameters'], 'name')
+      $productListParameters
     );
+    self::assertContains('llm', $productListParameters);
     self::assertArrayHasKey('/api/product/{id}/versions', $contract['paths']);
     self::assertArrayHasKey('/api/product/{id}/install', $contract['paths']);
     self::assertArrayHasKey('/api/product-details/{id}/{version}/bestmatch', $contract['paths']);
