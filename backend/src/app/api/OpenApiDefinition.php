@@ -35,7 +35,6 @@ use OpenApi\Attributes\Server;
         new Property(property: 'tags', type: 'array', items: new Items(type: 'string')),
         new Property(property: 'marketDirectory', type: 'string'),
         new Property(property: 'deprecated', type: 'boolean'),
-        new Property(property: 'internal', type: 'boolean'),
       ]
     ),
     new Schema(

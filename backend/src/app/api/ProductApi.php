@@ -382,7 +382,6 @@ class ProductApi
       'tags' => $meta['tags'] ?? [],
       'marketDirectory' => 'market/' . ($meta['type'] ?? '') . '/' . $key . '/',
       'deprecated' => $this->isDeprecated($meta),
-      'internal' => (bool) ($meta['internal'] ?? false),
     ];
 
     if (is_file($directory . '/logo.png')) {

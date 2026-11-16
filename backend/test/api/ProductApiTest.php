@@ -316,6 +316,7 @@ class ProductApiTest extends TestCase
     self::assertSame('3.1.0', $contract['openapi']);
     self::assertSame('/stable', $contract['servers'][0]['url']);
     self::assertArrayHasKey('/api/product', $contract['paths']);
+    self::assertArrayNotHasKey('internal', $contract['components']['schemas']['ProductModel']['properties']);
     self::assertContains(
       'designerVersion',
       array_column($contract['paths']['/api/product']['get']['parameters'], 'name')
