@@ -5,6 +5,7 @@ namespace app\api;
 use app\Config;
 use app\domain\market\Market;
 use app\domain\market\Product;
+use app\domain\market\Version;
 use OpenApi\Attributes\Get;
 use OpenApi\Attributes\Items;
 use OpenApi\Attributes\JsonContent;
@@ -85,7 +86,7 @@ class ProductApi
     }
     $designerVersionValue = $query['designerVersion'] ?? '';
     $designerVersion = is_string($designerVersionValue) ? trim($designerVersionValue) : '';
-    $designerMajorMinor = $designerVersion === '' ? null : $this->majorMinorVersion($designerVersion);
+    $designerMajorMinor = $designerVersion === '' ? null : Version::parseMajorMinor($designerVersion);
     if ($designerVersionValue !== '' && $designerMajorMinor === null) {
       return $this->json($response, ['message' => 'Invalid designer version'], 400);
     }
@@ -518,27 +519,15 @@ class ProductApi
       (is_array($sunset) && (bool) ($sunset['deprecated'] ?? false));
   }
 
-  private function finalVersionIsOlderThan(array $meta, array $designerMajorMinor): bool
+  private function finalVersionIsOlderThan(array $meta, Version $designerMajorMinor): bool
   {
     $sunset = $meta['sunset'] ?? [];
     $finalVersion = is_array($sunset) ? ($sunset['finalVersion'] ?? '') : '';
     if (!is_string($finalVersion)) {
       return false;
     }
-    $finalMajorMinor = $this->majorMinorVersion($finalVersion);
-    if ($finalMajorMinor === null) {
-      return false;
-    }
-    return $finalMajorMinor[0] < $designerMajorMinor[0] ||
-      ($finalMajorMinor[0] === $designerMajorMinor[0] && $finalMajorMinor[1] < $designerMajorMinor[1]);
-  }
-
-  private function majorMinorVersion(string $version): ?array
-  {
-    if (preg_match('/^(\d+)\.(\d+)(?:\.\d+)*(?:[-+][A-Za-z0-9.-]+)?$/', $version, $matches) !== 1) {
-      return null;
-    }
-    return [(int) $matches[1], (int) $matches[2]];
+    $finalMajorMinor = Version::parseMajorMinor($finalVersion);
+    return $finalMajorMinor !== null && $finalMajorMinor->isOlderThan($designerMajorMinor);
   }
 
   private function matchesKeyword(array $product, string $keyword): bool
