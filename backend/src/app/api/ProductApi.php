@@ -381,8 +381,11 @@ class ProductApi
       'type' => $meta['type'] ?? '',
       'tags' => $meta['tags'] ?? [],
       'marketDirectory' => 'market/' . ($meta['type'] ?? '') . '/' . $key . '/',
-      'deprecated' => $this->isDeprecated($meta),
     ];
+
+    if ($this->isDeprecated($meta)) {
+      $model['deprecated'] = true;
+    }
 
     if (is_file($directory . '/logo.png')) {
       $model['logoUrl'] = (string) $requestUri

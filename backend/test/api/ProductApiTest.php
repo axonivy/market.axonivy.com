@@ -186,6 +186,7 @@ class ProductApiTest extends TestCase
     );
     $productsWithoutDesigner = array_column($productsWithoutDesigner, null, 'id');
     self::assertArrayHasKey('excel-importer', $productsWithoutDesigner);
+    self::assertArrayNotHasKey('deprecated', $productsWithoutDesigner['a-trust']);
 
     $productsAt13 = json_decode(
       AppTester::assertThatGet('/stable/api/product?designerVersion=13.1.0')->ok()->getBody(),
