@@ -22,6 +22,8 @@ class ProductApiTest extends TestCase
     mkdir($productsDirectory . '/sample-solution', 0777, true);
     mkdir($productsDirectory . '/sample-utility', 0777, true);
     mkdir($productsDirectory . '/sample-utils', 0777, true);
+    mkdir($productsDirectory . '/excel-importer', 0777, true);
+    mkdir($productsDirectory . '/deprecated-current', 0777, true);
     mkdir($cacheDirectory . '/a-trust/a-trust-product/2.0.0', 0777, true);
     file_put_contents($productsDirectory . '/a-trust/meta.json', json_encode([
       'name' => 'A-Trust',
@@ -42,6 +44,14 @@ class ProductApiTest extends TestCase
         'name' => $id,
         'type' => $type,
         'listed' => true,
+      ], JSON_THROW_ON_ERROR));
+    }
+    foreach (['excel-importer' => '13.1', 'deprecated-current' => '14.0'] as $id => $finalVersion) {
+      file_put_contents($productsDirectory . '/' . $id . '/meta.json', json_encode([
+        'name' => $id,
+        'type' => 'utils',
+        'listed' => true,
+        'sunset' => ['deprecated' => true, 'finalVersion' => $finalVersion],
       ], JSON_THROW_ON_ERROR));
     }
     $logoFixture = dirname(__DIR__, 2) . '/src/web/favicon.png';
@@ -141,6 +151,42 @@ class ProductApiTest extends TestCase
       ->bodyContains('"id":"sample-utility"')
       ->bodyContains('"id":"sample-utils"')
       ->bodyDoesNotContain('"id":"sample-solution"');
+  }
+
+  public function testOmitsDeprecatedProductsWhenFinalVersionIsOlderThanDesigner(): void
+  {
+    $productsWithoutDesigner = json_decode(
+      AppTester::assertThatGet('/stable/api/product')->ok()->getBody(),
+      true,
+      flags: JSON_THROW_ON_ERROR
+    );
+    $productsWithoutDesigner = array_column($productsWithoutDesigner, null, 'id');
+    self::assertArrayHasKey('excel-importer', $productsWithoutDesigner);
+
+    $productsAt13 = json_decode(
+      AppTester::assertThatGet('/stable/api/product?designerVersion=13.1.0')->ok()->getBody(),
+      true,
+      flags: JSON_THROW_ON_ERROR
+    );
+    $productsAt13 = array_column($productsAt13, null, 'id');
+    self::assertArrayHasKey('excel-importer', $productsAt13);
+    self::assertTrue($productsAt13['excel-importer']['deprecated']);
+
+    $productsAt14 = json_decode(
+      AppTester::assertThatGet('/stable/api/product?designerVersion=14.0.1')->ok()->getBody(),
+      true,
+      flags: JSON_THROW_ON_ERROR
+    );
+    $productsAt14 = array_column($productsAt14, null, 'id');
+    self::assertArrayNotHasKey('excel-importer', $productsAt14);
+    self::assertArrayHasKey('deprecated-current', $productsAt14);
+  }
+
+  public function testRejectsInvalidDesignerVersion(): void
+  {
+    AppTester::assertThatGet('/stable/api/product?designerVersion=14')
+      ->statusCode(400)
+      ->bodyContains('Invalid designer version');
   }
 
   public function testRejectsUnknownProductType(): void
@@ -246,6 +292,10 @@ class ProductApiTest extends TestCase
     self::assertSame('3.1.0', $contract['openapi']);
     self::assertSame('/stable', $contract['servers'][0]['url']);
     self::assertArrayHasKey('/api/product', $contract['paths']);
+    self::assertContains(
+      'designerVersion',
+      array_column($contract['paths']['/api/product']['get']['parameters'], 'name')
+    );
     self::assertArrayHasKey('/api/product/{id}/versions', $contract['paths']);
     self::assertArrayHasKey('/api/product/{id}/install', $contract['paths']);
     self::assertArrayHasKey('/api/product-details/{id}/{version}/bestmatch', $contract['paths']);

@@ -35,6 +35,13 @@ class ProductApi
         required: false,
         schema: new Schema(type: 'string', enum: ['en', 'de'])
       ),
+      new Parameter(
+        name: 'designerVersion',
+        in: 'query',
+        required: false,
+        description: 'Hide deprecated products whose final version is older than this Designer major.minor version.',
+        schema: new Schema(type: 'string')
+      ),
     ],
     responses: [
       new Response(
@@ -69,12 +76,25 @@ class ProductApi
     if ($language !== '' && !in_array($language, ['en', 'de'], true)) {
       return $this->json($response, ['message' => 'Invalid language'], 400);
     }
+    $designerVersionValue = $query['designerVersion'] ?? '';
+    $designerVersion = is_string($designerVersionValue) ? trim($designerVersionValue) : '';
+    $designerMajorMinor = $designerVersion === '' ? null : $this->majorMinorVersion($designerVersion);
+    if ($designerVersionValue !== '' && $designerMajorMinor === null) {
+      return $this->json($response, ['message' => 'Invalid designer version'], 400);
+    }
     $products = [];
 
     foreach (Market::listed() as $product) {
       $meta = $this->metadata($product);
       $productType = strtolower((string) ($meta['type'] ?? ''));
       if ($types[$type] !== null && !in_array($productType, $types[$type], true)) {
+        continue;
+      }
+      if (
+        $designerMajorMinor !== null &&
+        $this->isDeprecated($meta) &&
+        $this->finalVersionIsOlderThan($meta, $designerMajorMinor)
+      ) {
         continue;
       }
 
@@ -361,7 +381,7 @@ class ProductApi
       'type' => $meta['type'] ?? '',
       'tags' => $meta['tags'] ?? [],
       'marketDirectory' => 'market/' . ($meta['type'] ?? '') . '/' . $key . '/',
-      'deprecated' => (bool) ($meta['deprecated'] ?? false),
+      'deprecated' => $this->isDeprecated($meta),
       'internal' => (bool) ($meta['internal'] ?? false),
     ];
 
@@ -468,6 +488,36 @@ class ProductApi
   private function booleanQuery($value): bool
   {
     return is_string($value) && filter_var($value, FILTER_VALIDATE_BOOLEAN);
+  }
+
+  private function isDeprecated(array $meta): bool
+  {
+    $sunset = $meta['sunset'] ?? [];
+    return (bool) ($meta['deprecated'] ?? false) ||
+      (is_array($sunset) && (bool) ($sunset['deprecated'] ?? false));
+  }
+
+  private function finalVersionIsOlderThan(array $meta, array $designerMajorMinor): bool
+  {
+    $sunset = $meta['sunset'] ?? [];
+    $finalVersion = is_array($sunset) ? ($sunset['finalVersion'] ?? '') : '';
+    if (!is_string($finalVersion)) {
+      return false;
+    }
+    $finalMajorMinor = $this->majorMinorVersion($finalVersion);
+    if ($finalMajorMinor === null) {
+      return false;
+    }
+    return $finalMajorMinor[0] < $designerMajorMinor[0] ||
+      ($finalMajorMinor[0] === $designerMajorMinor[0] && $finalMajorMinor[1] < $designerMajorMinor[1]);
+  }
+
+  private function majorMinorVersion(string $version): ?array
+  {
+    if (preg_match('/^(\d+)\.(\d+)(?:\.\d+)*(?:[-+][A-Za-z0-9.-]+)?$/', $version, $matches) !== 1) {
+      return null;
+    }
+    return [(int) $matches[1], (int) $matches[2]];
   }
 
   private function matchesKeyword(array $product, string $keyword): bool
