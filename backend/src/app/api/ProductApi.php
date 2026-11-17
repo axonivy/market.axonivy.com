@@ -5,6 +5,7 @@ namespace app\api;
 use app\Config;
 use app\domain\market\Market;
 use app\domain\market\Product;
+use app\domain\market\Version;
 use OpenApi\Attributes\Get;
 use OpenApi\Attributes\Items;
 use OpenApi\Attributes\JsonContent;
@@ -33,7 +34,21 @@ class ProductApi
         name: 'language',
         in: 'query',
         required: false,
-        schema: new Schema(type: 'string', enum: ['en', 'de'])
+        schema: new Schema(type: 'string', enum: ['en', 'de'], default: 'en')
+      ),
+      new Parameter(
+        name: 'llm',
+        in: 'query',
+        required: false,
+        description: 'When present, response omits meta targeting a visual client (logo, urls, ...)',
+        schema: new Schema(type: 'string')
+      ),
+      new Parameter(
+        name: 'designerVersion',
+        in: 'query',
+        required: false,
+        description: 'Hide deprecated products whose final version is older than this Designer major.minor version.',
+        schema: new Schema(type: 'string')
       ),
     ],
     responses: [
@@ -64,11 +79,18 @@ class ProductApi
 
     $keywordValue = $query['keyword'] ?? '';
     $keyword = is_string($keywordValue) ? trim($keywordValue) : '';
-    $languageValue = $query['language'] ?? '';
+    $languageValue = $query['language'] ?? 'en';
     $language = is_string($languageValue) ? strtolower($languageValue) : '';
-    if ($language !== '' && !in_array($language, ['en', 'de'], true)) {
+    if (!in_array($language, ['en', 'de'], true)) {
       return $this->json($response, ['message' => 'Invalid language'], 400);
     }
+    $designerVersionValue = $query['designerVersion'] ?? '';
+    $designerVersion = is_string($designerVersionValue) ? trim($designerVersionValue) : '';
+    $designerMajorMinor = $designerVersion === '' ? null : Version::parseMajorMinor($designerVersion);
+    if ($designerVersionValue !== '' && $designerMajorMinor === null) {
+      return $this->json($response, ['message' => 'Invalid designer version'], 400);
+    }
+    $includeMediaUrls = !array_key_exists('llm', $query);
     $products = [];
 
     foreach (Market::listed() as $product) {
@@ -77,8 +99,21 @@ class ProductApi
       if ($types[$type] !== null && !in_array($productType, $types[$type], true)) {
         continue;
       }
+      if (
+        $designerMajorMinor !== null &&
+        $this->isDeprecated($meta) &&
+        $this->finalVersionIsOlderThan($meta, $designerMajorMinor)
+      ) {
+        continue;
+      }
 
-      $model = $this->productModel($product, $meta, $language, $request->getUri());
+      $model = $this->productModel(
+        $product,
+        $meta,
+        $language,
+        $request->getUri(),
+        $includeMediaUrls
+      );
       if ($keyword !== '' && !$this->matchesKeyword($model, $keyword)) {
         continue;
       }
@@ -337,8 +372,13 @@ class ProductApi
     return is_array($metadata) ? $metadata : [];
   }
 
-  private function productModel(Product $product, array $meta, string $language, UriInterface $requestUri): array
-  {
+  private function productModel(
+    Product $product,
+    array $meta,
+    string $language,
+    UriInterface $requestUri,
+    bool $includeMediaUrls
+  ): array {
     if ($requestUri->getScheme() === 'https' && $requestUri->getPort() === 80) {
       $requestUri = $requestUri->withPort(null);
     }
@@ -361,26 +401,28 @@ class ProductApi
       'type' => $meta['type'] ?? '',
       'tags' => $meta['tags'] ?? [],
       'marketDirectory' => 'market/' . ($meta['type'] ?? '') . '/' . $key . '/',
-      'deprecated' => (bool) ($meta['deprecated'] ?? false),
-      'internal' => (bool) ($meta['internal'] ?? false),
     ];
 
-    if (is_file($directory . '/logo.png')) {
+    if ($this->isDeprecated($meta)) {
+      $model['deprecated'] = true;
+    }
+
+    if ($includeMediaUrls && is_file($directory . '/logo.png')) {
       $model['logoUrl'] = (string) $requestUri
         ->withPath('/stable/api/image/' . rawurlencode($key))
         ->withQuery('')
         ->withFragment('');
     }
-    if (is_file($directory . '/logo-dark.png')) {
+    if ($includeMediaUrls && is_file($directory . '/logo-dark.png')) {
       $model['logoDarkUrl'] = (string) $requestUri
         ->withPath('/stable/api/image/' . rawurlencode($key . '-dark'))
         ->withQuery('')
         ->withFragment('');
     }
-    if (!empty($meta['statusBadgeUrl'])) {
+    if ($includeMediaUrls && !empty($meta['statusBadgeUrl'])) {
       $model['badgeUrl'] = $meta['statusBadgeUrl'];
     }
-    if (!empty($meta['statusBadgeDarkUrl'])) {
+    if ($includeMediaUrls && !empty($meta['statusBadgeDarkUrl'])) {
       $model['badgeDarkUrl'] = $meta['statusBadgeDarkUrl'];
     }
 
@@ -468,6 +510,24 @@ class ProductApi
   private function booleanQuery($value): bool
   {
     return is_string($value) && filter_var($value, FILTER_VALIDATE_BOOLEAN);
+  }
+
+  private function isDeprecated(array $meta): bool
+  {
+    $sunset = $meta['sunset'] ?? [];
+    return (bool) ($meta['deprecated'] ?? false) ||
+      (is_array($sunset) && (bool) ($sunset['deprecated'] ?? false));
+  }
+
+  private function finalVersionIsOlderThan(array $meta, Version $designerMajorMinor): bool
+  {
+    $sunset = $meta['sunset'] ?? [];
+    $finalVersion = is_array($sunset) ? ($sunset['finalVersion'] ?? '') : '';
+    if (!is_string($finalVersion)) {
+      return false;
+    }
+    $finalMajorMinor = Version::parseMajorMinor($finalVersion);
+    return $finalMajorMinor !== null && $finalMajorMinor->isOlderThan($designerMajorMinor);
   }
 
   private function matchesKeyword(array $product, string $keyword): bool

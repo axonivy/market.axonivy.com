@@ -22,13 +22,23 @@ class ProductApiTest extends TestCase
     mkdir($productsDirectory . '/sample-solution', 0777, true);
     mkdir($productsDirectory . '/sample-utility', 0777, true);
     mkdir($productsDirectory . '/sample-utils', 0777, true);
+    mkdir($productsDirectory . '/excel-importer', 0777, true);
+    mkdir($productsDirectory . '/deprecated-current', 0777, true);
     mkdir($cacheDirectory . '/a-trust/a-trust-product/2.0.0', 0777, true);
     file_put_contents($productsDirectory . '/a-trust/meta.json', json_encode([
       'name' => 'A-Trust',
-      'names' => [['locale' => 'en', 'value' => 'A-Trust']],
-      'descriptions' => [['locale' => 'en', 'value' => 'Test connector']],
+      'names' => [
+        ['locale' => 'en', 'value' => 'A-Trust'],
+        ['locale' => 'de', 'value' => 'A-Trust Deutsch'],
+      ],
+      'descriptions' => [
+        ['locale' => 'en', 'value' => 'Test connector'],
+        ['locale' => 'de', 'value' => 'Test-Konnektor'],
+      ],
       'type' => 'connector',
       'listed' => true,
+      'statusBadgeUrl' => 'https://market.example/a-trust-badge.svg',
+      'statusBadgeDarkUrl' => 'https://market.example/a-trust-badge-dark.svg',
     ], JSON_THROW_ON_ERROR));
     file_put_contents($productsDirectory . '/sample-solution/meta.json', json_encode([
       'name' => 'Sample Solution',
@@ -42,6 +52,14 @@ class ProductApiTest extends TestCase
         'name' => $id,
         'type' => $type,
         'listed' => true,
+      ], JSON_THROW_ON_ERROR));
+    }
+    foreach (['excel-importer' => '13.1', 'deprecated-current' => '14.0'] as $id => $finalVersion) {
+      file_put_contents($productsDirectory . '/' . $id . '/meta.json', json_encode([
+        'name' => $id,
+        'type' => 'utils',
+        'listed' => true,
+        'sunset' => ['deprecated' => true, 'finalVersion' => $finalVersion],
       ], JSON_THROW_ON_ERROR));
     }
     $logoFixture = dirname(__DIR__, 2) . '/src/web/favicon.png';
@@ -115,7 +133,37 @@ class ProductApiTest extends TestCase
       ->bodyContains('"names":{"en":"A-Trust"}')
       ->bodyContains('"logoUrl":"https://market.example/stable/api/image/a-trust"')
       ->bodyContains('"logoDarkUrl":"https://market.example/stable/api/image/a-trust-dark"')
+      ->bodyContains('"badgeUrl":"https://market.example/a-trust-badge.svg"')
+      ->bodyContains('"badgeDarkUrl":"https://market.example/a-trust-badge-dark.svg"')
       ->bodyDoesNotContain('"id":"aspose-email-demo"');
+  }
+
+  public function testOmitsMediaUrlsWhenLlmParameterIsPresent(): void
+  {
+    AppTester::assertThatGet('/stable/api/product?type=connectors&llm=false')
+      ->ok()
+      ->bodyDoesNotContain('"logoUrl"')
+      ->bodyDoesNotContain('"logoDarkUrl"')
+      ->bodyDoesNotContain('"badgeUrl"')
+      ->bodyDoesNotContain('"badgeDarkUrl"');
+  }
+
+  public function testDefaultsProductListLanguageToEnglish(): void
+  {
+    AppTester::assertThatGet('/stable/api/product?type=connectors')
+      ->ok()
+      ->bodyContains('"names":{"en":"A-Trust"}')
+      ->bodyContains('"shortDescriptions":{"en":"Test connector"}')
+      ->bodyDoesNotContain('"de":');
+  }
+
+  public function testReturnsGermanProductTranslationsWhenRequested(): void
+  {
+    AppTester::assertThatGet('/stable/api/product?type=connectors&language=de')
+      ->ok()
+      ->bodyContains('"names":{"de":"A-Trust Deutsch"}')
+      ->bodyContains('"shortDescriptions":{"de":"Test-Konnektor"}')
+      ->bodyDoesNotContain('"en":');
   }
 
   public function testOmitsPort80FromHttpsLogoUrls(): void
@@ -141,6 +189,43 @@ class ProductApiTest extends TestCase
       ->bodyContains('"id":"sample-utility"')
       ->bodyContains('"id":"sample-utils"')
       ->bodyDoesNotContain('"id":"sample-solution"');
+  }
+
+  public function testOmitsDeprecatedProductsWhenFinalVersionIsOlderThanDesigner(): void
+  {
+    $productsWithoutDesigner = json_decode(
+      AppTester::assertThatGet('/stable/api/product')->ok()->getBody(),
+      true,
+      flags: JSON_THROW_ON_ERROR
+    );
+    $productsWithoutDesigner = array_column($productsWithoutDesigner, null, 'id');
+    self::assertArrayHasKey('excel-importer', $productsWithoutDesigner);
+    self::assertArrayNotHasKey('deprecated', $productsWithoutDesigner['a-trust']);
+
+    $productsAt13 = json_decode(
+      AppTester::assertThatGet('/stable/api/product?designerVersion=13.1.0')->ok()->getBody(),
+      true,
+      flags: JSON_THROW_ON_ERROR
+    );
+    $productsAt13 = array_column($productsAt13, null, 'id');
+    self::assertArrayHasKey('excel-importer', $productsAt13);
+    self::assertTrue($productsAt13['excel-importer']['deprecated']);
+
+    $productsAt14 = json_decode(
+      AppTester::assertThatGet('/stable/api/product?designerVersion=14.0.1')->ok()->getBody(),
+      true,
+      flags: JSON_THROW_ON_ERROR
+    );
+    $productsAt14 = array_column($productsAt14, null, 'id');
+    self::assertArrayNotHasKey('excel-importer', $productsAt14);
+    self::assertArrayHasKey('deprecated-current', $productsAt14);
+  }
+
+  public function testRejectsInvalidDesignerVersion(): void
+  {
+    AppTester::assertThatGet('/stable/api/product?designerVersion=14')
+      ->statusCode(400)
+      ->bodyContains('Invalid designer version');
   }
 
   public function testRejectsUnknownProductType(): void
@@ -246,6 +331,13 @@ class ProductApiTest extends TestCase
     self::assertSame('3.1.0', $contract['openapi']);
     self::assertSame('/stable', $contract['servers'][0]['url']);
     self::assertArrayHasKey('/api/product', $contract['paths']);
+    self::assertArrayNotHasKey('internal', $contract['components']['schemas']['ProductModel']['properties']);
+    $productListParameters = array_column($contract['paths']['/api/product']['get']['parameters'], 'name');
+    self::assertContains(
+      'designerVersion',
+      $productListParameters
+    );
+    self::assertContains('llm', $productListParameters);
     self::assertArrayHasKey('/api/product/{id}/versions', $contract['paths']);
     self::assertArrayHasKey('/api/product/{id}/install', $contract['paths']);
     self::assertArrayHasKey('/api/product-details/{id}/{version}/bestmatch', $contract['paths']);
