@@ -135,17 +135,19 @@ class ProductApiTest extends TestCase
       ->bodyContains('"logoDarkUrl":"https://market.example/stable/api/image/a-trust-dark"')
       ->bodyContains('"badgeUrl":"https://market.example/a-trust-badge.svg"')
       ->bodyContains('"badgeDarkUrl":"https://market.example/a-trust-badge-dark.svg"')
+      ->bodyContains('"marketDirectory":"market/connector/a-trust/"')
       ->bodyDoesNotContain('"id":"aspose-email-demo"');
   }
 
   public function testOmitsMediaUrlsWhenLlmParameterIsPresent(): void
   {
-    AppTester::assertThatGet('/stable/api/product?type=connectors&llm=false')
+    AppTester::assertThatGet('/stable/api/product?type=connectors&llm=true')
       ->ok()
       ->bodyDoesNotContain('"logoUrl"')
       ->bodyDoesNotContain('"logoDarkUrl"')
       ->bodyDoesNotContain('"badgeUrl"')
-      ->bodyDoesNotContain('"badgeDarkUrl"');
+      ->bodyDoesNotContain('"badgeDarkUrl"')
+      ->bodyDoesNotContain('"marketDirectory"');
   }
 
   public function testDefaultsProductListLanguageToEnglish(): void

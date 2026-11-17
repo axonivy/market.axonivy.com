@@ -400,30 +400,32 @@ class ProductApi
       'shortDescriptions' => $descriptions,
       'type' => $meta['type'] ?? '',
       'tags' => $meta['tags'] ?? [],
-      'marketDirectory' => 'market/' . ($meta['type'] ?? '') . '/' . $key . '/',
     ];
 
     if ($this->isDeprecated($meta)) {
       $model['deprecated'] = true;
     }
+    if ($includeMediaUrls) {
+      $model['marketDirectory'] = 'market/' . ($meta['type'] ?? '') . '/' . $key . '/';
 
-    if ($includeMediaUrls && is_file($directory . '/logo.png')) {
-      $model['logoUrl'] = (string) $requestUri
-        ->withPath('/stable/api/image/' . rawurlencode($key))
-        ->withQuery('')
-        ->withFragment('');
-    }
-    if ($includeMediaUrls && is_file($directory . '/logo-dark.png')) {
-      $model['logoDarkUrl'] = (string) $requestUri
-        ->withPath('/stable/api/image/' . rawurlencode($key . '-dark'))
-        ->withQuery('')
-        ->withFragment('');
-    }
-    if ($includeMediaUrls && !empty($meta['statusBadgeUrl'])) {
-      $model['badgeUrl'] = $meta['statusBadgeUrl'];
-    }
-    if ($includeMediaUrls && !empty($meta['statusBadgeDarkUrl'])) {
-      $model['badgeDarkUrl'] = $meta['statusBadgeDarkUrl'];
+      if (is_file($directory . '/logo.png')) {
+        $model['logoUrl'] = (string) $requestUri
+          ->withPath('/stable/api/image/' . rawurlencode($key))
+          ->withQuery('')
+          ->withFragment('');
+      }
+      if (is_file($directory . '/logo-dark.png')) {
+        $model['logoDarkUrl'] = (string) $requestUri
+          ->withPath('/stable/api/image/' . rawurlencode($key . '-dark'))
+          ->withQuery('')
+          ->withFragment('');
+      }
+      if (!empty($meta['statusBadgeUrl'])) {
+        $model['badgeUrl'] = $meta['statusBadgeUrl'];
+      }
+      if (!empty($meta['statusBadgeDarkUrl'])) {
+        $model['badgeDarkUrl'] = $meta['statusBadgeDarkUrl'];
+      }
     }
 
     return $model;
