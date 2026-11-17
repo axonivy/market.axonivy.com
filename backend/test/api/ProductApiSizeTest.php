@@ -26,7 +26,7 @@ class ProductApiSizeTest extends TestCase
       self::fail('Could not measure the product list JSON response length.');
     }
 
-    $maxClientFetchSize = 30_000;
+    $maxClientFetchSize = 22_000;
     fwrite(STDOUT, sprintf(
       "Product API response: %d characters across %d products (limit: %d)\n",
       $jsonLength,
