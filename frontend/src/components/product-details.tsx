@@ -8,7 +8,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Code, H4 } from "@/components/ui/typography";
-import type { ProductArtifact } from "@/data/product-types";
+import type { ProductArtifact, ProductComponent } from "@/data/product-types";
 import type { Readme, ReadmeSections } from "@/data/readme";
 import "@/translation/ui";
 import type { Lang } from "@/translation/ui";
@@ -35,6 +35,7 @@ const getReadmeTabs = (
 
 export type MavenArtifacts = {
   artifacts: ProductArtifact[];
+  components: ProductComponent[];
   mainArtifactId?: string;
   productName: string;
   version: string;
@@ -69,7 +70,7 @@ export default function ProductDetails({
           />
         ),
       })),
-    ...(maven && !sections?.components
+    ...(maven && (!sections?.components || maven.components.length > 0)
       ? [
           {
             value: "dependency",

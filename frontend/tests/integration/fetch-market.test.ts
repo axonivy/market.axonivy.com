@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { readdir, readFile } from "node:fs/promises";
+import { readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { MarketIndex } from "../../scripts/fetch-market.ts";
@@ -14,6 +14,22 @@ import {
 
 const PRODUCT_JSON = JSON.stringify({ installers: [] });
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
+const PROCESS_REPORT = JSON.stringify({
+  elements: [
+    {
+      type: "SubProcessCall",
+      name: "call(String)",
+      config: { processCall: "Jira/GetIssue:call(String)" },
+    },
+    {
+      type: "SubProcessCall",
+      name: "call(String)",
+      config: { processCall: "Jira/GetIssue:call(String)" },
+    },
+    { type: "Start", name: "start" },
+  ],
+  $defs: {},
+});
 
 function productArtifact(
   id: string,
@@ -445,6 +461,42 @@ describe("versions and Maven resolution", () => {
 });
 
 describe("product.json and installers", () => {
+  it("caches and indexes process components for every product version", async () => {
+    maven.artifact("demo-product", {
+      "1.0.0": {
+        "product.json": PRODUCT_JSON,
+        "components/process.json": PROCESS_REPORT,
+      },
+      "2.0.0-SNAPSHOT": {
+        "product.json": PRODUCT_JSON,
+        "components/process.json": PROCESS_REPORT,
+      },
+    });
+    await market.product("demo");
+
+    const product = find(await market.fetch(maven), "demo");
+    const expected = [
+      { name: "call(String)", processCall: "Jira/GetIssue:call(String)" },
+    ];
+
+    expect(product.componentsByVersion).toEqual({
+      "1.0.0": expected,
+      "2.0.0-SNAPSHOT": expected,
+    });
+    for (const version of ["1.0.0", "2.0.0-SNAPSHOT"]) {
+      expect(
+        await readFile(
+          market.productCache(
+            "demo-product",
+            version,
+            "components/process.json",
+          ),
+          "utf8",
+        ),
+      ).toBe(PROCESS_REPORT);
+    }
+  });
+
   it("publishes a _product.json per version with the version and product name filled in", async () => {
     const json = productJson(
       [
@@ -589,6 +641,40 @@ describe("product.json and installers", () => {
 });
 
 describe("robustness and cache", () => {
+  it("refreshes historical cache entries created before component reports were cached", async () => {
+    maven.artifact("demo-product", {
+      "1.0.0": { "product.json": PRODUCT_JSON },
+      "2.0.0": { "product.json": PRODUCT_JSON },
+    });
+    await market.product("demo");
+    await market.fetch(maven);
+
+    const markerFile = market.productCache(
+      "demo-product",
+      "1.0.0",
+      ".cache.json",
+    );
+    const oldMarker = JSON.parse(await readFile(markerFile, "utf8")) as {
+      zipUrl: string;
+    };
+    await writeFile(markerFile, JSON.stringify({ zipUrl: oldMarker.zipUrl }));
+
+    maven.artifact("demo-product", {
+      "1.0.0": {
+        "product.json": PRODUCT_JSON,
+        "components/process.json": PROCESS_REPORT,
+      },
+      "2.0.0": { "product.json": PRODUCT_JSON },
+    });
+    const product = find(await market.fetch(maven), "demo");
+    const historicalZip = `${maven.path("demo-product")}/1.0.0/demo-product-1.0.0.zip`;
+
+    expect(maven.requestCount(historicalZip)).toBe(2);
+    expect(product.componentsByVersion?.["1.0.0"]).toEqual([
+      { name: "call(String)", processCall: "Jira/GetIssue:call(String)" },
+    ]);
+  });
+
   it("never writes zip entries outside the cache folder", async () => {
     maven.artifact("demo-product", {
       "1.0.0": {

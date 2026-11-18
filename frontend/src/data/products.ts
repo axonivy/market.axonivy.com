@@ -16,10 +16,10 @@ const DEFAULT_VENDOR = "Axon Ivy AG";
 const DEFAULT_VENDOR_URL = "https://www.axonivy.com";
 const DEFAULT_COST = "Free";
 
-const indexFiles = import.meta.glob<MarketIndex>("/.market/product-index.json", {
-  eager: true,
-  import: "default",
-});
+const indexFiles = import.meta.glob<MarketIndex>(
+  "/.market/product-index.json",
+  { eager: true, import: "default" },
+);
 
 const metaFiles = import.meta.glob<ProductMeta>(
   "/.market/meta-catalog/products/*/meta.json",
@@ -80,6 +80,7 @@ function loadProducts(): Product[] {
         changelog: data?.changelog,
         dependency: data?.dependency,
         mavenDropins: data?.mavenDropins,
+        componentsByVersion: data?.componentsByVersion,
         artifacts: data?.artifacts ?? [],
         mainArtifactId: findMainArtifactId(data),
         installable: data?.installable ?? [],

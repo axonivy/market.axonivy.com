@@ -77,6 +77,8 @@ const maven =
   product.featuredVersion && mavenArtifacts.length > 0
     ? {
         artifacts: mavenArtifacts,
+        components:
+          product.componentsByVersion?.[product.featuredVersion] ?? [],
         mainArtifactId: product.mainArtifactId,
         productName: name,
         version: product.featuredVersion,

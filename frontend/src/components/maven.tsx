@@ -5,6 +5,7 @@ import { Trans, useTranslation } from "react-i18next";
 
 export default function Maven({
   artifacts,
+  components,
   mainArtifactId,
   productName,
   version,
@@ -31,6 +32,21 @@ export default function Maven({
           components={{ code: <Code /> }}
         />
       </Base>
+      {components.length > 0 && (
+        <section className="space-y-2">
+          <H4>{t("productDetails.tabs.components")}</H4>
+          <ul className="list-disc space-y-1 pl-5">
+            {components.map(({ name, processCall }) => (
+              <li key={processCall}>
+                <Code>{processCall}</Code>
+                {name !== processCall && (
+                  <span className="text-muted-foreground"> ({name})</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {orderedArtifacts.map((artifact) => {
         const snippet = [
           `<!-- ${productName} - ${artifact.name} -->`,
