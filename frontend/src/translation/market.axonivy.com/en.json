@@ -120,11 +120,12 @@
       "demo": "Demo",
       "dependencies": {
         "maven": {
-          "description": "You can consume these as Maven artifacts in your <code>pom.xml</code>.",
+          "description": "You can consume these Ivy Projects as Maven artifacts in your <code>pom.xml</code>.",
           "title": "Maven"
         }
       },
       "description": "Description",
+      "processes": "Processes",
       "setup": "Installation Guide"
     }
   }

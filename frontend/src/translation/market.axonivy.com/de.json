@@ -120,11 +120,12 @@
       "demo": "Demo",
       "dependencies": {
         "maven": {
-          "description": "Du kannst diese als Maven-Artefakte in deinem <code>pom.xml</code> einbinden.",
+          "description": "Du kannst diese Ivy-Projekte als Maven-Artefakte in deinem <code>pom.xml</code> einbinden.",
           "title": "Maven"
         }
       },
       "description": "Beschreibung",
+      "processes": "Prozesse",
       "setup": "Installation Guide"
     }
   }

@@ -84,6 +84,7 @@ const maven =
         lang: lang,
       }
     : undefined;
+const callableProcesses = product.callableProcesses ?? [];
 
 const contactUs = !product.sourceUrl;
 const showDownload = !contactUs && !product.mavenDropins;
@@ -315,6 +316,7 @@ const information: InformationRow[] = [
           client:load
           readme={readme}
           maven={maven}
+          callableProcesses={callableProcesses}
           changelog={changelog}
           lang={lang}
         />

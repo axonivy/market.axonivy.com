@@ -42,18 +42,18 @@ test("falls back to the English README", async ({ page }) => {
 });
 
 test("switches the language and keeps query and hash", async ({ page }) => {
-  await page.goto("/product/a-trust?foo=bar#dependency");
+  await page.goto("/product/a-trust?foo=bar#components");
 
   await page.getByRole("button", { name: "DE", exact: true }).click();
 
   await expect(page).toHaveURL(
-    /\/de\/product\/a-trust\/?\?foo=bar#dependency$/,
+    /\/de\/product\/a-trust\/?\?foo=bar#components$/,
   );
   await expect(page.locator("html")).toHaveAttribute("lang", "de");
   await expect(
     page.getByRole("button", { name: "DE", exact: true }),
   ).toHaveAttribute("aria-current", "true");
-  await expect(page.getByRole("tab", { name: "Maven" })).toHaveAttribute(
+  await expect(page.getByRole("tab", { name: "Components" })).toHaveAttribute(
     "aria-selected",
     "true",
   );
@@ -64,11 +64,11 @@ test("redirects to the saved language", async ({ page }) => {
   await page.goto("/product/a-trust");
   await page.evaluate(() => localStorage.setItem("lang", "de"));
 
-  await page.goto("/product/a-trust?q=x#dependency");
-  await expect(page).toHaveURL(/\/de\/product\/a-trust\/?\?q=x#dependency$/);
+  await page.goto("/product/a-trust?q=x#components");
+  await expect(page).toHaveURL(/\/de\/product\/a-trust\/?\?q=x#components$/);
 
   await page.getByRole("button", { name: "EN", exact: true }).click();
-  await expect(page).toHaveURL(/\/product\/a-trust\/?\?q=x#dependency$/);
+  await expect(page).toHaveURL(/\/product\/a-trust\/?\?q=x#components$/);
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await page.goto("/");
   await expect(page).toHaveURL("/");

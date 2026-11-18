@@ -1,7 +1,16 @@
-import type { MavenArtifacts } from "@/components/product-details";
 import { CodeBlock } from "@/components/ui/code-block";
-import { Base, Code, H4 } from "@/components/ui/typography";
+import { Base, Code, H4, H5 } from "@/components/ui/typography";
+import type { ProductArtifact } from "@/data/product-types";
+import type { Lang } from "@/translation/ui";
 import { Trans, useTranslation } from "react-i18next";
+
+export type MavenArtifacts = {
+  artifacts: ProductArtifact[];
+  mainArtifactId?: string;
+  productName: string;
+  version: string;
+  lang: Lang;
+};
 
 export default function Maven({
   artifacts,
@@ -24,6 +33,7 @@ export default function Maven({
 
   return (
     <div className="space-y-8">
+      <H4>{t("productDetails.tabs.dependencies.maven.title")}</H4>
       <Base>
         <Trans
           t={t}
@@ -46,7 +56,7 @@ export default function Maven({
             key={`${artifact.groupId}:${artifact.artifactId}`}
             className="w-full"
           >
-            <H4 className="mb-2">{artifact.name}</H4>
+            <H5 className="mb-2">{artifact.name}</H5>
             <CodeBlock code={snippet} lang={lang} className="w-full" />
           </section>
         );

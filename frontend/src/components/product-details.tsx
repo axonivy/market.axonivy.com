@@ -1,5 +1,6 @@
 import Changelog from "@/components/changelog";
-import Maven from "@/components/maven";
+import CallableProcesses from "@/components/callable-processes";
+import Maven, { type MavenArtifacts } from "@/components/maven";
 import { CodeBlock } from "@/components/ui/code-block";
 import {
   NativeSelect,
@@ -8,7 +9,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Code, H4 } from "@/components/ui/typography";
-import type { ProductArtifact } from "@/data/product-types";
+import type { CallableProcess } from "@/data/product-types";
 import type { Readme, ReadmeSections } from "@/data/readme";
 import "@/translation/ui";
 import type { Lang } from "@/translation/ui";
@@ -30,25 +31,18 @@ const getReadmeTabs = (
   { value: "description", label: t("productDetails.tabs.description") },
   { value: "demo", label: t("productDetails.tabs.demo") },
   { value: "setup", label: t("productDetails.tabs.setup") },
-  { value: "components", label: t("productDetails.tabs.components") },
 ];
-
-export type MavenArtifacts = {
-  artifacts: ProductArtifact[];
-  mainArtifactId?: string;
-  productName: string;
-  version: string;
-  lang: Lang;
-};
 
 export default function ProductDetails({
   readme,
   maven,
+  callableProcesses,
   changelog,
   lang,
 }: {
   readme?: Readme;
   maven?: MavenArtifacts;
+  callableProcesses: CallableProcess[];
   changelog?: ChangelogRelease[];
   lang: Lang;
 }) {
@@ -69,12 +63,24 @@ export default function ProductDetails({
           />
         ),
       })),
-    ...(maven && !sections?.components
+    ...(sections?.components || callableProcesses.length > 0 || maven
       ? [
           {
-            value: "dependency",
-            label: t("productDetails.tabs.dependencies.maven.title"),
-            content: <Maven {...maven} lang={lang} />,
+            value: "components",
+            label: t("productDetails.tabs.components"),
+            content: (
+              <div className="space-y-8">
+                {sections?.components && (
+                  <Markdown
+                    markdown={sections.components}
+                    baseUrl={readme!.baseUrl}
+                    lang={lang}
+                  />
+                )}
+                <CallableProcesses processes={callableProcesses} lang={lang} />
+                {maven && <Maven {...maven} lang={lang} />}
+              </div>
+            ),
           },
         ]
       : []),

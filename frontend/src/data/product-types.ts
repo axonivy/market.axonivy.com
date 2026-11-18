@@ -2,6 +2,7 @@ import type { ImageMetadata } from "astro";
 import type { TFunction } from "i18next";
 import type {
   IndexArtifact,
+  IndexCallableProcess,
   IndexDependency,
   IndexInstallable,
 } from "../../scripts/fetch-market";
@@ -34,6 +35,7 @@ export type ProductMeta = Omit<MarketMeta, "type"> & { type: ProductCategory };
 export type ProductArtifact = IndexArtifact;
 export type ProductInstallable = IndexInstallable;
 export type ProductDependency = IndexDependency;
+export type CallableProcess = IndexCallableProcess;
 
 export const contactUrl = (productId: string) =>
   `https://www.axonivy.com/marketplace/contact/?market_solutions=${productId}`;
@@ -56,6 +58,7 @@ export type Product = Omit<ProductMeta, "vendor" | "vendorUrl" | "cost"> & {
   changelog?: string;
   dependency?: ProductDependency;
   mavenDropins?: boolean;
+  callableProcesses?: CallableProcess[];
   artifacts: ProductArtifact[];
   mainArtifactId?: string;
   installable: ProductInstallable[];
@@ -64,8 +67,4 @@ export type Product = Omit<ProductMeta, "vendor" | "vendorUrl" | "cost"> & {
 export type ProductSummary = Pick<
   Product,
   "id" | "name" | "description" | "type" | "featured" | "listPriority"
-> & {
-  logo: string;
-  logoDark?: string;
-  deprecated?: boolean;
-};
+> & { logo: string; logoDark?: string; deprecated?: boolean };

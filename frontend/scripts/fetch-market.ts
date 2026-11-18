@@ -47,6 +47,7 @@ const DEFAULT_REPO_URL =
   process.env.MARKET_MAVEN_URL ?? "https://maven.axonivy.com";
 const DEFAULT_TYPE = "iar";
 const CONCURRENCY = 16;
+const PROCESS_REPORT_FILE = "components/process.json";
 
 const SLIM_FILES = new Set(["product.json"]);
 
@@ -86,6 +87,8 @@ export type IndexInstallable = {
   minimumIvyVersion?: string;
 };
 
+export type IndexCallableProcess = { name: string; processCall: string };
+
 export type IndexDependency = {
   groupId: string;
   artifactId: string;
@@ -100,6 +103,7 @@ export type IndexProduct = {
   readme?: { file: string; baseUrl: string };
   dependency?: IndexDependency;
   mavenDropins?: boolean;
+  callableProcesses?: IndexCallableProcess[];
   artifacts: IndexArtifact[];
   changelog?: string;
   // Newest first
@@ -337,11 +341,14 @@ async function ensureCached(
       extractionDir = downloadDir;
     }
     await extractZip(bytes, extractionDir, latest ? undefined : SLIM_FILES);
-    if (latest && existsSync(path.join(extractionDir, "product.json"))) {
-      await cp(
-        path.join(extractionDir, "product.json"),
-        path.join(dir, "product.json"),
-      );
+    if (latest) {
+      for (const file of ["product.json", PROCESS_REPORT_FILE]) {
+        const source = path.join(extractionDir, file);
+        if (!existsSync(source)) continue;
+        const target = path.join(dir, file);
+        await mkdir(path.dirname(target), { recursive: true });
+        await cp(source, target);
+      }
     }
     await writeFile(
       markerFile,
@@ -381,6 +388,46 @@ async function writeProductJson(
   return productJson as ProductJson;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+async function readCallableProcesses(
+  cacheDir: string,
+): Promise<IndexCallableProcess[]> {
+  const reportFile = path.join(cacheDir, PROCESS_REPORT_FILE);
+  if (!existsSync(reportFile)) return [];
+
+  const report: unknown = JSON.parse(await readFile(reportFile, "utf8"));
+  if (!isRecord(report) || !Array.isArray(report.elements)) {
+    throw new Error(`${reportFile} does not contain an elements array`);
+  }
+
+  const processes = new Map<string, IndexCallableProcess>();
+  for (const [index, element] of report.elements.entries()) {
+    if (!isRecord(element)) {
+      throw new Error(`${reportFile} has an invalid element at index ${index}`);
+    }
+    if (element.type !== "SubProcessCall") continue;
+    if (
+      typeof element.name !== "string" ||
+      !isRecord(element.config) ||
+      typeof element.config.processCall !== "string"
+    ) {
+      throw new Error(
+        `${reportFile} has an invalid SubProcessCall at index ${index}`,
+      );
+    }
+    if (!processes.has(element.config.processCall)) {
+      processes.set(element.config.processCall, {
+        name: element.name,
+        processCall: element.config.processCall,
+      });
+    }
+  }
+  return [...processes.values()];
+}
+
 type ProductJson = {
   minimumIvyVersion?: string;
   installers?: {
@@ -391,6 +438,12 @@ type ProductJson = {
       repositories?: { url?: string }[];
     };
   }[];
+};
+
+type ProcessedProductVersion = {
+  callableProcesses?: IndexCallableProcess[];
+  productJson?: ProductJson;
+  installable?: IndexInstallable;
 };
 
 const ARTIFACT_INSTALLERS = new Set([
@@ -543,7 +596,7 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
     const results = await mapLimit(
       productArtifact.versions,
       CONCURRENCY,
-      async (artifactVersion) => {
+      async (artifactVersion): Promise<ProcessedProductVersion | undefined> => {
         const isLatest = artifactVersion.version === product.featuredVersion;
         const cached = await ensureCached(
           productArtifact,
@@ -560,8 +613,13 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
           const readme = await copyLatestReadmeAssets(downloadDir, meta.id);
           if (readme) product.readme = readme;
 
+          const versionResult = {
+            ...(isLatest && {
+              callableProcesses: await readCallableProcesses(cacheDir),
+            }),
+          };
           if (!existsSync(path.join(cacheDir, "product.json"))) {
-            return undefined;
+            return versionResult;
           }
           const productJson = await writeProductJson(
             cacheDir,
@@ -574,6 +632,7 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
             product.mavenDropins = isMavenDropinsOnly(productJson);
           }
           return {
+            ...versionResult,
             productJson,
             installable: {
               version: artifactVersion.version,
@@ -590,8 +649,13 @@ async function processProduct(metaFile: string): Promise<IndexProduct> {
     );
     for (const result of results) {
       if (!result) continue;
-      product.installable.push(result.installable);
-      productJsons.push(result.productJson);
+      if (result.callableProcesses?.length) {
+        product.callableProcesses = result.callableProcesses;
+      }
+      if (result.productJson && result.installable) {
+        product.installable.push(result.installable);
+        productJsons.push(result.productJson);
+      }
     }
   }
   artifacts.push(...(await resolveInstallerArtifacts(meta, productJsons)));

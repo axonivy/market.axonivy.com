@@ -71,7 +71,7 @@ test.describe("a-trust", () => {
     ).toHaveAttribute("href", /market_solutions=a-trust$/);
   });
 
-  test("splits the README into tabs and adds the Maven tab", async ({
+  test("splits the README into tabs and adds the Components tab", async ({
     page,
   }) => {
     const tabs = page.getByRole("tab");
@@ -79,7 +79,7 @@ test.describe("a-trust", () => {
       "Description",
       "Demo",
       "Installation Guide",
-      "Maven",
+      "Components",
       "Changelog",
     ]);
     await expect(
@@ -120,7 +120,7 @@ test.describe("a-trust", () => {
       .last()
       .textContent())!.trim();
 
-    await page.getByRole("tab", { name: "Maven" }).click();
+    await page.getByRole("tab", { name: "Components" }).click();
 
     const code = mainArtifact(page).locator("code").last();
     await expect(code).toContainText("<!-- A-Trust - A Trust Connector -->");
@@ -140,7 +140,7 @@ test.describe("a-trust", () => {
       "Clipboard permissions are Chromium only",
     );
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-    await page.getByRole("tab", { name: "Maven" }).click();
+    await page.getByRole("tab", { name: "Components" }).click();
 
     await mainArtifact(page).getByRole("button", { name: "copy" }).click();
 
