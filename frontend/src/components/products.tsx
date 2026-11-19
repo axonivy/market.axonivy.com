@@ -90,7 +90,7 @@ function ProductList({ products, lang }: ProductsProps) {
   const { t } = useTranslation(undefined, { lng: lang });
 
   return (
-    <section className="designer:-mt-12 rest-client:mt-0 mt-12">
+    <section className="designer:-mt-12 vscode:-mt-12 rest-client:mt-0 mt-12">
       <div className="rest-client:hidden mb-8 flex flex-col gap-4">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div className="flex flex-row items-center gap-2 md:flex-col md:items-start">

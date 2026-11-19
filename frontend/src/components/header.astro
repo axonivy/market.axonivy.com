@@ -18,6 +18,27 @@ const languageUrls = getLanguageUrls(Astro.url);
       document.documentElement.classList.toggle("dark", theme === "dark");
     };
 
+    if (document.documentElement.dataset.vscode !== undefined) {
+      applyTheme(mediaQuery.matches ? "dark" : "light");
+      window.addEventListener("message", (event) => {
+        const message = event.data;
+        if (
+          event.source !== window.parent ||
+          message?.source !== "axonivy-vscode-designer" ||
+          message.type !== "theme" ||
+          (message.theme !== "light" && message.theme !== "dark")
+        ) {
+          return;
+        }
+        applyTheme(message.theme);
+      });
+      window.parent.postMessage(
+        { source: "axonivy-market", type: "theme-ready" },
+        "*",
+      );
+      return;
+    }
+
     const savedTheme = localStorage.getItem("theme");
 
     if (savedTheme === "dark") {

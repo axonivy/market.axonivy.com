@@ -35,6 +35,8 @@ html {
 @custom-variant designer (&:is([data-designer] *));
 /* <html data-rest-client> marks the New REST Client wizard of the Designer. */
 @custom-variant rest-client (&:is([data-rest-client] *));
+/* <html data-vscode> marks the VS Code Market embed. */
+@custom-variant vscode (&:is([data-vscode] *));
 
 @theme inline {
   --font-heading: var(--font-sans);

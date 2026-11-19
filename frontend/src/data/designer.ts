@@ -5,6 +5,7 @@ export const DESIGNER_PARAMS = {
   version: "ivy-version",
   newVersion: "ivy.version",
   designerViewer: "designer-market",
+  vscodeViewer: "vscode-market",
   restClient: "resultsOnly",
 };
 
@@ -13,6 +14,8 @@ export type DesignerEnv = {
   isRestClient: boolean;
   version?: string;
 };
+
+export type VscodeEnv = { isVscode: boolean; isRestClient: boolean };
 
 export function getDesignerEnv(): DesignerEnv {
   if (typeof document === "undefined") {
@@ -26,10 +29,29 @@ export function getDesignerEnv(): DesignerEnv {
   };
 }
 
+export function getVscodeEnv(): VscodeEnv {
+  if (typeof document === "undefined") {
+    return { isVscode: false, isRestClient: false };
+  }
+  const { restClient } = document.documentElement.dataset;
+  return {
+    isVscode: document.documentElement.dataset.vscode !== undefined,
+    isRestClient: restClient !== undefined,
+  };
+}
+
 export function useIsDesigner(): boolean {
   return useSyncExternalStore(
     noSubscription,
     () => getDesignerEnv().isDesigner,
+    () => false,
+  );
+}
+
+export function useIsVscode(): boolean {
+  return useSyncExternalStore(
+    noSubscription,
+    () => getVscodeEnv().isVscode,
     () => false,
   );
 }

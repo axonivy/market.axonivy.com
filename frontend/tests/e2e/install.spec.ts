@@ -32,6 +32,18 @@ function designer(page: Page) {
 }
 
 test.describe("in the browser", () => {
+  test("recognizes and keeps the VS Code viewer mode", async ({ page }) => {
+    await page.goto("/?ivy-viewer=vscode-market");
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.dataset.vscode))
+      .toBe("");
+
+    await page.goto("/product/a-trust");
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.dataset.vscode))
+      .toBe("");
+  });
+
   test("asks to open the market in the Designer", async ({ page }) => {
     await page.goto("/product/a-trust");
 
@@ -57,24 +69,6 @@ test.describe("in the browser", () => {
     await expect(page.getByRole("dialog")).toContainText(
       "Installing deprecated extensions is not recommended.",
     );
-  });
-
-  test("shows Contact us for custom solutions", async ({ page }) => {
-    test.skip(
-      true,
-      "Unlisted: waiting for a decision from PM whether we want to promote things that can't be installed.",
-    );
-
-    await page.goto("/product/employee-onboarding");
-
-    const contact = page.getByRole("link", { name: "Contact us" }).first();
-    await expect(contact).toHaveAttribute(
-      "href",
-      "https://www.axonivy.com/marketplace/contact/?market_solutions=employee-onboarding",
-    );
-    await expect(contact).toHaveAttribute("target", "_blank");
-    await expect(page.getByRole("button", { name: /Install/ })).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Download" })).toHaveCount(0);
   });
 
   test("disables the button without installer", async ({ page }) => {
@@ -210,20 +204,6 @@ test.describe("in the Designer", () => {
     await expect(
       page.getByRole("button", { name: "Installieren", exact: true }),
     ).toBeVisible();
-  });
-
-  test("still offers Contact us", async ({ page }) => {
-    test.skip(
-      true,
-      "Unlisted: waiting for a decision from PM whether we want to promote things that can't be installed.",
-    );
-
-    await page.goto("/product/employee-onboarding");
-
-    await expect(
-      page.getByRole("link", { name: "Contact us" }).first(),
-    ).toBeVisible();
-    await expect(designer(page).install).toHaveCount(0);
   });
 });
 
