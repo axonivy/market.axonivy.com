@@ -47,6 +47,7 @@ if (!product) {
 const lang = (Astro.currentLocale ?? "en") as Lang;
 const t = i18next.getFixedT(lang);
 const name = localize(product.names, lang, product.name);
+const installProductName = localize(product.names, "en", product.name);
 
 const sunset = product.sunset;
 const successor = sunset?.successor;
@@ -137,7 +138,7 @@ const information: InformationRow[] = [
 ---
 
 <Layout>
-  <div class="flex flex-col gap-12 designer:-mt-12">
+  <div class="flex flex-col gap-12 designer:-mt-12 vscode:-mt-12">
     <Breadcrumb>
       <BreadcrumbList>
         <BreadcrumbItem>
@@ -187,6 +188,7 @@ const information: InformationRow[] = [
             ) : (
               <InstallProduct
                 installable={product.installable}
+                productName={installProductName}
                 deprecated={product.deprecated}
                 lang={lang}
                 client:load
@@ -267,9 +269,10 @@ const information: InformationRow[] = [
       ) : (
         <InstallProduct
           installable={product.installable}
+          productName={installProductName}
           deprecated={product.deprecated}
           lang={lang}
-          className="flex-1"
+          className="flex-1 vscode:ml-auto vscode:flex-none"
           client:load
         />
       )}

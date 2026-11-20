@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { IconMoon, IconSun } from "@tabler/icons-react";
+import { useIsVscode } from "@/data/designer";
 import { useTranslation } from "react-i18next";
 import "@/translation/ui";
 import type { Lang } from "@/translation/ui";
@@ -28,14 +29,22 @@ function getInitialTheme(): Theme {
 }
 
 export function ModeToggle({ lang }: { lang: Lang }) {
+  const isVscode = useIsVscode();
+  const { t } = useTranslation(undefined, { lng: lang });
   const [theme, setTheme] = React.useState<Theme>(getInitialTheme);
 
   React.useEffect(() => {
+    if (isVscode || document.documentElement.dataset.vscode !== undefined) {
+      return;
+    }
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("theme", theme);
-  }, [theme]);
+  }, [isVscode, theme]);
 
   React.useEffect(() => {
+    if (isVscode || document.documentElement.dataset.vscode !== undefined) {
+      return;
+    }
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
     const handleChange = (event: MediaQueryListEvent) => {
@@ -44,13 +53,15 @@ export function ModeToggle({ lang }: { lang: Lang }) {
 
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
-  }, []);
+  }, [isVscode]);
+
+  if (isVscode) {
+    return null;
+  }
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
-
-  const { t } = useTranslation(undefined, { lng: lang });
 
   return (
     <Button variant="ghost" size="icon" onClick={toggleTheme}>

@@ -10,7 +10,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { P } from "@/components/ui/typography";
-import { useDesignerVersion, useIsDesigner } from "@/data/designer";
+import {
+  useDesignerVersion,
+  useIsDesigner,
+  useIsVscode,
+} from "@/data/designer";
 import {
   getInitialShowDevVersions,
   saveShowDevVersions,
@@ -36,17 +40,20 @@ declare global {
 
 export default function InstallProduct({
   installable,
+  productName,
   deprecated,
   lang,
   className,
 }: {
   installable: ProductInstallable[];
+  productName: string;
   deprecated?: boolean;
   lang: Lang;
   className?: string;
 }) {
   const { t } = useTranslation(undefined, { lng: lang });
   const isDesigner = useIsDesigner();
+  const isVscode = useIsVscode();
   const designerVersion = useDesignerVersion();
   const [showDevVersions, setShowDevVersions] = useState(
     getInitialShowDevVersions,
@@ -62,6 +69,31 @@ export default function InstallProduct({
     return (
       <Button disabled className={cn("h-12 px-6 text-base", className)}>
         {t("productDetails.install.noInstaller")}
+      </Button>
+    );
+  }
+
+  if (isVscode) {
+    return (
+      <Button
+        nativeButton={false}
+        render={
+          <a
+            href="command:ivyProjects.installMarketProduct"
+            onClick={(event) => {
+              if (window.parent !== window) {
+                event.preventDefault();
+                window.parent.postMessage(
+                  { type: "ivy.market.install", productName },
+                  "*",
+                );
+              }
+            }}
+          />
+        }
+        className={installClass}
+      >
+        {t("productDetails.install.title")}
       </Button>
     );
   }

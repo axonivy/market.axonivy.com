@@ -77,7 +77,10 @@ export default function DownloadProduct({
         render={
           <Button
             variant="outline"
-            className={cn("designer:invisible h-12 px-6 text-base", className)}
+            className={cn(
+              "designer:invisible vscode:hidden h-12 px-6 text-base",
+              className,
+            )}
           >
             {t("common.download")}
           </Button>

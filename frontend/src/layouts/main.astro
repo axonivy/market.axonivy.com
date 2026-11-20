@@ -37,7 +37,7 @@ const { redirect = true } = Astro.props as Props;
       let viewer = params.get(p.viewer);
       let version = params.get(p.version) ?? params.get(p.newVersion);
       try {
-        if (viewer === p.designerViewer) {
+        if (viewer === p.designerViewer || viewer === p.vscodeViewer) {
           sessionStorage.setItem(p.viewer, viewer);
         } else {
           viewer = sessionStorage.getItem(p.viewer);
@@ -56,6 +56,44 @@ const { redirect = true } = Astro.props as Props;
           document.documentElement.dataset.restClient = "";
         }
       }
+      if (viewer === p.vscodeViewer) {
+        document.documentElement.dataset.vscode = "";
+        // VS Code blocks popups and navigation to other sites inside its webview,
+        // so links leaving the market are handed to the extension to open externally.
+        if (window.parent !== window) {
+          document.addEventListener(
+            "click",
+            (event) => {
+              if (event.defaultPrevented || event.button !== 0) return;
+              const link =
+                event.target instanceof Element
+                  ? event.target.closest("a[href]")
+                  : null;
+              if (!link) return;
+              const url = new URL(link.href, location.href);
+              if (url.origin === location.origin) {
+                if (link.target === "_blank") {
+                  event.preventDefault();
+                  location.href = url.href;
+                }
+                return;
+              }
+              if (!["https:", "http:", "mailto:"].includes(url.protocol))
+                return;
+              event.preventDefault();
+              window.parent.postMessage(
+                {
+                  source: "axonivy-market",
+                  type: "open-external",
+                  url: url.href,
+                },
+                "*",
+              );
+            },
+            true,
+          );
+        }
+      }
     </script>
     <Font cssVariable="--font-inter" preload />
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
@@ -71,14 +109,14 @@ const { redirect = true } = Astro.props as Props;
   </head>
   <body>
     <div class="flex min-h-screen flex-col">
-      <header class="shrink-0 rest-client:hidden designer:hidden">
+      <header class="shrink-0 rest-client:hidden designer:hidden vscode:hidden">
         <Header />
       </header>
 
       <div class="relative isolate flex-1 overflow-hidden">
         <div
           class:list={[
-            "mx-auto flex min-h-[calc(100vh-4.5rem)] w-full flex-col px-4 pt-32 designer:pt-16 pb-20 md:max-w-6xl",
+            "mx-auto flex min-h-[calc(100vh-4.5rem)] w-full flex-col px-4 pt-32 designer:pt-16 vscode:pt-16 pb-20 md:max-w-6xl",
             "rest-client:min-h-0 rest-client:py-4",
           ]}
         >
@@ -87,7 +125,7 @@ const { redirect = true } = Astro.props as Props;
       </div>
     </div>
 
-    <footer class="rest-client:hidden designer:hidden">
+    <footer class="rest-client:hidden designer:hidden vscode:hidden">
       <Footer />
     </footer>
   </body>
