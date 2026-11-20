@@ -34,14 +34,10 @@ function designer(page: Page) {
 test.describe("in the browser", () => {
   test("recognizes and keeps the VS Code viewer mode", async ({ page }) => {
     await page.goto("/?ivy-viewer=vscode-market");
-    await expect
-      .poll(() => page.evaluate(() => document.documentElement.dataset.vscode))
-      .toBe("");
+    await expect(page.locator("html")).toHaveAttribute("data-vscode", "");
 
     await page.goto("/product/a-trust");
-    await expect
-      .poll(() => page.evaluate(() => document.documentElement.dataset.vscode))
-      .toBe("");
+    await expect(page.locator("html")).toHaveAttribute("data-vscode", "");
   });
 
   test("asks to open the market in the Designer", async ({ page }) => {
