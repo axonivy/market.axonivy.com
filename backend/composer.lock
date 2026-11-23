@@ -969,16 +969,16 @@
         },
         {
             "name": "slim/psr7",
-            "version": "1.8.0",
+            "version": "1.8.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/slimphp/Slim-Psr7.git",
-                "reference": "76e7e3b1cdfd583e9035c4c966c08e01e45ce959"
+                "reference": "439b6215fdd8314507c50c13a8aed4c1e50ee1f2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/slimphp/Slim-Psr7/zipball/76e7e3b1cdfd583e9035c4c966c08e01e45ce959",
-                "reference": "76e7e3b1cdfd583e9035c4c966c08e01e45ce959",
+                "url": "https://api.github.com/repos/slimphp/Slim-Psr7/zipball/439b6215fdd8314507c50c13a8aed4c1e50ee1f2",
+                "reference": "439b6215fdd8314507c50c13a8aed4c1e50ee1f2",
                 "shasum": ""
             },
             "require": {
@@ -1042,10 +1042,10 @@
             ],
             "support": {
                 "issues": "https://github.com/slimphp/Slim-Psr7/issues",
-                "source": "https://github.com/slimphp/Slim-Psr7/tree/1.8.0"
+                "source": "https://github.com/slimphp/Slim-Psr7/tree/1.8.1"
             },
-            "time": "2025-11-02T17:51:19+00:00",
-            "published-time": "2025-11-05T19:46:07+00:00"
+            "time": "2026-11-15T16:43:58+00:00",
+            "published-time": "2026-11-15T16:46:41+00:00"
         },
         {
             "name": "slim/slim",
@@ -2086,16 +2086,16 @@
         },
         {
             "name": "zircote/swagger-php",
-            "version": "7.6.0",
+            "version": "7.9.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zircote/swagger-php.git",
-                "reference": "9e782a7b3132a11549ef32dd44bd04a344b01b33"
+                "reference": "d79af11951ee45ceb6071cd775a63be155533dac"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zircote/swagger-php/zipball/9e782a7b3132a11549ef32dd44bd04a344b01b33",
-                "reference": "9e782a7b3132a11549ef32dd44bd04a344b01b33",
+                "url": "https://api.github.com/repos/zircote/swagger-php/zipball/d79af11951ee45ceb6071cd775a63be155533dac",
+                "reference": "d79af11951ee45ceb6071cd775a63be155533dac",
                 "shasum": ""
             },
             "require": {
@@ -2115,11 +2115,11 @@
             },
             "require-dev": {
                 "doctrine/annotations": "^2.0",
-                "friendsofphp/php-cs-fixer": "3.95.29",
+                "friendsofphp/php-cs-fixer": "3.95.30",
                 "phpbench/phpbench": "^1.7",
                 "phpstan/phpstan": "2.3.5",
                 "phpunit/phpunit": "^11.5 || >=12.5.22",
-                "rector/rector": "2.8.3"
+                "rector/rector": "2.8.4"
             },
             "bin": [
                 "bin/openapi"
@@ -2166,7 +2166,7 @@
             ],
             "support": {
                 "issues": "https://github.com/zircote/swagger-php/issues",
-                "source": "https://github.com/zircote/swagger-php/tree/7.6.0"
+                "source": "https://github.com/zircote/swagger-php/tree/7.9.0"
             },
             "funding": [
                 {
@@ -2174,8 +2174,8 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-11-12T02:54:11+00:00",
-            "published-time": "2026-11-12T02:56:10+00:00"
+            "time": "2026-11-23T03:09:59+00:00",
+            "published-time": "2026-11-23T03:10:25+00:00"
         }
     ],
     "packages-dev": [
