@@ -185,7 +185,7 @@ pipeline {
             sshagent(['zugprojenkins-ssh']) {
               def targetFolder = "/home/axonivya/deployment/ivy-website-market-" + new Date().format("yyyy-MM-dd_HH-mm-ss-SSS");
               def targetFile =  targetFolder + ".tar"
-              def host = 'axonivya@dev.axonivy.com'
+              def host = 'axonivya@upload.axonivy.io'
 
               // copy
               sh "scp build/ivy-website-market.tar $host:$targetFile"
