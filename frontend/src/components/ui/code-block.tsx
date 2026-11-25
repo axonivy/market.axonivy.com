@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { getVscodeEnv } from "@/data/designer";
 import { cn } from "@/lib/utils";
 import type { Lang } from "@/translation/ui";
 import { IconCheck, IconCopy } from "@tabler/icons-react";
@@ -12,7 +13,14 @@ export function CodeBlock({ code, className, lang }: CodeBlockProps) {
   const { t } = useTranslation(undefined, { lng: lang });
 
   async function copyCode() {
-    await navigator.clipboard.writeText(code);
+    if (getVscodeEnv().isVscode && window.parent !== window) {
+      window.parent.postMessage(
+        { source: "axonivy-market", type: "copy-to-clipboard", text: code },
+        "*",
+      );
+    } else {
+      await navigator.clipboard.writeText(code);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
