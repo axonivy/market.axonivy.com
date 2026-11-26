@@ -80,6 +80,7 @@
       "successor": "Nachfolger",
       "title": "Veraltet"
     },
+    "documentation": "Dokumentation",
     "download": {
       "artifact": "Artefakt auswählen",
       "devVersion": "Entwicklungsversionen anzeigen",
@@ -91,7 +92,6 @@
         "label": {
           "compatibility": "Kompatibilität",
           "cost": "Kosten",
-          "doc": "Dokumentation",
           "implemented": "Implementiert von",
           "language": "Sprache",
           "more": "Mehr Informationen",
@@ -108,11 +108,10 @@
       "title": "Informationen"
     },
     "install": {
-      "deprecatedWarning": "Die Installation veralteter Erweiterungen wird nicht empfohlen. Verwendung auf eigene Verantwortung.",
       "designerTitle": "Installieren",
       "noCompatibleVersion": "Keine Version für Designer {{version}} oder älter verfügbar.",
       "noInstaller": "Kein Installer verfügbar",
-      "openInDesigner": "Bitte öffne den <market>Axon Ivy Market</market> in deinem <designer>Axon Ivy Designer</designer> (mindestens Version 9.2.0).",
+      "openInDesigner": "Du kannst ein Produkt auch direkt in deinem Designer installieren. Öffne dazu den <market>Market</market> in deinem <designer>Axon Ivy Designer</designer> (mindestens Version 9.2.0).",
       "title": "Jetzt installieren"
     },
     "tabs": {
@@ -127,7 +126,6 @@
       },
       "description": "Beschreibung",
       "setup": "Installation Guide"
-    },
-    "type": "Typ"
+    }
   }
 }

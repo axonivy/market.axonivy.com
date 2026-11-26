@@ -4,11 +4,6 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { P } from "@/components/ui/typography";
 import {
   useDesignerVersion,
@@ -26,11 +21,10 @@ import {
   versionsToDisplay,
 } from "@/data/versions";
 import { cn } from "@/lib/utils";
-import { localePath } from "@/translation/language";
 import "@/translation/ui";
 import type { Lang } from "@/translation/ui";
 import { useState } from "react";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 
 declare global {
   interface Window {
@@ -99,37 +93,7 @@ export default function InstallProduct({
   }
 
   if (!isDesigner) {
-    return (
-      <Popover>
-        <PopoverTrigger
-          render={
-            <Button className={cn(installClass, "designer:invisible")}>
-              {t("productDetails.install.title")}
-            </Button>
-          }
-        />
-        <PopoverContent align="end" className="w-80 gap-2">
-          {deprecated && <P>{t("productDetails.install.deprecatedWarning")}</P>}
-          <P>
-            <Trans
-              t={t}
-              i18nKey="productDetails.install.openInDesigner"
-              components={{
-                market: (
-                  <a className="underline" href={localePath(lang, "/")} />
-                ),
-                designer: (
-                  <a
-                    className="underline"
-                    href={"https://developer.axonivy.com/download"}
-                  />
-                ),
-              }}
-            />
-          </P>
-        </PopoverContent>
-      </Popover>
-    );
+    return;
   }
 
   function changeShowDevVersions(checked: boolean) {
@@ -174,9 +138,9 @@ export default function InstallProduct({
   return (
     <div className={cn("col-span-2 flex flex-col gap-2", className)}>
       {compatibleVersions.length > 0 ? (
-        <div className="flex flex-row gap-2">
+        <div className="designer:max-sm:flex-col flex flex-row gap-2">
           <NativeSelect
-            className="flex-1 [&_select]:h-12 [&_select]:text-base"
+            className="designer:max-sm:w-full flex-1 [&_select]:h-12 [&_select]:text-base"
             value={version}
             aria-label={t("productDetails.download.version")}
             onChange={(event) => setSelectedVersion(event.currentTarget.value)}
