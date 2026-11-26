@@ -191,6 +191,7 @@ const information: InformationRow[] = [
                 productName={installProductName}
                 deprecated={product.deprecated}
                 lang={lang}
+                documentationUrl={product.documentationUrl}
                 client:load
               />
             )}
@@ -210,9 +211,13 @@ const information: InformationRow[] = [
                 class={cn(
                   buttonVariants({ variant: "outline" }),
                   "h-12 self-start px-4 text-base",
+                  !contactUs && "designer:hidden",
                 )}
               >
                 <IconBook class="size-6" />
+                <span class="designer:hidden">
+                  {t("productDetails.documentation")}
+                </span>
               </a>
             )}
           </div>
@@ -257,7 +262,7 @@ const information: InformationRow[] = [
         )}
       </div>
     )}
-    <div class="flex flex-row gap-2 items-center md:hidden w-full designer:mb-4">
+    <div class="flex flex-row gap-2 items-center md:hidden w-full designer:mb-4 designer:flex-col designer:items-stretch vscode:flex-wrap">
       {contactUs ? (
         <a
           href={contactUrl(product.id)}
@@ -272,7 +277,8 @@ const information: InformationRow[] = [
           productName={installProductName}
           deprecated={product.deprecated}
           lang={lang}
-          className="flex-1 vscode:ml-auto vscode:flex-none"
+          className="flex-1 designer:flex-none"
+          documentationUrl={product.documentationUrl}
           client:load
         />
       )}
@@ -292,10 +298,14 @@ const information: InformationRow[] = [
           rel="noopener noreferrer"
           class={cn(
             buttonVariants({ variant: "outline" }),
-            "h-12 self-start px-4 text-base",
+            "h-12 self-start px-4 text-base designer:self-stretch vscode:flex-1",
+            !contactUs && "designer:hidden",
           )}
         >
           <IconBook class="size-6" />
+          <span class="designer:hidden">
+            {t("productDetails.documentation")}
+          </span>
         </a>
       )}
     </div>

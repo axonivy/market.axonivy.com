@@ -18,10 +18,12 @@ import {
 import { isDownloadable, type ProductArtifact } from "@/data/product-types";
 import { newestFirst, versionsToDisplay } from "@/data/versions";
 import { cn } from "@/lib/utils";
+import { localePath } from "@/translation/language";
 import "@/translation/ui";
 import type { Lang } from "@/translation/ui";
+import { IconDownload, IconInfoCircle } from "@tabler/icons-react";
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 
 export default function DownloadProduct({
   artifacts,
@@ -76,12 +78,13 @@ export default function DownloadProduct({
       <PopoverTrigger
         render={
           <Button
-            variant="outline"
+            variant="default"
             className={cn(
               "designer:invisible vscode:hidden h-12 px-6 text-base",
               className,
             )}
           >
+            <IconDownload />
             {t("common.download")}
           </Button>
         }
@@ -121,6 +124,26 @@ export default function DownloadProduct({
             />
             <P className="text-xs">{t("productDetails.download.devVersion")}</P>
           </div>
+        </div>
+        <div className="flex items-start gap-1">
+          <IconInfoCircle className="text-primary h-4 w-4 shrink-0" />
+          <P className="text-xs">
+            <Trans
+              t={t}
+              i18nKey="productDetails.install.openInDesigner"
+              components={{
+                market: (
+                  <a className="underline" href={localePath(lang, "/")} />
+                ),
+                designer: (
+                  <a
+                    className="underline"
+                    href={"https://developer.axonivy.com/download"}
+                  />
+                ),
+              }}
+            />
+          </P>
         </div>
         <Button
           className="w-fit self-end"
