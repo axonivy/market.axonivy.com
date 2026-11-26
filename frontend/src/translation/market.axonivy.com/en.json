@@ -111,7 +111,7 @@
       "designerTitle": "Install",
       "noCompatibleVersion": "No version is available for Designer {{version}} or older.",
       "noInstaller": "No installer available",
-      "openInDesigner": "You can also install a product directly in your Designer. To do so, open the <market>Market</market> in your <designer>Axon Ivy Designer</designer> (minimum version 9.2.0).",
+      "openInDesigner": "You can also install a product directly in your Designer. To do so, open the <market>Market</market> in your <designer>Axon Ivy Designer</designer> (minimum version 10.0.0).",
       "title": "Install Now"
     },
     "tabs": {
