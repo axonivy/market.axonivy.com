@@ -306,9 +306,23 @@ test.describe("on mobile", () => {
   });
 
   test("shows the version selection in the Designer", async ({ page }) => {
-    await page.goto(`/product/a-trust?${DESIGNER}`);
+    await page.goto(`/product/portal?${DESIGNER}`);
 
-    await expect(designer(page).version).toBeVisible();
-    await expect(designer(page).install).toBeVisible();
+    const { version, install } = designer(page);
+    const documentation = page.getByRole("link", {
+      name: "Documentation",
+      exact: true,
+    });
+
+    await expect(version).toBeVisible();
+    await expect(install).toBeVisible();
+    await expect(documentation).toBeVisible();
+    await expect(documentation).toHaveText("");
+    expect((await documentation.boundingBox())?.y).toBe(
+      (await install.boundingBox())?.y,
+    );
+    expect((await version.boundingBox())?.y).toBeLessThan(
+      (await install.boundingBox())?.y ?? 0,
+    );
   });
 });

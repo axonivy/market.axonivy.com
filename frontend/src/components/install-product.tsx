@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   NativeSelect,
@@ -21,6 +21,7 @@ import {
   versionsToDisplay,
 } from "@/data/versions";
 import { cn } from "@/lib/utils";
+import { IconBook } from "@tabler/icons-react";
 import "@/translation/ui";
 import type { Lang } from "@/translation/ui";
 import { useState } from "react";
@@ -38,12 +39,14 @@ export default function InstallProduct({
   deprecated,
   lang,
   className,
+  documentationUrl,
 }: {
   installable: ProductInstallable[];
   productName: string;
   deprecated?: boolean;
   lang: Lang;
   className?: string;
+  documentationUrl?: string;
 }) {
   const { t } = useTranslation(undefined, { lng: lang });
   const isDesigner = useIsDesigner();
@@ -58,12 +61,35 @@ export default function InstallProduct({
     deprecated && "bg-warning hover:bg-warning/80 text-white",
     className,
   );
+  const documentationButton =
+    isDesigner && documentationUrl ? (
+      <a
+        href={documentationUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={t("productDetails.documentation")}
+        className={cn(
+          buttonVariants({ variant: "outline" }),
+          "h-12 px-4 text-base",
+        )}
+      >
+        <IconBook className="size-6" />
+      </a>
+    ) : null;
 
   if (installable.length === 0) {
-    return (
+    const button = (
       <Button disabled className={cn("h-12 px-6 text-base", className)}>
         {t("productDetails.install.noInstaller")}
       </Button>
+    );
+    return documentationButton ? (
+      <div className={cn("flex items-center gap-2", className)}>
+        {button}
+        {documentationButton}
+      </div>
+    ) : (
+      button
     );
   }
 
@@ -151,18 +177,27 @@ export default function InstallProduct({
               </NativeSelectOption>
             ))}
           </NativeSelect>
-          {url && (
-            <Button className={installClass} onClick={installInDesigner}>
-              {t("productDetails.install.designerTitle")}
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {url && (
+              <Button
+                className={cn(installClass, "designer:flex-1 flex-1")}
+                onClick={installInDesigner}
+              >
+                {t("productDetails.install.designerTitle")}
+              </Button>
+            )}
+            {documentationButton}
+          </div>
         </div>
       ) : (
-        <P role="status" className="text-sm">
-          {t("productDetails.install.noCompatibleVersion", {
-            version: designerMajorVersion,
-          })}
-        </P>
+        <div className="flex items-start gap-2">
+          <P role="status" className="text-sm">
+            {t("productDetails.install.noCompatibleVersion", {
+              version: designerMajorVersion,
+            })}
+          </P>
+          {documentationButton}
+        </div>
       )}
       <label className="flex items-center gap-1">
         <Checkbox
