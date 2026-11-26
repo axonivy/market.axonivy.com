@@ -42,10 +42,14 @@ type NavGroup = { label: string; items: { label: string; items: NavLink[] }[] };
 const getNavItems = (t: TFunction, lang: Lang): (NavLink | NavGroup)[] => [
   {
     label: t("common.download"),
-    href: "https://dev.axonivy.com/download",
+    href: "https://developer.axonivy.com/download",
     external: false,
   },
-  { label: t("nav.doc"), href: "https://dev.axonivy.com/doc", external: false },
+  {
+    label: t("nav.doc"),
+    href: "https://developer.axonivy.com/doc",
+    external: false,
+  },
   {
     label: t("nav.resources"),
     items: [
@@ -55,13 +59,13 @@ const getNavItems = (t: TFunction, lang: Lang): (NavLink | NavGroup)[] => [
           {
             label: t("nav.releaseCycle"),
             description: t("nav.releaseCycleDescription"),
-            href: "https://dev.axonivy.com/download/release-cycle",
+            href: "https://developer.axonivy.com/download/release-cycle",
             external: false,
           },
           {
             label: t("nav.deprecation"),
             description: t("nav.deprecationDescription"),
-            href: "https://dev.axonivy.com/deprecation",
+            href: "https://developer.axonivy.com/deprecation",
             external: false,
           },
         ],
@@ -93,12 +97,12 @@ const getNavItems = (t: TFunction, lang: Lang): (NavLink | NavGroup)[] => [
   },
   {
     label: t("nav.news"),
-    href: "https://dev.axonivy.com/news",
+    href: "https://developer.axonivy.com/news",
     external: false,
   },
   {
     label: t("nav.team"),
-    href: "https://dev.axonivy.com/team",
+    href: "https://developer.axonivy.com/team",
     external: false,
   },
 ];
