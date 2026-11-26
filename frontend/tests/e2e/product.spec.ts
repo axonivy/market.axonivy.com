@@ -30,9 +30,9 @@ test.describe("a-trust", () => {
     await expect(
       page.getByRole("img", { name: "A-Trust" }).first(),
     ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "Install Now" }),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Install Now" })).toHaveCount(
+      0,
+    );
     await expect(page.getByRole("button", { name: "Download" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Deprecated" })).toHaveCount(
       0,

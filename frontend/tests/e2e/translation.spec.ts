@@ -24,7 +24,8 @@ test("shows the German product page with the German README", async ({
   );
   await expect(
     page.getByRole("button", { name: "Jetzt installieren" }),
-  ).toBeVisible();
+  ).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Download" })).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Home", exact: true }),
   ).toHaveAttribute("href", "/de");

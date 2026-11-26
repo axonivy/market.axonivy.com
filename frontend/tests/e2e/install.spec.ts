@@ -43,27 +43,32 @@ test.describe("in the browser", () => {
   test("asks to open the market in the Designer", async ({ page }) => {
     await page.goto("/product/a-trust");
 
-    await page.getByRole("button", { name: "Install Now" }).click();
+    await page.getByRole("button", { name: "Download" }).click();
 
     const popover = page.getByRole("dialog");
     await expect(popover).toContainText(
-      "Please open the Axon Ivy Market inside your Axon Ivy Designer",
+      "You can also install a product directly in your Designer. To do so, open the Market in your Axon Ivy Designer",
     );
     await expect(
       popover.getByRole("link", { name: "Axon Ivy Designer" }),
     ).toHaveAttribute("href", "https://developer.axonivy.com/download");
     await expect(popover).not.toContainText("deprecated");
-    await expect(page.getByRole("button", { name: "Download" })).toBeVisible();
+    await expect(
+      popover.getByRole("button", { name: "Download" }),
+    ).toBeVisible();
   });
 
-  test("warns about deprecated products", async ({ page }) => {
+  test("shows the deprecated notice without a browser install button", async ({
+    page,
+  }) => {
     await page.goto("/product/excel-importer");
 
-    const install = page.getByRole("button", { name: "Install Now" });
-    await expect(install).toHaveCSS("background-color", "rgb(255, 115, 0)");
-    await install.click();
-    await expect(page.getByRole("dialog")).toContainText(
-      "Installing deprecated extensions is not recommended.",
+    await expect(
+      page.getByRole("heading", { name: "Deprecated" }),
+    ).toBeVisible();
+    await expect(page.getByText("This extension is deprecated")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Install Now" })).toHaveCount(
+      0,
     );
   });
 
@@ -255,7 +260,10 @@ test.describe("without a version of the Designer release", () => {
 test("ignores other viewers", async ({ page }) => {
   await page.goto("/product/a-trust?ivy-viewer=browser");
 
-  await expect(page.getByRole("button", { name: "Install Now" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Install Now" })).toHaveCount(
+    0,
+  );
+  await expect(page.getByRole("button", { name: "Download" })).toBeVisible();
 });
 
 unhydrated.describe("before hydration", () => {
@@ -266,32 +274,34 @@ unhydrated.describe("before hydration", () => {
   unhydrated("shows the browser buttons", async ({ page }) => {
     await page.goto("/product/a-trust");
 
-    await expect(
-      page.getByRole("button", { name: "Install Now" }),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Install Now" })).toHaveCount(
+      0,
+    );
+    await expect(page.getByRole("button", { name: "Download" })).toBeVisible();
   });
 
   unhydrated("hides them in the Designer", async ({ page }) => {
     await page.goto(`/product/a-trust?${DESIGNER}`);
 
-    for (const name of ["Install Now", "Download"]) {
-      await expect(
-        page.locator("button", { hasText: name }).first(),
-      ).toBeAttached();
-      await expect(page.getByRole("button", { name })).toHaveCount(0);
-    }
+    await expect(
+      page.locator("button", { hasText: "Download" }).first(),
+    ).toBeAttached();
+    await expect(page.getByRole("button", { name: "Download" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Install Now" })).toHaveCount(
+      0,
+    );
   });
 });
 
 test.describe("on mobile", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test("shows Install Now and Download", async ({ page }) => {
+  test("shows Download without a browser install button", async ({ page }) => {
     await page.goto("/product/a-trust");
 
-    await expect(
-      page.getByRole("button", { name: "Install Now" }),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Install Now" })).toHaveCount(
+      0,
+    );
     await expect(page.getByRole("button", { name: "Download" })).toBeVisible();
   });
 
